@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Verifica se a máquina tem tudo que o Estante precisa.
+falhou=0
+
+checa() {
+    if python3 -c "$2" 2>/dev/null; then
+        echo "OK      $1"
+    else
+        echo "FALTA   $1   (sudo apt install $3)"
+        falhou=1
+    fi
+}
+
+echo "Python: $(python3 --version 2>&1)"
+python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)' \
+    || { echo "FALTA   Python 3.10 ou mais novo"; falhou=1; }
+
+checa "GTK 3 (PyGObject)" \
+    "import gi; gi.require_version('Gtk','3.0'); from gi.repository import Gtk" \
+    "python3-gi gir1.2-gtk-3.0"
+checa "GStreamer" \
+    "import gi; gi.require_version('Gst','1.0'); from gi.repository import Gst; Gst.init(None); assert Gst.ElementFactory.find('playbin')" \
+    "gir1.2-gstreamer-1.0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good"
+checa "mutagen" "import mutagen" "python3-mutagen"
+checa "pytest (só desenvolvimento)" "import pytest" "python3-pytest"
+
+exit $falhou
