@@ -24,6 +24,8 @@ from gi.repository import Gdk, GLib, Gtk  # noqa: E402
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.session import Tela  # noqa: E402
 from moa.ui import theme  # noqa: E402
+from moa.ui.box_view import BoxView  # noqa: E402
+from moa.ui.edit_view import EditView  # noqa: E402
 from moa.ui.playlist_view import PlaylistView  # noqa: E402
 from moa.ui.plus_panel import PlusPanel  # noqa: E402
 from moa.ui.radio_view import RadioView  # noqa: E402
@@ -64,6 +66,8 @@ class Conteudo:
         self.registrar(Tela.RADIO, RadioView(contexto))
         self.registrar(Tela.CONFIGURACOES, SettingsView(contexto))
         self.registrar(Tela.PLAYLIST, PlaylistView(contexto))
+        self.registrar(Tela.CAIXA, BoxView(contexto))
+        self.registrar(Tela.EDITAR, EditView(contexto))
         self._ultima_tela = None
 
         contexto.session.ao_mudar(self.redesenhar)

@@ -90,3 +90,8 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Verificação:** 275 testes. Mutação em quatro regras de segurança do apagar: três foram pegas de primeira; uma sobreviveu (faixa apontando para fora da pasta) e gerou um teste novo, depois pega.
 - **Tropeço:** uma suíte "quebrada" depois de uma mutação era só o cache de bytecode velho (arquivo de mesmo tamanho na mesma hora); resolvido limpando `__pycache__`; nas mutações seguintes o bytecode foi desligado.
 - **NÃO testado:** apagar em disco de rede, uso real.
+
+## 26/11/2026 — M4 (parte 2): telas de montar disco, Caixa e editar
+
+- **Feito:** tela "Criar uma playlist" (digitar vai direto para a busca, marcações sobrevivem ao filtro), painel do "+" com as capas dos discos, tela da Caixa (com "Apagar de vez" só nela), tela "Mexendo no disco" (nome, capa, "Como era antes", "Tirar da estante"). 307 testes passando.
+- **Execução interrompida por limite de uso:** M5 a M9 NÃO foram feitos (robustez, MusicBrainz, cópia de CD, empacotamento, avaliação). ADRs 0013 em diante e o ADR do M4 sobre telas ainda não escritos.

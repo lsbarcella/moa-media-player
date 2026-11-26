@@ -216,12 +216,12 @@ def capa_do_disco(contexto, disco, lado: int = LADO_DA_CAPA) -> Gtk.Widget:
     return Capa(disco, contexto.miniaturas.get(disco.id), lado)
 
 
-def aviso(texto: str, ao_desfazer=None) -> Gtk.Widget:
+def aviso(texto: str, ao_desfazer=None, rotulo_do_botao: str = "Desfazer") -> Gtk.Widget:
     """Faixa de aviso calmo. Fica até a próxima ação do usuário."""
     caixa = caixa_h(14)
     caixa.get_style_context().add_class("moa-aviso")
     caixa.pack_start(rotulo(texto), True, True, 0)
     if ao_desfazer is not None:
-        caixa.pack_start(botao("Desfazer", ao_clicar=ao_desfazer), False, False, 0)
+        caixa.pack_start(botao(rotulo_do_botao, ao_clicar=ao_desfazer), False, False, 0)
     caixa.set_margin_bottom(14)
     return caixa

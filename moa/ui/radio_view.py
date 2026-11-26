@@ -51,7 +51,7 @@ class RadioView:
         visor = ctx.radio.visor()
         a = ctx.session.aviso
         if a is not None and a.ancora is None:           # aviso com âncora aparece na linha da música
-            self.raiz.pack_start(aviso(a.texto, ctx.session.desfazer if a.desfazer else None),
+            self.raiz.pack_start(aviso(a.texto, ctx.session.desfazer if a.desfazer else None, a.rotulo_do_desfazer),
                                  False, False, 0)
         if visor is None:
             self.raiz.pack_start(rotulo("Nenhum disco no rádio. Pegue um disco na estante."),
@@ -198,10 +198,18 @@ class RadioView:
             moldura.pack_start(linha, False, False, 0)
             a = self.ctx.session.aviso
             if a is not None and a.ancora == str(musica.path):
-                moldura.pack_start(aviso(a.texto, self.ctx.session.desfazer if a.desfazer else None),
+                moldura.pack_start(aviso(a.texto, self.ctx.session.desfazer if a.desfazer else None, a.rotulo_do_desfazer),
                                    False, False, 0)
             coluna.pack_start(moldura, False, False, 0)
+        coluna.pack_start(botao("Mexer neste disco", ao_clicar=self._mexer_no_disco),
+                          False, False, 8)
         return coluna
+
+    def _mexer_no_disco(self) -> None:
+        from moa.core.session import Tela
+        self.ctx.session.acao()
+        self.ctx.session.disco_aberto_id = self.ctx.radio.disco.id
+        self.ctx.session.ir_para(Tela.EDITAR)
 
     def _pedir_outro_disco(self, indice: int) -> None:
         self.ctx.session.acao()

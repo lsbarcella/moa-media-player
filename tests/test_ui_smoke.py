@@ -39,7 +39,7 @@ def montar(tmp_path, musica, sink=_sink_rapido, carregado=True):
     banco = Database(tmp_path / "moa.db")
     prefs = Preferencias(tmp_path / "config.json")
     theme.aplicar(prefs.config.paleta, prefs.config.letra)
-    ctx = Contexto(banco, prefs, musica, sink_factory=sink)
+    ctx = Contexto(banco, prefs, musica, sink_factory=sink, pasta_miniaturas=tmp_path / "miniaturas")
     conteudo = Conteudo(ctx)
     if carregado:
         ctx.definir_colecao(scan(musica), {})

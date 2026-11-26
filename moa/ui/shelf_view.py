@@ -40,7 +40,7 @@ class ShelfView:
         self.botao_principal = None
         if ctx.session.aviso is not None:
             a = ctx.session.aviso
-            self.raiz.pack_start(aviso(a.texto, ctx.session.desfazer if a.desfazer else None),
+            self.raiz.pack_start(aviso(a.texto, ctx.session.desfazer if a.desfazer else None, a.rotulo_do_desfazer),
                                  False, False, 0)
 
         if not ctx.discos and not ctx.montados:
@@ -65,8 +65,14 @@ class ShelfView:
         criar = botao("Criar uma playlist", "moa-pri", "moa-grande", icone_nome="mais",
                       ao_clicar=self._criar_playlist)
         linha.pack_start(criar, False, False, 0)
+        n = len(self.ctx.caixa)
+        linha.pack_start(botao(f"A Caixa ({n} {'disco' if n == 1 else 'discos'})", "moa-grande",
+                               icone_nome="caixa", ao_clicar=self._abrir_a_caixa), False, False, 0)
         self.botao_principal = criar
         self.raiz.pack_start(linha, False, False, 0)
+
+    def _abrir_a_caixa(self) -> None:
+        self.ctx.session.ir_para(Tela.CAIXA)
 
     def _criar_playlist(self) -> None:
         self.ctx.session.acao()

@@ -41,6 +41,7 @@ class Aviso:
     texto: str
     desfazer: Callable[[], None] | None = None   # se existir, o aviso mostra "Desfazer"
     ancora: str | None = None                    # se existir, o aviso aparece na linha dessa faixa
+    rotulo_do_desfazer: str = "Desfazer"         # texto do botão ("Como era antes", por exemplo)
 
 
 class Session:
@@ -90,8 +91,8 @@ class Session:
             self._avisar_que_mudou()
 
     def mostrar_aviso(self, texto: str, desfazer: Callable[[], None] | None = None,
-                      ancora: str | None = None) -> None:
-        self.aviso = Aviso(texto, desfazer, ancora)
+                      ancora: str | None = None, rotulo_do_desfazer: str = "Desfazer") -> None:
+        self.aviso = Aviso(texto, desfazer, ancora, rotulo_do_desfazer)
         self._avisar_que_mudou()
 
     # -- painel "Colocar em outro disco" (o "+" de cada música) -------------------------

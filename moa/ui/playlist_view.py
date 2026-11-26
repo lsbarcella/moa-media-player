@@ -129,7 +129,7 @@ class PlaylistView:
         a = self.ctx.session.aviso
         if a is not None:
             self._area_do_aviso.pack_start(
-                aviso(a.texto, self.ctx.session.desfazer if a.desfazer else None), False, False, 0)
+                aviso(a.texto, self.ctx.session.desfazer if a.desfazer else None, a.rotulo_do_desfazer), False, False, 0)
         self._area_do_aviso.show_all()
 
     def _redesenhar_filtros(self) -> None:

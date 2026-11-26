@@ -8,6 +8,7 @@
 `Contexto` e entrega às telas, que só desenham e chamam as ações dele.
 """
 
+from dataclasses import replace
 from pathlib import Path
 from typing import Callable
 
@@ -74,6 +75,16 @@ class Contexto:
         self.caixa = sorted(camadas.caixa, key=lambda d: d.sort_key)
         for funcao in list(self._ouvintes_da_colecao):
             funcao()
+
+    def esquecer_arquivos_apagados(self) -> None:
+        """Depois de "Apagar de vez": tira da coleção as faixas cujo arquivo não existe mais."""
+        restantes = []
+        for disco in self._brutos:
+            faixas = tuple(t for t in disco.tracks if t.path.exists())
+            if faixas:
+                restantes.append(replace(disco, tracks=faixas))
+        self._brutos = restantes
+        self._recalcular()
 
     def novo_rascunho(self) -> RascunhoDePlaylist:
         nomes = [d.title for d in self.montados + self.caixa]
