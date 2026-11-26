@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-import estante.core.covers as covers
-import estante.core.library as library
-from estante.core.db import Database
-from estante.core.library import refresh_library, scan
+import moa.core.covers as covers
+import moa.core.library as library
+from moa.core.db import Database
+from moa.core.library import refresh_library, scan
 
 
 @pytest.fixture
@@ -115,7 +115,7 @@ def test_pasta_de_musica_inexistente_nao_quebra(tmp_path, db):
 
 
 def test_recupera_se_o_banco_foi_apagado(biblioteca, tmp_path, leituras):
-    caminho = tmp_path / "estante.db"
+    caminho = tmp_path / "moa.db"
     primeiro = Database.open(caminho)
     refresh_library(biblioteca, primeiro)
     primeiro.close()

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verifica se a máquina tem tudo que o Estante precisa.
+# Verifica se a máquina tem tudo que o Moa Media Player precisa.
 falhou=0
 
 checa() {

@@ -31,11 +31,11 @@ import mutagen
 from mutagen.flac import FLAC, Picture
 from mutagen.mp4 import MP4Tags
 
-from estante.core.models import Album
-from estante.core.textutil import fold
+from moa.core.models import Album
+from moa.core.textutil import fold
 
 if TYPE_CHECKING:       # só para o editor entender o tipo; evita importação circular
-    from estante.core.db import Database
+    from moa.core.db import Database
 
 log = logging.getLogger(__name__)
 

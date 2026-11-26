@@ -1,4 +1,4 @@
-from estante.core.textutil import fold, natural_key
+from moa.core.textutil import fold, natural_key
 
 
 def test_fold_tira_acentos_e_maiusculas():

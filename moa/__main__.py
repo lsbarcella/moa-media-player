@@ -1,12 +1,12 @@
-"""Ponto de entrada: python3 -m estante"""
+"""Ponto de entrada: python3 -m moa"""
 
 import sys
 
-from estante.app import EstanteApp
+from moa.app import MoaApp
 
 
 def main() -> int:
-    app = EstanteApp()
+    app = MoaApp()
     return app.run(sys.argv)
 
 

@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from estante.core.covers import CoverSource
-from estante.core.db import MIGRACOES, Database, EsquemaMaisNovoQueOApp
-from estante.core.models import Track
+from moa.core.covers import CoverSource
+from moa.core.db import MIGRACOES, Database, EsquemaMaisNovoQueOApp
+from moa.core.models import Track
 
 
 def faixa(nome="/m/CD/01.mp3", **campos):
@@ -32,7 +32,7 @@ def test_banco_novo_ja_nasce_na_versao_mais_recente(db):
 
 
 def test_reabrir_nao_refaz_a_migracao_e_guarda_os_dados(tmp_path):
-    caminho = tmp_path / "estante.db"
+    caminho = tmp_path / "moa.db"
     primeiro = Database(caminho)
     primeiro.save_tracks([faixa()])
     primeiro.close()
@@ -136,19 +136,19 @@ def test_esquece_as_capas_de_discos_que_sumiram(db):
 # ---------------------------------------------------------------------------
 
 def test_banco_corrompido_e_guardado_ao_lado_e_um_novo_e_criado(tmp_path):
-    caminho = tmp_path / "estante.db"
+    caminho = tmp_path / "moa.db"
     caminho.write_bytes(b"isto nao e um banco sqlite " * 100)
     db = Database.open(caminho)                       # não pode levantar erro
     assert db.schema_version() == len(MIGRACOES)
     assert db.load_tracks() == {}
     db.close()
-    guardados = list(tmp_path.glob("estante.db.problema-*"))
+    guardados = list(tmp_path.glob("moa.db.problema-*"))
     assert len(guardados) == 1                        # o arquivo ruim foi guardado, não apagado
     assert guardados[0].read_bytes().startswith(b"isto nao e um banco")
 
 
 def test_banco_de_versao_futura_tambem_e_guardado_ao_lado(tmp_path):
-    caminho = tmp_path / "estante.db"
+    caminho = tmp_path / "moa.db"
     conexao = sqlite3.connect(caminho)
     conexao.execute(f"PRAGMA user_version = {len(MIGRACOES) + 5}")
     conexao.execute("CREATE TABLE coisa_do_futuro(x)")
@@ -159,11 +159,11 @@ def test_banco_de_versao_futura_tambem_e_guardado_ao_lado(tmp_path):
     db = Database.open(caminho)
     assert db.schema_version() == len(MIGRACOES)
     db.close()
-    assert len(list(tmp_path.glob("estante.db.problema-*"))) == 1
+    assert len(list(tmp_path.glob("moa.db.problema-*"))) == 1
 
 
 def test_banco_ocupado_nao_e_tratado_como_corrompido(tmp_path):
-    caminho = tmp_path / "estante.db"
+    caminho = tmp_path / "moa.db"
     Database(caminho).close()
     trancador = sqlite3.connect(caminho, isolation_level=None)
     trancador.execute("BEGIN EXCLUSIVE")              # outro processo segurando o banco
@@ -173,11 +173,11 @@ def test_banco_ocupado_nao_e_tratado_como_corrompido(tmp_path):
     finally:
         trancador.execute("ROLLBACK")
         trancador.close()
-    assert list(tmp_path.glob("estante.db.problema-*")) == []   # o arquivo bom não foi movido
+    assert list(tmp_path.glob("moa.db.problema-*")) == []   # o arquivo bom não foi movido
     assert caminho.exists()
 
 
 def test_cria_a_pasta_do_banco_se_ela_nao_existe(tmp_path):
-    db = Database.open(tmp_path / "ainda" / "nao" / "existe" / "estante.db")
+    db = Database.open(tmp_path / "ainda" / "nao" / "existe" / "moa.db")
     db.close()
-    assert (tmp_path / "ainda" / "nao" / "existe" / "estante.db").exists()
+    assert (tmp_path / "ainda" / "nao" / "existe" / "moa.db").exists()

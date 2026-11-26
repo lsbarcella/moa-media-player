@@ -6,7 +6,7 @@ Sem GTK. São só dados e regras de ordenação, fáceis de testar.
 from dataclasses import dataclass
 from pathlib import Path
 
-from estante.core.textutil import natural_key
+from moa.core.textutil import natural_key
 
 # Nome usado para coletâneas, em que as faixas são de artistas diferentes.
 VARIOS_ARTISTAS = "Vários artistas"

@@ -1,4 +1,4 @@
-"""Banco de dados SQLite do Estante (ADR-0008). Sem GTK.
+"""Banco de dados SQLite do Moa (ADR-0008). Sem GTK.
 
 Hoje guarda só o cache da biblioteca (faixas e capas). Nos próximos marcos
 entram os discos montados, a Caixa, os recentes e onde o idoso parou, como
@@ -22,8 +22,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-from estante.core.covers import CoverSource
-from estante.core.models import Track
+from moa.core.covers import CoverSource
+from moa.core.models import Track
 
 log = logging.getLogger(__name__)
 

@@ -1,7 +1,8 @@
-# Estante
+# Moa Media Player
 
 Reprodutor de música **offline**, **leve** e **acessível para idosos**, para Linux Mint (Cinnamon).
 A interface imita uma estante de CDs: um clique na capa e o disco toca inteiro.
+O nome é uma homenagem ao pai do autor, Moacir.
 
 Projeto de TCC (Engenharia de Software, Uninter). Contexto completo em [CLAUDE.md](CLAUDE.md).
 
@@ -16,7 +17,7 @@ tools/check_deps.sh   # confere se está tudo instalado
 ## Executar
 
 ```bash
-python3 -m estante
+python3 -m moa
 ```
 
 ## Testes

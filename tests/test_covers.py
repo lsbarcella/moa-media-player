@@ -14,7 +14,7 @@ import gi
 gi.require_version("GdkPixbuf", "2.0")
 from gi.repository import GdkPixbuf  # noqa: E402
 
-from estante.core.covers import (
+from moa.core.covers import (
     PALETA,
     CoverSource,
     contrast_ratio,
@@ -24,8 +24,8 @@ from estante.core.covers import (
     read_image_bytes,
     substitute_cover,
 )
-from estante.core.library import scan
-from estante.core.models import Album
+from moa.core.library import scan
+from moa.core.models import Album
 
 
 # ---------------------------------------------------------------------------

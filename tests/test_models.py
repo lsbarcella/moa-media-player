@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from estante.core.models import VARIOS_ARTISTAS, Album, Track
+from moa.core.models import VARIOS_ARTISTAS, Album, Track
 
 
 def faixa(nome_arquivo, numero=None):

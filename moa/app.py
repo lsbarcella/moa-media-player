@@ -5,12 +5,12 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gio, Gtk  # noqa: E402
 
-from estante.ui.window import MainWindow  # noqa: E402
+from moa.ui.window import MainWindow  # noqa: E402
 
-APPLICATION_ID = "br.tcc.Estante"
+APPLICATION_ID = "br.tcc.Moa"
 
 
-class EstanteApp(Gtk.Application):
+class MoaApp(Gtk.Application):
     def __init__(self) -> None:
         super().__init__(
             application_id=APPLICATION_ID,

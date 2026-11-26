@@ -20,11 +20,11 @@ from typing import TYPE_CHECKING, Callable
 
 import mutagen
 
-from estante.core.models import VARIOS_ARTISTAS, Album, Track
-from estante.core.textutil import fold
+from moa.core.models import VARIOS_ARTISTAS, Album, Track
+from moa.core.textutil import fold
 
 if TYPE_CHECKING:       # só para o editor entender o tipo; evita importação circular
-    from estante.core.db import Database
+    from moa.core.db import Database
 
 log = logging.getLogger(__name__)
 

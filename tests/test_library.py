@@ -5,8 +5,8 @@ Usam arquivos de áudio de verdade, gerados no próprio teste (ver conftest.py).
 
 import pytest
 
-from estante.core.library import read_track, scan, title_from_filename
-from estante.core.models import VARIOS_ARTISTAS
+from moa.core.library import read_track, scan, title_from_filename
+from moa.core.models import VARIOS_ARTISTAS
 
 
 # ---------------------------------------------------------------------------
