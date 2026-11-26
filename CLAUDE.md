@@ -219,7 +219,7 @@ O `tools/measure.sh` deve medir esses números de forma repetível, por exemplo 
 - O app abre como **janela de programa normal** (não tela cheia).
 - MusicBrainz é opcional e oportunista; o app funciona 100% offline.
 - Este escopo vale para o MVP.
-- **Licença: GNU GPL versão 3** (software livre), com o repositório público `lsbarcella/moa-media-player` no GitHub. Ver ADR-0009.
+- **Licença: GNU GPL versão 3 ou posterior** (software livre), titular Leonardo dos Santos Barcella, 2026, com o repositório público `lsbarcella/moa-media-player` no GitHub. **Todo arquivo `.py` ou `.sh` novo deve começar com o cabeçalho de três linhas** (copie de qualquer arquivo existente); um teste confere. O `LICENSE` não é editado. Ver ADR-0009.
 - **Nome: Moa Media Player.** O autor escolheu o nome completo, sabendo que "Media Player" é genérico e em inglês. Pacote `moa`, ID `br.tcc.Moa`.
 - **Expansão futura:** depois do MVP, o autor pretende expandir para vídeos e fotos. Vídeo num notebook antigo é bem mais pesado que áudio e exigirá medição e um ADR antes de qualquer promessa.
 - **Audição:** o rádio terá um botão **"Voz mais clara"** (liga/desliga, estado em texto), que reforça agudos e voz. É a opção B1 do ADR-0004; pode evoluir para um controle "Tom" (B2) se o teste mostrar que não basta.
@@ -241,7 +241,7 @@ O `tools/measure.sh` deve medir esses números de forma repetível, por exemplo 
 - Detalhe de pesquisa: tratar o skeuomorfismo como **hipótese com evidência mista** (Urbano 2022 a favor, Ellis & Marshall 2019 contra), a validar com o usuário.
 
 **Em aberto:**
-- Licença: "somente GPL v3" ou "GPL v3 ou posterior" (decide os cabeçalhos dos arquivos-fonte), e a licença da arte do ícone (ADR-0009).
+- Licença da arte do ícone e da documentação (ADR-0009).
 - Valores do ajuste "Voz mais clara" (o estado padrão é desativado); precisam ser testados com ele ouvindo.
 - **Desenho visual dos botões, dos ícones e das telas** (inclusive da manutenção da coleção: adicionar, renomear, trocar capa, remover). Será explorado com `ce-ideate`, seguido de um preview em HTML.
 - Confirmação ao fechar pelo X (por padrão, não há).

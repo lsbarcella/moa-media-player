@@ -28,8 +28,13 @@ python3 -m pytest
 
 ## Licença
 
-Moa Media Player é **software livre**, licenciado sob a **GNU General Public License versão 3**.
-O texto completo está em [LICENSE](LICENSE). Decisão registrada em `docs/adr/0009-licenca-gpl-v3.md`.
+Copyright (C) 2026 Leonardo dos Santos Barcella
+
+Moa Media Player é **software livre**: você pode redistribuí-lo e modificá-lo sob os termos da
+**GNU General Public License**, publicada pela Free Software Foundation, na **versão 3 ou, a seu
+critério, em qualquer versão posterior**. Ele é distribuído **sem nenhuma garantia**.
+O texto completo da licença está em [LICENSE](LICENSE). Decisão registrada em
+`docs/adr/0009-licenca-gpl-v3.md`.
 
 ## Documentação
 

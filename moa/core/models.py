@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Leonardo dos Santos Barcella
+# Este arquivo faz parte do Moa Media Player. Veja o arquivo LICENSE na raiz do projeto.
+
 """Modelos de dados da biblioteca: uma faixa e um disco.
 
 Sem GTK. São só dados e regras de ordenação, fáceis de testar.

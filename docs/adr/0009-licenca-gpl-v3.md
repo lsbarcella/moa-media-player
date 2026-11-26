@@ -1,6 +1,6 @@
 # ADR-0009 — Licença: GNU GPL versão 3 (software livre)
 
-- **Status:** Aceito. Fica em aberto a escolha entre "somente v3" e "v3 ou posterior" (ver Pendências).
+- **Status:** Aceito. Versão escolhida: **GPL v3 ou posterior** (`GPL-3.0-or-later`).
 - **Data:** 26/11/2026
 - **Decisor:** autor do TCC
 
@@ -18,7 +18,11 @@ O autor quer que o Moa Media Player seja **software livre**, e criou o repositó
 
 ## Decisão
 
-Licenciar o código do Moa Media Player sob a **GNU GPL versão 3**. O arquivo `LICENSE` na raiz do repositório contém o texto oficial.
+Licenciar o código do Moa Media Player sob a **GNU GPL versão 3**. O arquivo `LICENSE` na raiz do repositório contém o texto oficial e **não é editado**: o texto da GPL pertence à Free Software Foundation, e alterá-lo o descaracterizaria. O nome do autor e o ano vão em outros lugares, como a própria licença orienta.
+
+- **Titular dos direitos autorais:** Leonardo dos Santos Barcella, **2026**.
+- **Versão:** GPL v3 **ou posterior** (identificador SPDX `GPL-3.0-or-later`).
+- **Onde aparece:** no README e em um cabeçalho de três linhas no começo de cada arquivo-fonte (`.py` e `.sh`). O teste `tests/test_license_headers.py` falha se um arquivo novo ficar sem o cabeçalho.
 
 **Compatibilidade das dependências** (conferida em 26/11/2026 nos arquivos instalados no Linux Mint e nos metadados do pacote):
 
@@ -44,6 +48,6 @@ O arquivo de copyright do pacote Debian do mutagen escreve apenas "GPL-2", sem o
 
 ## Pendências
 
-- **"Somente v3" ou "v3 ou posterior"?** A FSF costuma recomendar "ou posterior", que dá flexibilidade futura; "somente v3" mantém controle sobre quais termos futuros se aplicam. Os cabeçalhos dos arquivos-fonte (por exemplo `# SPDX-License-Identifier: GPL-3.0-or-later`) só devem ser adicionados depois dessa escolha.
+- **Documentação** (CLAUDE.md, ADRs, diário de IA, ideação e preview): hoje não tem licença própria declarada. Vale decidir se segue a GPL ou uma licença de documentação livre (por exemplo CC BY-SA 4.0).
 - **Licença do ícone da moa e das demais artes.** A GPL cobre o código. O desenho precisa ser **original ou de licença livre** (por exemplo, CC BY-SA 4.0), para o pacote inteiro continuar livre. Não usar imagens de terceiros sem conferir a licença.
 - **Nome e marca:** a GPL cobre o código, não o nome. Hoje não há marca registrada, então nada impede que terceiros usem o nome "Moa Media Player" em versões modificadas. Se isso vier a importar, é uma decisão futura.

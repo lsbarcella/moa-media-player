@@ -60,3 +60,9 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Problema:** os commits foram gravados com um e-mail do autor que não era o da conta do GitHub, então o GitHub não ligava os commits à conta (sem foto), e esse e-mail ficou público no histórico. A causa foi a configuração local do git, que a IA não conferiu antes do primeiro push.
 - **Correção (autorizada pelo autor):** configurado o e-mail da conta do GitHub, reescrito o autor dos 14 commits (conteúdo e datas de autoria preservados, conferidos por comparação das árvores) e feito `force push` com trava de segurança.
 - **Lição para a IA:** conferir `git config user.email` e perguntar ao autor se é o e-mail certo antes do primeiro push para um repositório público.
+
+## 26/11/2026 — Aviso de direitos autorais
+
+- **Pedido:** o autor quis colocar o nome completo e o ano na licença. A IA explicou que o `LICENSE` é o texto oficial da GPL e não deve ser editado; o nome e o ano vão no README e nos cabeçalhos dos arquivos.
+- **Decisões do autor:** titular Leonardo dos Santos Barcella, ano 2026, GPL v3 **ou posterior**.
+- **Feito:** cabeçalho de três linhas em 19 arquivos-fonte, seção de direitos autorais no README, ADR-0009 atualizado e o teste `tests/test_license_headers.py`, que falha se um arquivo novo ficar sem o cabeçalho.
