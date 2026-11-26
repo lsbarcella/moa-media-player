@@ -74,3 +74,12 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Verificação:** 183 testes passando. Teste de mutação nas três regras mais delicadas (teto do volume, fim do disco, pulo no erro): os testes falharam como esperado.
 - **Decisões provisórias** (a revisar pelo autor): curva e padrão do volume, ganhos de "Voz mais clara" (−3, +3, +6 dB), fim do disco para.
 - **NÃO testado:** som real, ReplayGain com arquivos reais, qualidade do equalizador.
+
+## 26/11/2026 — M3: telas principais
+
+- **Pedido:** continuar o MVP: Estante, Tocando agora e Configurações, seguindo o preview aprovado.
+- **Feito:** `core/session.py` (navegação e avisos que ficam até a próxima ação), `core/radio.py` (as frases do visor, testáveis sem janela), `core/contexto.py`, `ui/theme.py` (4 paletas e 3 tamanhos de letra gerados em Python, contraste 7:1 testado), `ui/window.py` (cabeçalho fixo, mini-rádio, atalhos de teclado), `ui/shelf_view.py`, `ui/radio_view.py`, `ui/settings_view.py`, `ui/loader.py` (varredura em segundo plano, uma conexão de banco por thread), 10 ícones SVG originais e `tools/make_synthetic_collection.py` (80 discos, 800 faixas, para verificar sem usar a coleção real). ADR-0011.
+- **Verificação:** 247 testes; as telas foram desenhadas fora da tela (`Gtk.OffscreenWindow`) e os PNGs foram olhados; `timeout 5 python3 -m moa` abre (código 124). Teste de mutação em três regras (aviso até a próxima ação, contraste das paletas, limite do volume): os testes falharam como esperado.
+- **Bug achado pelos testes:** dar "Tocar" num disco pausado não registrava o disco em "Ouvidos há pouco"; corrigido.
+- **Decisões provisórias:** progresso só em texto, fim do disco para, tema claro, X do sistema, abre sempre na Estante com "Continuar a ouvir" (ADR-0011).
+- **NÃO testado:** aparência no monitor real do notebook, X do Cinnamon, HD mecânico, paletas de daltonismo com simulador ou pessoa daltônica.

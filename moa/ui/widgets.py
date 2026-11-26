@@ -41,13 +41,42 @@ def rotulo(texto: str, *classes: str, quebrar: bool = True, centro: bool = False
     return etiqueta
 
 
-def botao(texto: str, *classes: str, ao_clicar=None, icone: Gtk.Widget | None = None) -> Gtk.Button:
+PASTA_DOS_ICONES = Path(__file__).parent / "icons"
+NOMES_DOS_ICONES = ("tocar", "pausar", "anterior", "proxima", "volume", "voltar",
+                    "engrenagem", "mais", "caixa", "disco")
+LADO_DO_ICONE = 32
+
+
+def icone(nome: str, cor: str = "#1E1913", fundo: str = "#FFFFFF",
+          lado: int = LADO_DO_ICONE) -> Gtk.Image:
+    """Um ícone de aparelho antigo (SVG original do projeto), na cor pedida.
+
+    Ícone nunca vem sozinho: sempre acompanha um texto (restrição do projeto).
+    """
+    svg = (PASTA_DOS_ICONES / f"{nome}.svg").read_text(encoding="utf-8")
+    svg = svg.replace("__COR__", cor).replace("__FUNDO__", fundo)
+    carregador = GdkPixbuf.PixbufLoader.new_with_type("svg")
+    carregador.set_size(lado, lado)
+    carregador.write(svg.encode("utf-8"))
+    carregador.close()
+    imagem = Gtk.Image.new_from_pixbuf(carregador.get_pixbuf())
+    imagem.set_valign(Gtk.Align.CENTER)
+    return imagem
+
+
+# Botões de fundo escuro (verde, preto) levam o ícone branco.
+_CLASSES_DE_FUNDO_ESCURO = {"moa-pri", "moa-tocar"}
+
+
+def botao(texto: str, *classes: str, ao_clicar=None, icone_nome: str | None = None) -> Gtk.Button:
     """Botão grande com texto sempre visível (e ícone opcional ao lado)."""
     b = Gtk.Button()
     caixa = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
     caixa.set_halign(Gtk.Align.CENTER)
-    if icone is not None:
-        caixa.pack_start(icone, False, False, 0)
+    if icone_nome is not None:
+        escuro = bool(_CLASSES_DE_FUNDO_ESCURO & set(classes))
+        caixa.pack_start(icone(icone_nome, "#FFFFFF" if escuro else "#1E1913",
+                               "#1E1913" if escuro else "#FFFFFF"), False, False, 0)
     etiqueta = Gtk.Label(label=texto)
     etiqueta.set_line_wrap(True)
     etiqueta.set_justify(Gtk.Justification.CENTER)

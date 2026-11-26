@@ -25,6 +25,7 @@ from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.session import Tela  # noqa: E402
 from moa.ui import theme  # noqa: E402
 from moa.ui.radio_view import RadioView  # noqa: E402
+from moa.ui.settings_view import SettingsView  # noqa: E402
 from moa.ui.shelf_view import ShelfView  # noqa: E402
 from moa.ui.widgets import botao, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
 
@@ -54,6 +55,7 @@ class Conteudo:
         self.telas: dict[Tela, object] = {}
         self.registrar(Tela.ESTANTE, ShelfView(contexto))
         self.registrar(Tela.RADIO, RadioView(contexto))
+        self.registrar(Tela.CONFIGURACOES, SettingsView(contexto))
 
         contexto.session.ao_mudar(self.redesenhar)
         contexto.radio.ao_mudar(self.redesenhar)
@@ -97,12 +99,12 @@ class Conteudo:
         texto = sessao.texto_de_voltar
         if texto is not None:
             acao = sessao.voltar if sessao.tela == Tela.CONFIGURACOES else sessao.voltar_para_a_estante
-            esquerda.pack_start(botao(texto, ao_clicar=acao), False, False, 0)
+            esquerda.pack_start(botao(texto, ao_clicar=acao, icone_nome="voltar"), False, False, 0)
         direita = caixa_h(8)
         direita.set_size_request(280, -1)
         direita.set_halign(Gtk.Align.END)
         if sessao.mostra_botao_configuracoes and Tela.CONFIGURACOES in self.telas:
-            direita.pack_end(botao("Configurações",
+            direita.pack_end(botao("Configurações", icone_nome="engrenagem",
                                    ao_clicar=lambda: sessao.ir_para(Tela.CONFIGURACOES)),
                              False, False, 0)
         self.cabecalho.pack_start(esquerda, False, False, 0)
@@ -122,7 +124,8 @@ class Conteudo:
         self.mini.pack_start(
             rotulo(f"Tocando agora: {visor.titulo} ({visor.disco})", "moa-forte"), True, True, 0)
         self.mini.pack_start(
-            botao("Pausar" if radio.tocando else "Tocar", ao_clicar=self._alternar_do_mini),
+            botao("Pausar" if radio.tocando else "Tocar", ao_clicar=self._alternar_do_mini,
+                  icone_nome="pausar" if radio.tocando else "tocar"),
             False, False, 0)
         self.mini.pack_start(
             botao("Abrir o rádio", ao_clicar=lambda: self.ctx.session.ir_para(Tela.RADIO)),

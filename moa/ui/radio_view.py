@@ -15,7 +15,7 @@ from gi.repository import Gtk  # noqa: E402
 
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.player import DEGRAU_MAXIMO  # noqa: E402
-from moa.ui.widgets import Capa, aviso, botao, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
+from moa.ui.widgets import Capa, aviso, botao, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
 
 LARGURA_PARA_EMPILHAR = 900
 
@@ -103,12 +103,12 @@ class RadioView:
 
         # botões: anterior / tocar-pausar / próxima
         controles = Gtk.Grid(column_spacing=10, column_homogeneous=False)
-        anterior = botao("Anterior", ao_clicar=self._anterior)
+        anterior = botao("Anterior", ao_clicar=self._anterior, icone_nome="anterior")
         if visor.luz_acesa:
-            principal = botao("Pausar", "moa-pausar", ao_clicar=self._alternar)
+            principal = botao("Pausar", "moa-pausar", ao_clicar=self._alternar, icone_nome="pausar")
         else:
-            principal = botao("Tocar", "moa-tocar", ao_clicar=self._alternar)
-        proxima = botao("Próxima", ao_clicar=self._proxima)
+            principal = botao("Tocar", "moa-tocar", ao_clicar=self._alternar, icone_nome="tocar")
+        proxima = botao("Próxima", ao_clicar=self._proxima, icone_nome="proxima")
         for coluna, (widget, largura) in enumerate(((anterior, 1), (principal, 2), (proxima, 1))):
             widget.set_hexpand(True)
             controles.attach(widget, coluna * 2, 0, largura, 1)
@@ -141,8 +141,12 @@ class RadioView:
         linha.pack_start(barras, False, False, 0)
         linha.pack_start(mais, True, True, 0)
         volume.pack_start(linha, False, False, 0)
-        volume.pack_start(rotulo(f"Volume: {degrau} de {DEGRAU_MAXIMO}", "moa-forte", centro=True),
-                          False, False, 0)
+        legenda = caixa_h(8)
+        legenda.set_halign(Gtk.Align.CENTER)
+        legenda.pack_start(icone("volume", "#FFFFFF", "#2B2118"), False, False, 0)
+        legenda.pack_start(rotulo(f"Volume: {degrau} de {DEGRAU_MAXIMO}", "moa-forte", centro=True),
+                           False, False, 0)
+        volume.pack_start(legenda, False, False, 0)
         corpo.pack_start(volume, False, False, 0)
 
         # "Voz mais clara"
@@ -152,7 +156,7 @@ class RadioView:
                       ao_clicar=self._alternar_voz)
         corpo.pack_start(clara, False, False, 0)
 
-        corpo.pack_start(botao("Guardar o disco na estante e parar", ao_clicar=self._guardar),
+        corpo.pack_start(botao("Guardar o disco na estante e parar", ao_clicar=self._guardar, icone_nome="disco"),
                          False, False, 0)
         return corpo
 
@@ -184,7 +188,7 @@ class RadioView:
             linha.pack_start(b, True, True, 0)
             if self.ao_pedir_outro_disco is not None:
                 linha.pack_start(
-                    botao("＋ Colocar em outro disco",
+                    botao("Colocar em outro disco", icone_nome="mais",
                           ao_clicar=lambda k=i: self.ao_pedir_outro_disco(k)),
                     False, False, 0)
             coluna.pack_start(linha, False, False, 0)
