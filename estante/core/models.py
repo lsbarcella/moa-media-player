@@ -27,6 +27,8 @@ class Track:
     title: str
     number: int | None = None   # número da faixa no disco, se a tag existir
     artist: str | None = None   # artista da faixa, se a tag existir
+    album: str | None = None    # nome do álbum segundo a tag, se existir
+    album_artist: str | None = None   # artista do álbum segundo a tag, se existir
     mtime: float = 0.0          # data de modificação do arquivo (para o cache)
     size: int = 0               # tamanho do arquivo em bytes (para o cache)
 
