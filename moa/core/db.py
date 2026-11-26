@@ -60,7 +60,23 @@ def _migracao_1(conexao: sqlite3.Connection) -> None:
         )""")
 
 
-MIGRACOES = [_migracao_1]
+def _migracao_2(conexao: sqlite3.Connection) -> None:
+    """Onde o idoso parou e os discos ouvidos há pouco (M2). Aditiva: não toca no M1."""
+    conexao.execute("""
+        CREATE TABLE playback (
+            id          INTEGER PRIMARY KEY CHECK (id = 1),   -- uma linha só
+            album_id    TEXT NOT NULL,
+            track_index INTEGER NOT NULL,
+            seconds     REAL NOT NULL
+        )""")
+    conexao.execute("""
+        CREATE TABLE recent_albums (
+            album_id  TEXT PRIMARY KEY,
+            played_at REAL NOT NULL
+        )""")
+
+
+MIGRACOES = [_migracao_1, _migracao_2]
 
 
 class EsquemaMaisNovoQueOApp(Exception):
@@ -172,6 +188,34 @@ class Database:
     def delete_tracks_except(self, caminhos: Iterable[str]) -> None:
         """Esquece as faixas que não estão mais na pasta de música."""
         self._apagar_exceto("tracks", "path", caminhos)
+
+    # -- onde parou e recentes (M2) -------------------------------------------
+
+    def save_playback(self, album_id: str, indice: int, segundos: float) -> None:
+        with self._transacao():
+            self._conexao.execute(
+                "INSERT OR REPLACE INTO playback VALUES (1, ?, ?, ?)", (album_id, indice, segundos))
+
+    def load_playback(self) -> tuple[str, int, float] | None:
+        linha = self._conexao.execute(
+            "SELECT album_id, track_index, seconds FROM playback WHERE id = 1").fetchone()
+        return (linha[0], linha[1], linha[2]) if linha else None
+
+    def touch_recent(self, album_id: str, limite: int) -> None:
+        """Põe o disco como o mais novo dos recentes e guarda só os `limite` últimos."""
+        with self._transacao():
+            self._conexao.execute(
+                "INSERT OR REPLACE INTO recent_albums VALUES (?, ?)", (album_id, time.time()))
+            self._conexao.execute(
+                "DELETE FROM recent_albums WHERE album_id NOT IN "
+                "(SELECT album_id FROM recent_albums ORDER BY played_at DESC, rowid DESC LIMIT ?)",
+                (limite,))
+
+    def load_recents(self) -> list[str]:
+        """Do mais novo para o mais antigo."""
+        linhas = self._conexao.execute(
+            "SELECT album_id FROM recent_albums ORDER BY played_at DESC, rowid DESC")
+        return [linha[0] for linha in linhas]
 
     # -- cache das capas -----------------------------------------------------
 
