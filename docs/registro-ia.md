@@ -66,3 +66,11 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Pedido:** o autor quis colocar o nome completo e o ano na licença. A IA explicou que o `LICENSE` é o texto oficial da GPL e não deve ser editado; o nome e o ano vão no README e nos cabeçalhos dos arquivos.
 - **Decisões do autor:** titular Leonardo dos Santos Barcella, ano 2026, GPL v3 **ou posterior**.
 - **Feito:** cabeçalho de três linhas em 19 arquivos-fonte, seção de direitos autorais no README, ADR-0009 atualizado e o teste `tests/test_license_headers.py`, que falha se um arquivo novo ficar sem o cabeçalho.
+
+## 26/11/2026 — M2: reprodução (execução autônoma do MVP, `lfg`)
+
+- **Pedido:** montar todo o MVP (M2 a M9) antes dos reviews, seguindo o plano `docs/plans/2026-11-26-0653-feat-moa-mvp-m2-a-m9-plan.md`, em um ramo `mvp`.
+- **Feito:** `core/player.py` (fila do disco, volume em 11 posições com curva cúbica e teto 1.0, ReplayGain, "Voz mais clara" desligada por padrão, erro numa faixa pula para a próxima, fim do disco para), `core/state.py` (onde parou e recentes), `core/config.py` (JSON com gravação atômica) e a migração 2 do banco. ADR-0010.
+- **Verificação:** 183 testes passando. Teste de mutação nas três regras mais delicadas (teto do volume, fim do disco, pulo no erro): os testes falharam como esperado.
+- **Decisões provisórias** (a revisar pelo autor): curva e padrão do volume, ganhos de "Voz mais clara" (−3, +3, +6 dB), fim do disco para.
+- **NÃO testado:** som real, ReplayGain com arquivos reais, qualidade do equalizador.
