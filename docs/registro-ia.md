@@ -83,3 +83,10 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Bug achado pelos testes:** dar "Tocar" num disco pausado não registrava o disco em "Ouvidos há pouco"; corrigido.
 - **Decisões provisórias:** progresso só em texto, fim do disco para, tema claro, X do sistema, abre sempre na Estante com "Continuar a ouvir" (ADR-0011).
 - **NÃO testado:** aparência no monitor real do notebook, X do Cinnamon, HD mecânico, paletas de daltonismo com simulador ou pessoa daltônica.
+
+## 26/11/2026 — M4 (parte 1): dados dos discos montados e da Caixa
+
+- **Feito:** migração 3 do banco, `MixDisc`, `core/custom_albums.py` (criar, adicionar sem duplicar, remover, nome sugerido), `core/box.py` (Caixa, nome e capa com "Como era antes", "Apagar de vez" com regras de segurança), escolhas de capa em `refresh_covers`, `Contexto.recarregar` e o `test_loader.py` que faltava (conexão por thread). ADR-0012.
+- **Verificação:** 275 testes. Mutação em quatro regras de segurança do apagar: três foram pegas de primeira; uma sobreviveu (faixa apontando para fora da pasta) e gerou um teste novo, depois pega.
+- **Tropeço:** uma suíte "quebrada" depois de uma mutação era só o cache de bytecode velho (arquivo de mesmo tamanho na mesma hora); resolvido limpando `__pycache__`; nas mutações seguintes o bytecode foi desligado.
+- **NÃO testado:** apagar em disco de rede, uso real.

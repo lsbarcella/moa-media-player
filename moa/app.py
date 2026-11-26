@@ -53,7 +53,8 @@ class MoaApp(Gtk.Application):
             dados = pasta_de_dados()
             caminho_do_banco = dados / "moa.db"
             banco = Database.open(caminho_do_banco)
-            self.contexto = Contexto(banco, Preferencias(), pasta_de_musica())
+            self.contexto = Contexto(banco, Preferencias(), pasta_de_musica(),
+                                     pasta_miniaturas=dados / "miniaturas")
             window = MainWindow(self.contexto, application=self)
             Carregador(self.contexto, caminho_do_banco, dados / "miniaturas").iniciar()
         window.present()

@@ -11,9 +11,11 @@
 from pathlib import Path
 from typing import Callable
 
+from moa.core import box, custom_albums
 from moa.core.config import Preferencias
+from moa.core.covers import refresh_covers
 from moa.core.db import Database
-from moa.core.models import Album
+from moa.core.models import Album, MixDisc
 from moa.core.player import Player
 from moa.core.radio import Radio
 from moa.core.session import Session
@@ -22,7 +24,7 @@ from moa.core.state import Memoria
 
 class Contexto:
     def __init__(self, banco: Database, preferencias: Preferencias, pasta_musica: Path,
-                 sink_factory=None):
+                 sink_factory=None, pasta_miniaturas: Path | None = None):
         self.banco = banco
         self.preferencias = preferencias
         self.pasta_musica = Path(pasta_musica)
@@ -30,7 +32,12 @@ class Contexto:
         self.memoria = Memoria(banco)
         self.player = Player(sink_factory=sink_factory)
         self.radio = Radio(self.player, self.memoria, preferencias)
-        self.discos: list[Album] = []
+        self.pasta_miniaturas = pasta_miniaturas
+        self._brutos: list[Album] = []              # o que a varredura achou, sem as camadas
+        self.discos: list[Album] = []               # na estante (sem a Caixa, com nomes editados)
+        self.montados: list[MixDisc] = []           # discos montados que estão na estante
+        self.caixa: list = []                       # discos e discos montados na Caixa
+        self.faixas_por_caminho: dict = {}
         self.miniaturas: dict[str, Path | None] = {}
         self.carregando = True              # a primeira varredura ainda não terminou
         self._ouvintes_da_colecao: list[Callable[[], None]] = []
@@ -38,20 +45,46 @@ class Contexto:
     def ao_mudar_a_colecao(self, funcao: Callable[[], None]) -> None:
         self._ouvintes_da_colecao.append(funcao)
 
-    def definir_colecao(self, discos: list[Album], miniaturas: dict[str, Path | None]) -> None:
+    def definir_colecao(self, albuns: list[Album], miniaturas: dict[str, Path | None]) -> None:
         """Chamado quando a varredura termina (sempre na thread principal)."""
-        self.discos = sorted(discos, key=lambda d: d.sort_key)
+        self._brutos = list(albuns)
         self.miniaturas = miniaturas
         self.carregando = False
+        self._recalcular()
+
+    def recarregar(self, capas: bool = False) -> None:
+        """Refaz a estante depois de uma ação do usuário (tirar, editar, montar disco).
+
+        Com `capas=True` também refaz as miniaturas (uma capa foi trocada). Roda na
+        thread principal: são poucos discos, e o resultado tem que aparecer na hora.
+        """
+        if capas and self.pasta_miniaturas is not None:
+            self.miniaturas = refresh_covers(self._brutos, self.banco, self.pasta_miniaturas,
+                                             escolhas=box.escolhas_de_capa(self.banco))
+        self._recalcular()
+
+    def _recalcular(self) -> None:
+        self.faixas_por_caminho = {str(t.path): t for d in self._brutos for t in d.tracks}
+        montados = custom_albums.carregar(self.banco, self.faixas_por_caminho)
+        camadas = box.aplicar_camadas(self._brutos, montados, self.banco)
+        self.discos = sorted(camadas.estante, key=lambda d: d.sort_key)
+        self.montados = sorted(camadas.montados, key=lambda d: d.sort_key)
+        self.caixa = sorted(camadas.caixa, key=lambda d: d.sort_key)
         for funcao in list(self._ouvintes_da_colecao):
             funcao()
 
-    def disco(self, album_id: str | None) -> Album | None:
-        return next((d for d in self.discos if d.id == album_id), None)
+    def disco(self, album_id: str | None):
+        """Acha um disco (da estante, montado ou da Caixa) pelo id."""
+        return next((d for d in self.discos + self.montados + self.caixa if d.id == album_id), None)
+
+    def disco_de_origem(self, faixa) -> Album | None:
+        """O disco de verdade a que a faixa pertence (para "do disco X" nos discos montados)."""
+        pasta = faixa.path.parent
+        return next((a for a in self._brutos if a.folder == pasta), None)
 
     @property
     def ids_dos_discos(self) -> set[str]:
-        return {d.id for d in self.discos}
+        return {d.id for d in self.discos + self.montados}
 
     def encerrar(self) -> None:
         """Ao fechar pelo X: guarda onde parou, solta o som e fecha o banco."""

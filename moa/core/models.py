@@ -72,3 +72,26 @@ class Album:
         quando a tag falta). Coletâneas ficam em "Vários artistas".
         """
         return (natural_key(self.artist or self.title), natural_key(self.title))
+
+
+@dataclass(frozen=True)
+class MixDisc:
+    """Um disco montado pelo usuário: referências a faixas de outros discos (KTD9).
+
+    É VIRTUAL: guarda só os caminhos das faixas, nunca copia arquivos. Tem a mesma
+    "cara" de um `Album` para a estante, o rádio e a busca (id, título, artista,
+    faixas, ordem), mas não tem pasta.
+    """
+
+    id: str
+    title: str
+    tracks: tuple[Track, ...] = ()
+    artist: str | None = None
+
+    @property
+    def sort_key(self):
+        return (natural_key(self.title), natural_key(self.title))
+
+    @property
+    def eh_montado(self) -> bool:
+        return True

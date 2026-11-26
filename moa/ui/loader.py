@@ -19,6 +19,7 @@ from pathlib import Path
 from gi.repository import GLib
 
 from moa.core.contexto import Contexto
+from moa.core import box
 from moa.core.covers import refresh_covers
 from moa.core.db import Database
 from moa.core.library import refresh_library
@@ -31,7 +32,8 @@ def varrer(caminho_do_banco: Path, pasta_musica: Path, pasta_miniaturas: Path):
     banco = Database(caminho_do_banco)
     try:
         discos = refresh_library(pasta_musica, banco)
-        miniaturas = refresh_covers(discos, banco, pasta_miniaturas)
+        miniaturas = refresh_covers(discos, banco, pasta_miniaturas,
+                                    escolhas=box.escolhas_de_capa(banco))
         return discos, miniaturas
     finally:
         banco.close()
@@ -54,7 +56,7 @@ class Carregador:
                                         self._pasta_miniaturas)
         except Exception:                      # nunca derruba o app nem assusta o idoso
             log.exception("a varredura da pasta de música falhou")
-            discos, miniaturas = list(self._contexto.discos), dict(self._contexto.miniaturas)
+            discos, miniaturas = list(self._contexto._brutos), dict(self._contexto.miniaturas)
         GLib.idle_add(self._entregar, discos, miniaturas)
 
     def _entregar(self, discos, miniaturas) -> bool:
