@@ -16,12 +16,15 @@ import os
 import re
 from collections import Counter
 from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 import mutagen
 
 from estante.core.models import VARIOS_ARTISTAS, Album, Track
 from estante.core.textutil import fold
+
+if TYPE_CHECKING:       # só para o editor entender o tipo; evita importação circular
+    from estante.core.db import Database
 
 log = logging.getLogger(__name__)
 
@@ -167,6 +170,34 @@ def _artista_do_album(faixas: tuple[Track, ...]) -> str | None:
 def _montar_disco(pasta: Path, faixas: tuple[Track, ...]) -> Album:
     titulo = _mais_comum([t.album for t in faixas if t.album]) or pasta.name
     return Album(folder=pasta, title=titulo, artist=_artista_do_album(faixas), tracks=faixas)
+
+
+def refresh_library(raiz: Path, db: "Database") -> list[Album]:
+    """Varre a pasta de música relendo só o que mudou desde a última vez.
+
+    Para cada arquivo, compara a data de modificação e o tamanho com o que o
+    banco guardou. Se são iguais, usa a faixa do cache e NÃO abre o arquivo
+    (abrir arquivos é o que custa caro num HD mecânico). Faixas novas ou
+    alteradas são lidas e gravadas; faixas que sumiram são esquecidas.
+
+    O resultado é idêntico ao de `scan`, só mais rápido.
+    """
+    guardadas = db.load_tracks()
+    novas: list[Track] = []
+
+    def ler(caminho: Path) -> Track:
+        estado = caminho.stat()
+        antiga = guardadas.get(str(caminho))
+        if antiga is not None and antiga.mtime == estado.st_mtime and antiga.size == estado.st_size:
+            return antiga
+        faixa = read_track(caminho)
+        novas.append(faixa)
+        return faixa
+
+    discos = scan(raiz, read=ler)
+    db.save_tracks(novas)
+    db.delete_tracks_except(str(t.path) for d in discos for t in d.tracks)
+    return discos
 
 
 def scan(raiz: Path, read: Callable[[Path], Track] = read_track) -> list[Album]:

@@ -25,6 +25,7 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import mutagen
 from mutagen.flac import FLAC, Picture
@@ -32,6 +33,9 @@ from mutagen.mp4 import MP4Tags
 
 from estante.core.models import Album
 from estante.core.textutil import fold
+
+if TYPE_CHECKING:       # só para o editor entender o tipo; evita importação circular
+    from estante.core.db import Database
 
 log = logging.getLogger(__name__)
 
@@ -213,6 +217,73 @@ def make_thumbnail(fonte: CoverSource, pasta_cache: Path, tamanho: int = 256) ->
         log.warning("não consegui gravar a miniatura %s: %s", destino, erro)
         return None
     return destino
+
+
+def _assinatura_do_disco(disco: Album) -> str:
+    """Resumo que muda quando o disco muda, para saber se o cache da capa vale.
+
+    Entram a data da pasta (muda quando um arquivo é criado ou apagado nela,
+    por exemplo um `folder.jpg` novo) e o caminho, a data e o tamanho de cada
+    faixa (muda quando uma música é trocada ou re-etiquetada).
+    """
+    resumo = hashlib.sha1()
+    try:
+        resumo.update(str(os.stat(disco.folder).st_mtime_ns).encode())
+    except OSError:
+        pass
+    for faixa in disco.tracks:
+        resumo.update(f"|{faixa.path}|{faixa.mtime}|{faixa.size}".encode())
+    return resumo.hexdigest()
+
+
+def refresh_covers(discos: list[Album], db: "Database", pasta_cache: Path,
+                   tamanho: int = 256) -> dict[str, Path | None]:
+    """Devolve a miniatura de cada disco (pelo `album.id`), usando o cache.
+
+    Um disco que não mudou desde a última vez NÃO é reaberto: a decisão e a
+    miniatura vêm do banco. Só os discos novos ou alterados passam por
+    `find_cover` e `make_thumbnail`. O valor None significa "sem miniatura":
+    a interface desenha a capa substituta.
+
+    Miniaturas que ninguém mais usa (disco apagado, imagem trocada) são
+    removidas do cache.
+    """
+    pasta_cache = Path(pasta_cache)
+    resultado: dict[str, Path | None] = {}
+
+    for disco in discos:
+        assinatura = _assinatura_do_disco(disco)
+        registro = db.get_cover(disco.id)
+
+        if registro is not None and registro.signature == assinatura:
+            fonte = registro.source
+            miniatura = registro.thumbnail
+            if fonte is not None and miniatura is not None and not miniatura.exists():
+                # Alguém limpou o cache de miniaturas: refaz sem procurar a fonte de novo.
+                miniatura = make_thumbnail(fonte, pasta_cache, tamanho)
+                db.save_cover(disco.id, assinatura, fonte, miniatura)
+        else:
+            fonte = find_cover(disco)
+            miniatura = make_thumbnail(fonte, pasta_cache, tamanho) if fonte else None
+            db.save_cover(disco.id, assinatura, fonte, miniatura)
+        resultado[disco.id] = miniatura
+
+    db.delete_covers_except(d.id for d in discos)
+    _limpar_miniaturas_orfas(pasta_cache, {m for m in resultado.values() if m is not None})
+    return resultado
+
+
+def _limpar_miniaturas_orfas(pasta_cache: Path, em_uso: set[Path]) -> None:
+    """Apaga do cache as miniaturas (e temporários) que nenhum disco usa."""
+    pasta = pasta_cache / "miniaturas"
+    if not pasta.is_dir():
+        return
+    for arquivo in pasta.iterdir():
+        if arquivo.suffix in (".png", ".tmp") and arquivo not in em_uso:
+            try:
+                arquivo.unlink()
+            except OSError as erro:
+                log.warning("não consegui apagar a miniatura velha %s: %s", arquivo, erro)
 
 
 # ---------------------------------------------------------------------------
