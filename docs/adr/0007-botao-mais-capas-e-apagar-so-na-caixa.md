@@ -6,7 +6,7 @@
 
 ## Contexto
 
-Duas decisões de interação ficaram abertas depois da ideação de interface (`docs/ideation/`): como o botão "+" de cada música pergunta o destino, e se a opção de apagar um disco de vez existe e onde. As duas foram comparadas em um preview interativo (`docs/preview/estante-preview.html`).
+Duas decisões de interação ficaram abertas depois da ideação de interface (`docs/ideation/`): como o botão "+" de cada música pergunta o destino, e se a opção de apagar um disco de vez existe e onde. As duas foram comparadas em um preview interativo (`docs/preview/moa-preview.html`).
 
 ## Alternativas
 

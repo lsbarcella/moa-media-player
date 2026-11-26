@@ -6,7 +6,9 @@ Este arquivo dá ao Claude Code o contexto do projeto. Leia-o inteiro antes de q
 
 Um reprodutor de música **offline por padrão**, **leve** e **autônomo para idosos**, que roda no **Linux Mint (Cinnamon)** em notebooks antigos. A interface reaproveita **imagens mentais que o idoso já tem do mundo real**: uma **estante de CDs** e **aparelhos de som antigos**. O usuário pega um disco da estante, coloca no aparelho e ele toca inteiro.
 
-Nome de trabalho: **Estante**. O nome definitivo ainda não foi escolhido. Use `estante` como nome do pacote Python e `br.tcc.Estante` como application ID até o autor decidir.
+Nome do aplicativo: **Moa Media Player** (decidido pelo autor). É uma homenagem ao pai do autor, Moacir; a "moa" é uma ave extinta da Nova Zelândia, e o ícone será uma moa com fones de ouvido. O nome pesquisado não conflita com nenhum aplicativo conhecido (busca limitada; marca não consultada).
+
+Use **`moa`** como nome do pacote Python e **`br.tcc.Moa`** como application ID. **Não ponha "music" nem "player" nos nomes do código**, porque o app deve poder crescer para vídeos e fotos. A **tela inicial continua se chamando "Estante"**: o nome do app e o nome da tela são coisas diferentes.
 
 ## 2. Princípio central: autonomia por meio de modelos mentais
 
@@ -80,15 +82,15 @@ Mapa de metáforas (ponto de partida, a refinar com o autor; ver ADR-0002):
 A lógica fica separada da interface. **O núcleo (`core/`) não importa GTK**, para poder ser testado sem tela.
 
 ```
-estante/
+moa/
 ├── CLAUDE.md
 ├── README.md
 ├── docs/
 │   ├── adr/                # Registros de decisão
 │   ├── registro-ia.md      # Diário das sessões com IA
 │   └── testes-usabilidade.md
-├── estante/
-│   ├── __main__.py         # Ponto de entrada: python3 -m estante
+├── moa/
+│   ├── __main__.py         # Ponto de entrada: python3 -m moa
 │   ├── app.py              # Gtk.Application (garante instância única)
 │   ├── core/
 │   │   ├── library.py      # Varre pastas e monta álbuns e faixas (com fallbacks)
@@ -115,9 +117,9 @@ estante/
 └── packaging/              # .desktop, ícone, autostart, scripts do .deb
 ```
 
-Use `GLib.get_user_data_dir()` (para estado e cache) e `GLib.get_user_config_dir()` (para preferências), sempre numa subpasta `estante/`. A pasta de música padrão é a do sistema, `GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_MUSIC)`, que no Mint em português é `~/Música`. O app a detecta sozinho.
+Use `GLib.get_user_data_dir()` (para estado e cache) e `GLib.get_user_config_dir()` (para preferências), sempre numa subpasta `moa/`. A pasta de música padrão é a do sistema, `GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_MUSIC)`, que no Mint em português é `~/Música`. O app a detecta sozinho.
 
-**Regra para dados de origem externa (MusicBrainz e discos montados):** nunca reescreva os arquivos de música do usuário. Guarde as informações novas em uma camada separada, no cache do app, que se sobrepõe às tags (decisão recomendada, aguardando confirmação do autor; ver seção 11).
+**Regra para dados de origem externa (MusicBrainz e discos montados):** nunca reescreva os arquivos de música do usuário. Guarde as informações novas em uma camada separada, no cache do app, que se sobrepõe às tags (aceito pelo autor por enquanto; ver seção 11).
 
 ## 8. Regras de montagem da estante
 
@@ -216,6 +218,8 @@ O `tools/measure.sh` deve medir esses números de forma repetível, por exemplo 
 - O app abre como **janela de programa normal** (não tela cheia).
 - MusicBrainz é opcional e oportunista; o app funciona 100% offline.
 - Este escopo vale para o MVP.
+- **Nome: Moa Media Player.** O autor escolheu o nome completo, sabendo que "Media Player" é genérico e em inglês. Pacote `moa`, ID `br.tcc.Moa`.
+- **Expansão futura:** depois do MVP, o autor pretende expandir para vídeos e fotos. Vídeo num notebook antigo é bem mais pesado que áudio e exigirá medição e um ADR antes de qualquer promessa.
 - **Audição:** o rádio terá um botão **"Voz mais clara"** (liga/desliga, estado em texto), que reforça agudos e voz. É a opção B1 do ADR-0004; pode evoluir para um controle "Tom" (B2) se o teste mostrar que não basta.
 - **Perfil do usuário definido só por literatura** (ADR-0005). A IA havia recomendado questionário seguido de observação; o autor escolheu só a literatura.
 - **Dispositivo apontador: mouse** (o usuário usa mouse, não touchpad).
@@ -236,7 +240,6 @@ O `tools/measure.sh` deve medir esses números de forma repetível, por exemplo 
 
 **Em aberto:**
 - Valores do ajuste "Voz mais clara" (o estado padrão é desativado); precisam ser testados com ele ouvindo.
-- Nome definitivo do app.
 - **Desenho visual dos botões, dos ícones e das telas** (inclusive da manutenção da coleção: adicionar, renomear, trocar capa, remover). Será explorado com `ce-ideate`, seguido de um preview em HTML.
 - Confirmação ao fechar pelo X (por padrão, não há).
 - Se os usuários acham o botão "Configurações" no teste (a literatura recomenda o controle de letra visível), e se as paletas de daltonismo funcionam para uma pessoa daltônica real.
@@ -269,7 +272,7 @@ sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-gstreamer-1.0 \
   gstreamer1.0-plugins-base gstreamer1.0-plugins-good python3-mutagen python3-pytest
 
 # Executar
-python3 -m estante
+python3 -m moa
 
 # Testes
 python3 -m pytest

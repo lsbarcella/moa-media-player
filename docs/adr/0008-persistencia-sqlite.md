@@ -23,8 +23,8 @@ Duas coisas mudaram a análise:
 
 ## Decisão
 
-- Um arquivo SQLite em `GLib.get_user_data_dir()/estante/` guarda: o cache da biblioteca (com data de modificação por arquivo, para reprocessar só o que mudou), os discos montados, a lista da Caixa, os recentes e onde parou.
-- As configurações do usuário (tamanho da letra, cores, "Voz mais clara") ficam em **JSON** em `GLib.get_user_config_dir()/estante/`, legíveis e simples.
+- Um arquivo SQLite em `GLib.get_user_data_dir()/moa/` guarda: o cache da biblioteca (com data de modificação por arquivo, para reprocessar só o que mudou), os discos montados, a lista da Caixa, os recentes e onde parou.
+- As configurações do usuário (tamanho da letra, cores, "Voz mais clara") ficam em **JSON** em `GLib.get_user_config_dir()/moa/`, legíveis e simples.
 - O módulo `core/db.py` isola o SQL. O núcleo continua sem importar GTK.
 - O banco deve ter **versão de esquema** para permitir migração, e o app deve se recuperar sem alarme de um banco ausente ou corrompido: o cache da biblioteca se refaz varrendo as pastas; discos montados e Caixa são perdidos só em caso de arquivo corrompido, então vale uma cópia de segurança simples.
 
