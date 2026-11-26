@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview interativo: Estante</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#FAF5E9; --ink:#1E1913; --ink2:#4A4036; --card:#FFFFFF; --line:#CDBFA6;
+  --wood:#4A2A12; --wood2:#7A4A21; --green:#1F4D2B; --amber:#FFD27A; --blue:#14407A;
+  --warn:#FFF1B8; --visor:#FFE9A8; --lampon:#B7E4A8; --focus:#0B3D91; --danger:#7A1F1F; --selbg:#EAF5E4; --warnb:#B58B00;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#E9E2D3;color:#1E1913;font:16px/1.5 "Segoe UI",system-ui,-apple-system,"Noto Sans",sans-serif}
+.author{max-width:1180px;margin:0 auto;padding:16px 16px 8px}
+.author h1{font-size:1.35rem;margin:0 0 4px}
+.author p{margin:.2rem 0;max-width:90ch;color:#3A3128}
+.variants{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px;margin:12px 0}
+fieldset{border:1px solid #B9AD96;border-radius:8px;background:#FFFCF3;padding:8px 10px;margin:0}
+legend{font-weight:700;font-size:.9rem;padding:0 4px}
+fieldset label{display:block;padding:3px 0;cursor:pointer;font-size:.92rem}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}
+.toolbar button{font:inherit;padding:6px 12px;border:1px solid #6B5E4A;border-radius:6px;background:#fff;cursor:pointer}
+#authornote{background:#FFF1B8;border-radius:6px;padding:4px 10px;display:none}
+.stage{max-width:1180px;margin:0 auto;padding:0 16px 40px;display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.notes{background:#FFFCF3;border:1px solid #B9AD96;border-radius:8px;padding:10px 14px;font-size:.92rem}
+.notes h2{font-size:1rem;margin:0 0 4px}
+.notes ul{margin:.3rem 0 0;padding-left:1.2rem}
+
+/* ====== a janela do app ====== */
+#win{--s:1;font-size:calc(20px*var(--s));line-height:1.35;background:var(--bg);color:var(--ink);border:3px solid #2B2118;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;height:780px;position:relative}
+.titlebar{background:#2B2118;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:6px 10px;font-size:16px}
+.titlebar .wc{display:flex;gap:6px}
+.titlebar .wc button{font:inherit;color:#fff;background:#4A3B2C;border:1px solid #6B5A45;border-radius:4px;min-width:34px;height:28px;cursor:pointer}
+.titlebar .wc button.x{background:#7A1F1F}
+#apphead{display:grid;grid-template-columns:minmax(0,auto) 1fr minmax(0,auto);align-items:center;gap:16px;padding:10px 20px;background:#fff;border-bottom:3px solid var(--wood2)}
+#apphead h1{font-size:calc(30px*var(--s));margin:0;text-align:center}
+.hl,.hr{display:flex;align-items:center;gap:8px;min-width:0}
+.hr{justify-content:flex-end;font-size:.85em}
+#main{flex:1;overflow:auto;padding:18px 24px}
+#mini{display:none;align-items:center;gap:14px;background:var(--wood);color:#fff;padding:8px 20px}
+#mini.on{display:flex}
+#mini .mt{flex:1;min-width:0}
+#overlay .overlay{position:absolute;left:0;right:0;top:0;bottom:0;background:rgba(30,25,19,.6);display:flex;align-items:center;justify-content:center;padding:20px;z-index:5}
+.panel{background:#fff;border:4px solid var(--ink);border-radius:16px;padding:20px;max-width:640px;width:100%;max-height:100%;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.panel h2{margin:0;font-size:1.05em}
+
+.btn{min-height:64px;min-width:64px;padding:10px 20px;font:inherit;font-weight:700;border:3px solid var(--ink);border-radius:14px;background:#fff;color:var(--ink);cursor:pointer;text-align:center}
+.btn.pri{background:var(--green);border-color:var(--green);color:#fff}
+.btn.big{min-height:76px;font-size:1.05em;padding:12px 26px}
+.btn.wide{width:100%}
+.btn.sm{padding:8px 14px;min-height:64px}
+.btn[aria-disabled="true"]{background:#E4DCCB;color:#4A4036;border-style:dashed}
+.btn:focus-visible,.tile:focus-visible,.tmain:focus-visible,.trowcheck:focus-visible,input:focus-visible{outline:5px solid var(--focus);outline-offset:3px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:14px 18px}
+.lead{max-width:60ch}
+.msg{background:var(--warn);border:3px solid var(--warnb);border-radius:14px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.msg small{width:100%}
+.actions{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:18px}
+.continue{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;border-color:var(--green);border-width:3px}
+.continue p{margin:0}
+
+/* estante */
+.shelf{margin-bottom:26px}
+.plaque{display:inline-block;background:var(--wood);color:#fff;border-radius:8px;padding:4px 16px;font-size:1em;margin:0 0 12px}
+.row{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:20px 18px;padding-bottom:14px;border-bottom:16px solid var(--wood2)}
+.tile{display:flex;flex-direction:column;align-items:center;gap:8px;background:none;border:3px solid transparent;border-radius:12px;padding:6px;font:inherit;color:inherit;cursor:pointer;min-height:64px}
+.tile .cap{font-weight:700;text-align:center;line-height:1.2}
+.cover{width:150px;height:150px;border-radius:6px;box-shadow:0 3px 0 rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;font-weight:800;font-size:.95em;line-height:1.15;padding:8px;position:relative;overflow:hidden}
+.cover.small{width:84px;height:84px;font-size:.55em;flex:none}
+.cover.mid{width:200px;height:200px}
+.cover.hero{width:210px;height:210px;flex:none}
+.mosaic{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;padding:0;align-items:stretch;justify-items:stretch;align-content:stretch;justify-content:stretch}
+.mosaic i{display:block;width:100%;height:100%;min-height:0}
+.mixtag{position:absolute;left:0;right:0;bottom:0;background:#1E1913;color:#fff;font-size:.7em;padding:2px 4px}
+.cover.small .mixtag{display:none}
+.slot{width:150px;height:150px;border:4px dashed var(--ink2);border-radius:6px;background:#2B2118;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700;padding:8px}
+.tile.dashed .newcover{background:#fff;color:var(--ink);border:4px dashed var(--ink);box-shadow:none;font-size:3em}
+.tiles{display:flex;flex-wrap:wrap;gap:12px}
+
+/* radio */
+.radio-wrap{display:grid;grid-template-columns:minmax(380px,470px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.radio-wrap{grid-template-columns:1fr}}
+.radio{background:var(--wood);border:4px solid #2B2118;border-radius:22px;padding:18px;color:#fff;display:flex;flex-direction:column;gap:14px}
+.radio .stat{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.04em}
+.lamp{width:22px;height:22px;border-radius:50%;background:#2B2118;border:3px solid #fff;flex:none}
+.lamp.on{background:var(--lampon);box-shadow:0 0 10px var(--lampon)}
+.visor{background:var(--visor);color:var(--ink);border:5px solid #2B2118;border-radius:14px;padding:12px;display:flex;gap:14px;align-items:flex-start}
+.visor .vt{min-width:0}
+.visor .line{font-weight:800;margin:0 0 6px;font-size:.95em}
+.visor .note{margin:6px 0 0;font-weight:700;background:#fff;border-radius:6px;padding:2px 8px;font-size:.9em}
+.visor h2{margin:0 0 4px;font-size:1.25em;line-height:1.2}
+.visor p{margin:2px 0}
+.ctrl{display:grid;grid-template-columns:1fr 1.5fr 1fr;gap:10px}
+.ctrl .btn{background:#F6E9D2;border-color:#2B2118;min-height:78px}
+.ctrl .play{background:var(--green);color:#fff;border-radius:40px;min-height:92px;font-size:1.1em}
+.ctrl .pause{background:var(--amber);color:var(--ink);border-radius:12px;min-height:92px;font-size:1.1em}
+.vol{background:#2B2118;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.vol .vrow{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:8px;align-items:center}
+.vol .btn{background:#F6E9D2;font-size:.85em;padding:6px 8px}
+.lamps{display:flex;gap:4px;justify-content:center}
+.lamps i{width:14px;height:34px;border-radius:4px;background:#4A3B2C;border:2px solid #fff}
+.lamps i.on{background:var(--lampon);box-shadow:0 0 6px var(--lampon)}
+.vol .vtext{text-align:center;font-weight:800;margin:0}
+.clara{display:flex;align-items:center;justify-content:center;gap:10px;background:#F6E9D2}
+.clara[aria-pressed="true"]{background:var(--lampon)}
+.hint{font-size:.7em;color:#EADBC0;margin:0}
+.rside h2{margin:0 0 8px;font-size:1.05em}
+ul.tracks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.trow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch;background:#fff;border:2px solid var(--line);border-radius:12px;padding:6px}
+.trow.now{border-color:var(--green);border-width:4px;background:var(--selbg)}
+.tmain{display:flex;align-items:center;gap:12px;background:none;border:none;font:inherit;color:inherit;text-align:left;cursor:pointer;min-height:64px;padding:4px 8px;border-radius:8px}
+.tnum{font-weight:800;min-width:1.6em}
+.ttitle{display:flex;flex-direction:column;min-width:0}
+.ttitle small{font-size:.75em;color:var(--ink2);font-weight:600}
+.trow .plus{font-size:.8em;padding:6px 12px;max-width:190px}
+.badge{grid-column:1/-1;background:var(--warn);border:3px solid var(--warnb);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:.9em}
+.edit-entry{margin-top:14px}
+
+/* playlist */
+.pl-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,380px);gap:22px;align-items:start}
+@media (max-width:900px){.pl-wrap{grid-template-columns:1fr}}
+label.lbl{display:block;font-weight:800;margin-bottom:6px}
+input[type=text]{font:inherit;width:100%;min-height:64px;padding:8px 14px;border:3px solid var(--ink);border-radius:12px;background:#fff;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.chip{min-height:64px;padding:8px 16px;font:inherit;font-weight:700;border:3px solid var(--ink);border-radius:32px;background:#fff;color:var(--ink);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+.chip:focus-visible{outline:5px solid var(--focus);outline-offset:3px}
+.trowcheck{display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:6px 12px;background:#fff;border:2px solid var(--line);border-radius:12px;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.trowcheck.sel{background:var(--selbg);border:4px solid var(--green)}
+.box{width:40px;height:40px;border:4px solid var(--ink);border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;flex:none}
+.trowcheck.sel .box{background:var(--green);color:#fff;border-color:var(--green)}
+.trowcheck small{display:block;font-size:.75em;color:var(--ink2);font-weight:600}
+.trowcheck .st{margin-left:auto;font-weight:800;font-size:.8em}
+.newdisc{position:sticky;top:0;display:flex;flex-direction:column;gap:12px}
+.newdisc ol{margin:0;padding-left:1.4rem;font-size:.85em;max-height:150px;overflow:auto}
+.newdisc .nm{font-size:1.2em;font-weight:800;word-break:break-word}
+
+/* caixa e edicao */
+.boxrow{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.boxrow .boxname{font-weight:800;flex:1;min-width:140px}
+.warnbox{background:#FFF1B8;border:4px solid var(--danger);border-radius:14px;padding:14px 18px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px}
+.edit-wrap{display:grid;grid-template-columns:minmax(220px,260px) minmax(0,1fr);gap:26px;align-items:start}
+@media (max-width:900px){.edit-wrap{grid-template-columns:1fr}}
+.gallery{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 16px}
+.gopt{display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;border:3px solid var(--line);border-radius:12px;padding:8px;font:inherit;color:inherit;cursor:pointer;min-height:64px;width:150px}
+.gopt[aria-pressed="true"]{border:5px solid var(--green);background:var(--selbg)}
+.gopt:focus-visible{outline:5px solid var(--focus);outline-offset:3px}
+.gopt .cover{width:96px;height:96px;font-size:.5em}
+.sep{border-top:3px solid var(--line);margin:18px 0;padding-top:14px}
+.btnrow{display:flex;flex-wrap:wrap;gap:12px}
+.small-note{font-size:.8em;color:var(--ink2)}
+/* regra do projeto: texto com no mínimo 20 px (na escala normal). Só capas e miniaturas decorativas ficam menores. */
+#win .vol .btn,#win .trow .plus,#win .ttitle small,#win .visor .line,#win .visor .note,#win .hint,#win .small-note,#win .hr,#win .badge,#win .trowcheck small,#win .trowcheck .st,#win .newdisc ol,#win .mixtag,#win .cover:not(.small),#win .gopt{font-size:1em}
+#win .trow .plus{max-width:230px}
+#win .hint{color:#F3E6CC}
+.cover.vcover{width:150px;height:150px;flex:none}
+
+/* paletas de daltonismo (primeira versão; contraste de 7:1 conferido por cálculo, sem simulador) */
+#win[data-cores="rv"]{--green:#14407A;--lampon:#A8D4FF;--selbg:#E3EEFA}
+#win[data-cores="ay"]{--green:#8A1538;--amber:#FFC2B0;--lampon:#FFD0DC;--selbg:#F9E3EA;--warn:#FFE3D6;--warnb:#8A1538}
+#win[data-cores="bw"]{--bg:#FFFFFF;--green:#000000;--amber:#FFFFFF;--lampon:#FFFFFF;--selbg:#FFFFFF;--warn:#FFFFFF;--warnb:#000000;--visor:#FFFFFF;--wood:#000000;--wood2:#000000;--line:#000000;--blue:#000000}
+
+/* letra maior: as colunas se empilham para os rótulos caberem */
+.ctrl .btn{padding:8px 6px}
+#win.big .radio-wrap,#win.big .pl-wrap,#win.big .edit-wrap{grid-template-columns:1fr}
+
+/* tela de configurações */
+.set-wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:22px;align-items:start}
+.set-wrap h2{margin:0 0 8px;font-size:1.1em}
+.optlist{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:8px 16px;font:inherit;font-weight:700;color:var(--ink);background:#fff;border:3px solid var(--ink);border-radius:14px;cursor:pointer;text-align:left}
+.opt[aria-pressed="true"]{border:5px solid var(--green);background:var(--selbg)}
+.opt:focus-visible{outline:5px solid var(--focus);outline-offset:3px}
+.opt .ck{min-width:1.2em;font-weight:900}
+.sw{display:inline-block;width:26px;height:26px;border:2px solid #1E1913;border-radius:6px;flex:none}
+.swrow{margin-left:auto;display:flex;gap:6px}
+.sample{margin:14px 0 0;padding:10px 14px;background:#fff;border:2px solid var(--line);border-radius:10px;font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="author">
+  <h1>Preview interativo do Estante (maquete)</h1>
+  <p>Maquete para você avaliar o <strong>desenho</strong>. Não toca som e não é o código final. Tudo vale a regra de um clique, alvos de 64 px ou mais, letra base de 20 px, contraste de 7:1 ou mais (conferido) e tema claro. Use os controles abaixo para comparar as variantes que ainda estão em aberto.</p>
+  <p><strong>Já decidido:</strong> o “+” mostra as capas dos discos; “Apagar de vez” só existe dentro da Caixa; tamanho da letra e cores para daltonismo ficam em “Configurações”. <strong>Ainda em aberto</strong> (a primeira opção de cada grupo é o padrão):</p>
+  <p><strong>Atenção:</strong> a barra de título escura (–, □, ✕) <em>não é desenho nosso</em>: é a do sistema, e o X dela é pequeno (bem abaixo de 64 px; tamanho exato a confirmar no Cinnamon). Isso é uma decisão a tomar: aceitar o X do sistema ou desenhar um cabeçalho próprio com um X grande.</p>
+  <div class="variants" id="variants"></div>
+  <div class="toolbar">
+    <button type="button" id="reset">Recomeçar o preview</button>
+    <span id="authornote" role="status"></span>
+  </div>
+</div>
+
+<div class="stage">
+  <div id="win" aria-label="Janela do aplicativo Estante">
+    <div class="titlebar"><span>Estante</span><span class="wc"><button type="button" title="Minimizar">–</button><button type="button" title="Maximizar">□</button><button type="button" class="x" id="xbtn" title="Fechar">✕</button></span></div>
+    <header id="apphead"></header>
+    <div id="main"></div>
+    <div id="mini"></div>
+    <div id="overlay"></div>
+  </div>
+  <section class="notes" id="notes" aria-live="polite"></section>
+</div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- dados de exemplo (inventados) ---------- */
+const TITLES = ["Saudade de Domingo","Valsa da Chuva","Meu Violão","Estrela do Mar","Cartas de Amor","Noite de Seresta","Flor de Laranjeira","O Último Bolero","Samba da Esquina","Ponteio","Lua Cheia","Retrato Antigo","Rua das Acácias","Dança da Colheita","Canção para Dona Maria","Sonho de Verão","Coração de Viola","Aquela Tarde","Mesa Posta","Festa no Terreiro","Baile de Sábado","Luz de Vela","Caminho de Casa","Bem-te-vi","Roda Gigante","Primeira Chuva","Velho Chafariz","Sol de Maio","Ladeira Abaixo","Tango Azul","Estação Distante","Tempo de Criança","Carta ao Vento","Doce Lembrança","Porto Seguro","Canto da Manhã","Café com Prosa","Vento Sul","Janela Aberta","Fim de Tarde"];
+const BASE = [
+  ['domingo','Sucessos de Domingo','#8A2D12',0],['serestas','Serestas','#1F4D6B',1],['boleros','Boleros','#6B1F4D',0],
+  ['samba','Clássicos do Samba','#1F5A2E',1],['violao','Violão e Voz','#5A3A12',0],['junina','Festa Junina','#7A3B00',0],
+  ['valsas','Valsas','#3B2D6B',1],['viola','Moda de Viola','#4A5A12',0],['jovem','Jovem Guarda','#12486B',0],
+  ['orquestra','Orquestra Popular','#6B2D2D',1],['tangos','Tangos','#2D3B3B',0],['natal','Natal em Família','#7A1F2E',1]
+];
+function mkDiscs(){
+  const d = BASE.map((b,k) => ({id:b[0],name:b[1],color:b[2],cover:b[3]?'arquivo':'desenhada',mix:false,
+    tracks:Array.from({length:8},(_,j)=>({t:TITLES[(k*3+j)%TITLES.length],from:b[1],fromId:b[0]}))}));
+  const bol = d.find(x=>x.id==='boleros'), val = d.find(x=>x.id==='valsas');
+  d.push({id:'mix1',name:'Domingo',color:'#1F5A2E',cover:'desenhada',mix:true,tracks:[bol.tracks[0],val.tracks[1]]});
+  return d;
+}
+const TODAY = '26/11';
+
+const DEFAULT_VARIANTS = {visor:'estado', plus:'capas', conf:'permanente', apagar:'caixa', memoria:'sim'};
+let V = Object.assign({}, DEFAULT_VARIANTS);
+let S;
+let timer = null;
+function fresh(){
+  return {screen:'shelf', prev:'shelf', cores:'normal', scale:1, discs:mkDiscs(), box:['junina','tangos'], recent:['boleros','valsas','serestas','domingo'],
+    last:{id:'boleros',track:2}, current:null, playing:false, volume:6, clara:false, note:'', msg:null, plusResult:null,
+    plus:{open:false,track:0,step:'menu'}, draft:null, edit:null, boxDel:null, mixCount:0};
+}
+S = fresh();
+
+const disc = id => S.discs.find(d => d.id === id);
+const inBox = id => S.box.includes(id);
+const inUse = id => V.memoria==='sim' && S.current && S.current.id===id;
+
+/* ---------- capas ---------- */
+function bgFor(d){
+  const c = d.color;
+  if (d.cover==='arquivo') return `radial-gradient(circle at 30% 30%, rgba(255,255,255,.45) 0 18%, transparent 19%), radial-gradient(circle at 72% 70%, rgba(0,0,0,.35) 0 26%, transparent 27%), ${c}`;
+  if (d.cover==='pasta') return `repeating-linear-gradient(135deg, ${c} 0 16px, rgba(255,255,255,.3) 16px 32px)`;
+  return c;
+}
+function coverHTML(d, cls){
+  cls = cls || '';
+  if (d.mix){
+    const srcs = []; d.tracks.forEach(t => { const s = S.discs.find(x=>x.id===t.fromId); if (s && !srcs.includes(s)) srcs.push(s); });
+    const cells = [0,1,2,3].map(i => `<i style="background:${(srcs[i%Math.max(srcs.length,1)]||{color:'#444'}).color}"></i>`).join('');
+    return `<span class="cover mosaic ${cls}" aria-hidden="true">${cells}<span class="mixtag">Montado</span></span>`;
+  }
+  const label = d.cover==='desenhada' ? esc(d.name) : '';
+  return `<span class="cover ${cls}" style="background:${bgFor(d)}" aria-hidden="true">${label}</span>`;
+}
+
+/* ---------- mensagens (ficam até a próxima ação) ---------- */
+function armTimer(){
+  clearTimeout(timer);
+  if (V.conf==='temporario' && (S.msg || S.plusResult)){
+    timer = setTimeout(()=>{ S.msg=null; S.plusResult=null; render(); }, 10000);
+  }
+}
+function setMsg(text, undo){ S.msg = {text, undo:undo||null}; armTimer(); }
+const msgHTML = () => S.msg ? `<div class="msg" role="status"><span>${S.msg.text}</span>${S.msg.undo?`<button class="btn" data-act="undo-msg">Desfazer</button>`:''}${V.conf==='temporario'?'<small>(este aviso some em 10 segundos)</small>':''}</div>` : '';
+
+/* ---------- telas ---------- */
+function tile(d){
+  if (inUse(d.id)) return `<button class="tile" data-act="go-radio"><span class="slot">Em uso no rádio</span><span class="cap">Ir ao rádio</span></button>`;
+  return `<button class="tile" data-act="open-disc" data-id="${d.id}">${coverHTML(d)}<span class="cap">${esc(d.name)}</span></button>`;
+}
+function shelfSection(title, list){
+  if (!list.length) return '';
+  return `<section class="shelf"><h2 class="plaque">${title}</h2><div class="row">${list.map(tile).join('')}</div></section>`;
+}
+function shelfScreen(){
+  const mem = V.memoria==='sim';
+  let h = msgHTML();
+  h += `<div class="actions"><button class="btn pri big" data-act="new-mix">＋ Criar uma playlist</button><button class="btn big" data-act="go-box">A Caixa (${S.box.length} ${S.box.length===1?'disco':'discos'})</button></div>`;
+  if (mem && S.last && !S.current){
+    h += `<div class="continue card"><p>Você parou em <strong>${esc(disc(S.last.id).name)}</strong>, faixa ${S.last.track+1}.</p><button class="btn pri big" data-act="continue">▶ Continuar a ouvir</button></div>`;
+  }
+  const albums = S.discs.filter(d=>!d.mix && !inBox(d.id)).sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  if (mem) h += shelfSection('Ouvidos há pouco', S.recent.map(disc).filter(d=>d && !inBox(d.id)).slice(0,5));
+  h += shelfSection('Meus discos', albums);
+  h += shelfSection('Discos que montei', S.discs.filter(d=>d.mix && !inBox(d.id)));
+  return h;
+}
+
+function plusBadge(){
+  const r = S.plusResult; const m = disc(r.mixId);
+  if (r.dup) return `<div class="badge" role="status"><span>Esta música já está no disco “${esc(m.name)}”.</span></div>`;
+  const t = r.created ? `Criei o disco “${esc(m.name)}” com esta música.` : `Está no disco “${esc(m.name)}”.`;
+  return `<div class="badge" role="status"><span>${t}</span><button class="btn sm" data-act="undo-plus">Desfazer</button>${V.conf==='temporario'?'<small>(some em 10 s)</small>':''}</div>`;
+}
+function radioScreen(){
+  const d = disc(S.current.id), i = S.current.track, n = d.tracks.length, tr = d.tracks[i];
+  const state = V.visor==='estado'
+    ? (S.playing ? `TOCANDO: Faixa ${i+1} de ${n}` : 'PAUSADO. Aperte Tocar para continuar')
+    : (S.playing ? 'Tocando. Toque em Pausar para parar.' : 'Parado. Toque em Tocar para ouvir.');
+  const lamps = Array.from({length:10},(_,k)=>`<i class="${k<S.volume?'on':''}"></i>`).join('');
+  const volDown = S.volume<=0 ? `<button class="btn" data-act="vol" data-d="-1" aria-disabled="true">No mínimo</button>` : `<button class="btn" data-act="vol" data-d="-1">− Mais baixo</button>`;
+  const volUp = S.volume>=10 ? `<button class="btn" data-act="vol" data-d="1" aria-disabled="true">No máximo</button>` : `<button class="btn" data-act="vol" data-d="1">Mais alto +</button>`;
+  const rows = d.tracks.map((t,k)=>{
+    const r = S.plusResult && S.plusResult.discId===d.id && S.plusResult.track===k;
+    const tag = k===i ? `<small>${S.playing?'Tocando agora':'Parado aqui'}</small>` : '';
+    const from = d.mix ? `<small>do disco ${esc(t.from)}</small>` : '';
+    return `<li class="trow ${k===i?'now':''}"><button class="tmain" data-act="play-track" data-i="${k}"><span class="tnum">${k+1}</span><span class="ttitle">${esc(t.t)}${from}${tag}</span></button><button class="btn plus" data-act="plus-open" data-i="${k}">＋ Colocar em outro disco</button>${r?plusBadge():''}</li>`;
+  }).join('');
+  return `${msgHTML()}<div class="radio-wrap">
+    <section class="radio" aria-label="Rádio">
+      <div class="stat"><span class="lamp ${S.playing?'on':''}"></span><span>${S.playing?'TOCANDO':'PAUSADO'}</span></div>
+      <div class="visor">${coverHTML(d,'vcover')}<div class="vt">
+        <p class="line" id="visorline">${state}</p>
+        <h2>${esc(tr.t)}</h2><p>Disco: ${esc(d.name)}</p><p>Faixa ${i+1} de ${n}</p>
+        ${S.note?`<p class="note" role="status">${esc(S.note)}</p>`:''}
+      </div></div>
+      <div class="ctrl">
+        <button class="btn" data-act="prev">⏮ Anterior</button>
+        ${S.playing?`<button class="btn pause" data-act="toggle">❚❚ Pausar</button>`:`<button class="btn play" data-act="toggle">▶ Tocar</button>`}
+        <button class="btn" data-act="next">Próxima ⏭</button>
+      </div>
+      <div class="vol"><div class="vrow">${volDown}<div class="lamps" aria-hidden="true">${lamps}</div>${volUp}</div><p class="vtext">Volume: ${S.volume} de 10</p></div>
+      <button class="btn clara" data-act="clara" aria-pressed="${S.clara}"><span class="lamp ${S.clara?'on':''}"></span>Voz mais clara: ${S.clara?'ligada':'desligada'}</button>
+      <p class="hint">No preview o som não muda. Padrão: desativada.</p>
+      <button class="btn" data-act="store">Guardar o disco na estante e parar</button>
+    </section>
+    <section class="rside"><h2>Músicas deste disco</h2><ul class="tracks">${rows}</ul>
+      <div class="edit-entry"><button class="btn" data-act="edit-open">Mexer neste disco</button></div></section>
+  </div>`;
+}
+
+function allTracks(){
+  const out = [];
+  S.discs.filter(d=>!d.mix && !inBox(d.id)).forEach(d => d.tracks.forEach((t,i)=>out.push({key:d.id+':'+i,t:t.t,from:d.name,fromId:d.id,idx:i})));
+  return out;
+}
+function playlistScreen(){
+  const chips = [['todos','Todos os discos']].concat(S.discs.filter(d=>!d.mix && !inBox(d.id)).slice(0,6).map(d=>[d.id,d.name]));
+  return `<div class="pl-wrap">
+    <section>
+      <label class="lbl" for="search">Procurar música (é só começar a digitar)</label>
+      <input type="text" id="search" autocomplete="off" placeholder="Digite parte do nome da música">
+      <p class="small-note">Também dá para escolher sem digitar: clique em um disco abaixo e marque as músicas.</p>
+      <div class="chips" id="chips" role="group" aria-label="Mostrar músicas de">${chips.map(c=>`<button class="chip" data-act="chip" data-id="${c[0]}" aria-pressed="${S.draft.album===c[0]}">${esc(c[1])}</button>`).join('')}</div>
+      <div id="plist" role="group" aria-label="Músicas"></div>
+    </section>
+    <aside class="newdisc card" id="newdisc"></aside>
+  </div>`;
+}
+function suggestName(){
+  let n = `Meu disco de ${TODAY}`, c = 1;
+  while (S.discs.some(d=>d.name===n)) { c++; n = `Meu disco de ${TODAY} (${c})`; }
+  return n;
+}
+function refreshPlaylist(){
+  const q = S.draft.q.trim().toLowerCase();
+  const list = allTracks().filter(x => (S.draft.album==='todos' || x.fromId===S.draft.album) && (!q || x.t.toLowerCase().includes(q) || x.from.toLowerCase().includes(q)));
+  $('#plist').innerHTML = list.length ? list.map(x=>{
+    const sel = S.draft.sel.includes(x.key);
+    return `<div style="margin-bottom:8px"><button class="trowcheck ${sel?'sel':''}" data-act="pick" data-k="${x.key}" aria-pressed="${sel}"><span class="box" aria-hidden="true">${sel?'✓':''}</span><span>${esc(x.t)}<small>${esc(x.from)}</small></span><span class="st">${sel?'Marcada':''}</span></button></div>`;
+  }).join('') : `<p class="card">Nenhuma música encontrada. Apague uma letra ou escolha “Todos os discos”.</p>`;
+  document.querySelectorAll('#chips .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id===S.draft.album)));
+  const chosen = S.draft.sel.map(k => allTracks().find(x=>x.key===k)).filter(Boolean);
+  const mixDisc = {mix:true, tracks:chosen.map(x=>({fromId:x.fromId}))};
+  const n = chosen.length;
+  $('#newdisc').innerHTML = `<h2 style="margin:0">Disco novo</h2>${coverHTML(mixDisc,'mid')}
+    ${S.draft.renaming ? `<label class="lbl" for="nm">Nome do disco</label><input type="text" id="nm" value="${esc(S.draft.name)}">` : `<p class="nm">${esc(S.draft.name)}</p>`}
+    <p style="margin:0"><strong>${n===0?'Nenhuma música escolhida':(n===1?'1 música escolhida':n+' músicas escolhidas')}</strong></p>
+    ${n?`<ol>${chosen.map(x=>`<li>${esc(x.t)}</li>`).join('')}</ol>`:''}
+    <div class="btnrow">${n?`<button class="btn pri big" data-act="mix-save">Guardar na estante</button>`:`<button class="btn big" aria-disabled="true">Marque pelo menos uma música</button>`}
+    <button class="btn" data-act="mix-rename">${S.draft.renaming?'Pronto, este nome':'Mudar o nome'}</button></div>`;
+  const nm = $('#nm'); if (nm) nm.addEventListener('input', e => { S.draft.name = e.target.value; });
+}
+
+function boxScreen(){
+  let h = msgHTML() + `<p class="lead">Aqui ficam os discos que você tirou da estante. <strong>As músicas continuam guardadas no computador.</strong></p>`;
+  if (!S.box.length) h += `<p class="card">A Caixa está vazia.</p>`;
+  S.box.map(disc).forEach(d => {
+    h += `<div class="boxrow card">${coverHTML(d,'small')}<span class="boxname">${esc(d.name)}</span><button class="btn pri" data-act="box-back" data-id="${d.id}">Colocar de volta na estante</button>${V.apagar==='caixa'?`<button class="btn" data-act="box-del" data-id="${d.id}">Apagar de vez…</button>`:''}</div>`;
+    if (S.boxDel===d.id) h += `<div class="warnbox" role="alertdialog"><p style="margin:0">Apagar “${esc(d.name)}” de vez? <strong>${d.mix?'O disco montado será desfeito. As músicas dos outros discos não são apagadas.':'Os arquivos de música deste disco também serão apagados do computador e não voltam.'}</strong></p><div class="btnrow"><button class="btn pri" data-act="box-del-no">Manter o disco</button><button class="btn" data-act="box-del-yes" data-id="${d.id}">Sim, apagar de vez</button></div></div>`;
+  });
+  return h;
+}
+
+function editScreen(){
+  const e = S.edit, d = disc(e.id);
+  const preview = Object.assign({}, d, {name:e.name||'(sem nome)', cover:e.cover});
+  const opt = (k,label) => {
+    const p = Object.assign({}, d, {name:e.name||'(sem nome)', cover:k});
+    return `<button class="gopt" data-act="cover" data-k="${k}" aria-pressed="${e.cover===k}">${coverHTML(p)}<span>${label}${e.cover===k?'<br>Escolhida':''}</span></button>`;
+  };
+  return `<div class="edit-wrap">
+    <aside class="card" style="text-align:center"><p style="margin:0 0 8px"><strong>Como vai ficar na estante</strong></p>${coverHTML(preview,'hero')}<p class="nm" style="margin:8px 0 0;font-weight:800">${esc(e.name||'(sem nome)')}</p></aside>
+    <section>
+      <label class="lbl" for="enm">Nome do disco</label><input type="text" id="enm" value="${esc(e.name)}">
+      <p class="lbl" style="margin-top:18px">Trocar a capa</p>
+      <div class="gallery" role="group" aria-label="Capas disponíveis">${opt('arquivo','Capa do arquivo')}${opt('pasta','Imagem da pasta')}${opt('desenhada','Capa desenhada')}</div>
+      <div class="btnrow"><button class="btn pri big" data-act="edit-save">Guardar</button><button class="btn big" data-act="edit-cancel">Deixar como estava</button></div>
+      <div class="sep"><p style="margin:0 0 10px">Tirar da estante: o disco sai da estante e vai para a Caixa. <strong>As músicas continuam no computador.</strong></p><button class="btn" data-act="to-box">Tirar da estante</button></div>
+    </section></div>`;
+}
+
+/* ---------- cabeçalho, mini-rádio, painel + ---------- */
+const TITLES_SCR = {shelf:'Minha estante', radio:'Tocando agora', playlist:'Montando um disco novo', box:'A Caixa', edit:'Mexendo no disco', settings:'Configurações'};
+function headerHTML(){
+  const back = S.screen==='shelf' ? '' : (S.screen==='settings' ? `<button class="btn" data-act="go-back">← Voltar para onde eu estava</button>` : `<button class="btn" data-act="go-shelf">← Voltar para a estante</button>`);
+  const lt = S.screen==='settings' ? '' : `<button class="btn sm" data-act="go-settings">⚙ Configurações</button>`;
+  $('#apphead').innerHTML = `<div class="hl">${back}</div><h1>${TITLES_SCR[S.screen]}</h1><div class="hr">${lt}</div>`;
+}
+function miniHTML(){
+  const m = $('#mini');
+  if (S.current && S.screen!=='radio'){
+    const d = disc(S.current.id);
+    m.className = 'on';
+    m.innerHTML = `<span class="mt">Tocando agora: <strong>${esc(d.tracks[S.current.track].t)}</strong> (${esc(d.name)})</span><button class="btn sm" data-act="toggle">${S.playing?'❚❚ Pausar':'▶ Tocar'}</button><button class="btn sm" data-act="go-radio">Abrir o rádio</button>`;
+  } else { m.className=''; m.innerHTML=''; }
+}
+const PALS = {normal:['#1F4D2B','#FFD27A','#B7E4A8'], rv:['#14407A','#FFD27A','#A8D4FF'], ay:['#8A1538','#FFC2B0','#FFD0DC'], bw:['#000000','#FFFFFF','#FFFFFF']};
+function settingsScreen(){
+  const L = [[1,'Normal'],[1.2,'Grande'],[1.4,'Maior']];
+  const C = [['normal','Cores normais'],['rv','Dificuldade com vermelho e verde'],['ay','Dificuldade com azul e amarelo'],['bw','Preto e branco, bem forte']];
+  const pressed = v => S.scale===v;
+  return `<div class="set-wrap">
+    <section class="card"><h2>Tamanho da letra</h2>
+      <div class="optlist" role="group" aria-label="Tamanho da letra">${L.map(l=>`<button class="opt" data-act="set-letra" data-v="${l[0]}" aria-pressed="${pressed(l[0])}"><span class="ck">${pressed(l[0])?'✓':''}</span>${l[1]}</button>`).join('')}</div>
+      <p class="sample">Exemplo: Tocando agora, faixa 3 de 8</p></section>
+    <section class="card"><h2>Cores</h2><p style="margin:0 0 10px">Escolha o que fica mais fácil de ver. Isso não muda o som.</p>
+      <div class="optlist" role="group" aria-label="Cores">${C.map(c=>`<button class="opt" data-act="set-cores" data-v="${c[0]}" aria-pressed="${S.cores===c[0]}"><span class="ck">${S.cores===c[0]?'✓':''}</span><span>${c[1]}</span><span class="swrow" aria-hidden="true">${PALS[c[0]].map(x=>`<i class="sw" style="background:${x}"></i>`).join('')}</span></button>`).join('')}</div>
+      <p class="small-note" style="margin:10px 0 0">O Estante nunca usa só a cor para dizer algo: sempre há também texto e formas.</p></section>
+  </div>`;
+}
+function overlayHTML(){
+  const o = $('#overlay');
+  if (!S.plus.open){ o.innerHTML=''; return; }
+  const d = disc(S.current.id), t = d.tracks[S.plus.track], mixes = S.discs.filter(x=>x.mix && !inBox(x.id));
+  let body;
+  if (V.plus==='frases'){
+    if (S.plus.step==='list') body = `<p style="margin:0">Escolha o disco:</p>${mixes.map(m=>`<button class="btn wide" data-act="plus-add" data-m="${m.id}">${esc(m.name)}</button>`).join('')}<button class="btn wide" data-act="plus-back">← Voltar</button>`;
+    else body = `${mixes.length?`<button class="btn wide pri" data-act="plus-step-list">Adicionar a uma playlist existente</button>`:''}<button class="btn wide pri" data-act="plus-new">Criar uma nova playlist</button>`;
+  } else {
+    body = `<p style="margin:0">Em qual disco?</p><div class="tiles"><button class="tile dashed" data-act="plus-new"><span class="cover newcover" aria-hidden="true">＋</span><span class="cap">Disco novo</span></button>${mixes.map(m=>`<button class="tile" data-act="plus-add" data-m="${m.id}">${coverHTML(m)}<span class="cap">${esc(m.name)}</span></button>`).join('')}</div>`;
+  }
+  o.innerHTML = `<div class="overlay"><div class="panel" role="dialog" aria-label="Colocar em outro disco"><h2>Colocar “${esc(t.t)}” em outro disco</h2>${body}<button class="btn wide" data-act="plus-cancel">Cancelar</button></div></div>`;
+}
+
+const NOTES = {
+  shelf: ['<strong>Tela Estante.</strong> Mostra as ideias <strong>I5</strong> (cabeçalho fixo e capa como peça única) e <strong>I7</strong> (estante que lembra).',
+    'Com a variante “Estante que lembra: Com”: cartão “Continuar a ouvir” (nada toca sozinho), prateleira “Ouvidos há pouco” e o <em>lugar vazio</em> “Em uso no rádio” quando um disco está no rádio.',
+    'O botão grande “Criar uma playlist” é a forma (a) que você decidiu. Discos montados ficam em “Discos que montei”.'],
+  radio: ['<strong>Tela Tocando agora.</strong> Mostra <strong>I1</strong> (visor que fala, estado em três canais: lâmpada, palavra e cor/forma do botão, e volume em degraus), o botão <strong>Voz mais clara</strong> (ADR-0004, começa desligado) e o “+” em cada música (<strong>I3</strong>).',
+    'Compare a variante do visor (estado × ação). O “+” mostra as capas dos discos (decidido). Em “Mexer neste disco” fica a entrada de <strong>I6</strong>.',
+    'O visor tem uma segunda linha que descreve a última ação (ex.: “Volume mais alto (7 de 10)”). Mensagens ficam até a próxima ação, ou somem em 10 s conforme a variante.'],
+  playlist: ['<strong>Criar uma playlist (forma a).</strong> Mostra <strong>I2</strong>: caixas grandes de marcar, busca que recebe a digitação sem clicar nela (experimente digitar uma letra), marcadas que continuam marcadas ao filtrar, “Disco novo” que vai se enchendo e nome sugerido.',
+    'O caminho só com mouse (escolher um disco e marcar) existe porque a literatura aponta digitar como difícil para parte dos idosos.'],
+  box: ['<strong>A Caixa.</strong> Mostra <strong>I4</strong>: “Tirar da estante” nunca apaga, e a Caixa diz em texto que as músicas continuam no computador.',
+    '“Apagar de vez” só existe aqui, dentro da Caixa, com texto claro e dois botões grandes (decidido; ADR-0007).'],
+  edit: ['<strong>Mexer no disco.</strong> Mostra <strong>I6</strong>: prévia ao vivo de como o disco fica na estante, galeria de capas já encontradas, “Guardar” × “Deixar como estava” e “Como era antes” (aparece depois de guardar, na mensagem).',
+    'Renomear exige digitar; é o ponto fraco desta ideia e precisa de teste com o usuário.'],
+  settings: ['<strong>Configurações (ADR-0006).</strong> Tamanho da letra e cores para daltonismo ficam aqui, atrás de um botão com texto sempre visível no cabeçalho. A escolha vale para todas as telas; experimente mudar e voltar.',
+    'Risco: a literatura recomenda o controle de letra visível, então o botão precisa ser achado sozinho no teste. As paletas de daltonismo são uma primeira versão (contraste de 7:1 conferido por cálculo) e precisam de validação com um simulador e, de preferência, com uma pessoa daltônica.']
+};
+function notesHTML(){
+  $('#notes').innerHTML = `<h2>O que esta tela mostra</h2><ul>${NOTES[S.screen].map(x=>`<li>${x}</li>`).join('')}</ul>`;
+}
+
+function render(){
+  $('#win').style.setProperty('--s', S.scale);
+  $('#win').dataset.cores = S.cores;
+  $('#win').classList.toggle('big', S.scale>1);
+  headerHTML();
+  const m = $('#main');
+  if (S.screen==='playlist'){
+    // a tela de playlist não é re-renderizada inteira para não perder o foco da busca
+    if (!m.querySelector('#search')){ m.innerHTML = playlistScreen(); bindPlaylist(); $('#search').value = S.draft.q; }
+    refreshPlaylist();
+  } else if (S.screen==='edit'){
+    m.innerHTML = editScreen(); const i = $('#enm'); if (i) i.addEventListener('input', ev => { S.edit.name = ev.target.value; refreshEditPreview(); });
+  } else {
+    m.innerHTML = ({shelf:shelfScreen, radio:radioScreen, box:boxScreen, settings:settingsScreen})[S.screen]();
+  }
+  miniHTML(); overlayHTML(); notesHTML();
+}
+function refreshEditPreview(){
+  const e = S.edit, d = disc(e.id);
+  const aside = document.querySelector('.edit-wrap aside');
+  if (aside) aside.innerHTML = `<p style="margin:0 0 8px"><strong>Como vai ficar na estante</strong></p>${coverHTML(Object.assign({}, d, {name:e.name||'(sem nome)', cover:e.cover}),'hero')}<p class="nm" style="margin:8px 0 0;font-weight:800">${esc(e.name||'(sem nome)')}</p>`;
+}
+function bindPlaylist(){
+  const s = $('#search');
+  s.addEventListener('input', e => { S.draft.q = e.target.value; refreshPlaylist(); });
+}
+
+/* ---------- ações ---------- */
+function startPlay(id, track){
+  S.current = {id, track}; S.playing = true; S.note = '';
+  S.last = {id, track};
+  S.recent = [id].concat(S.recent.filter(x=>x!==id)).slice(0,6);
+}
+function handle(act, d){
+  const keepMsg = ['undo-msg','undo-plus'];
+  if (!keepMsg.includes(act)){ S.msg = null; if (!['plus-add','plus-new'].includes(act)) S.plusResult = null; S.note = ''; clearTimeout(timer); }
+  switch(act){
+    case 'go-shelf': S.screen='shelf'; S.plus.open=false; S.draft=null; S.edit=null; S.boxDel=null; break;
+    case 'go-settings': S.prev=S.screen; S.screen='settings'; break;
+    case 'go-back': S.screen=S.prev||'shelf'; break;
+    case 'set-letra': S.scale=+d.v; break;
+    case 'set-cores': S.cores=d.v; break;
+    case 'go-radio': S.screen='radio'; break;
+    case 'go-box': S.screen='box'; S.boxDel=null; break;
+    case 'open-disc': startPlay(d.id, 0); S.screen='radio'; break;
+    case 'continue': startPlay(S.last.id, S.last.track); S.screen='radio'; break;
+    case 'toggle': S.playing = !S.playing; break;
+    case 'prev': { const c=S.current; if (c.track>0){ c.track--; S.last={id:c.id,track:c.track}; S.playing=true; } else S.note='Voltei ao começo da música.'; break; }
+    case 'next': { const c=S.current, n=disc(c.id).tracks.length; if (c.track<n-1){ c.track++; S.last={id:c.id,track:c.track}; S.playing=true; } else { S.playing=false; S.note='Este é o fim do disco.'; } break; }
+    case 'play-track': S.current.track = +d.i; S.last={id:S.current.id,track:S.current.track}; S.playing=true; S.note=`Tocando a faixa ${+d.i+1}.`; break;
+    case 'vol': { const dir=+d.d; const nv=S.volume+dir; if (nv<0) S.note='O volume já está no mínimo.'; else if (nv>10) S.note='O volume já está no máximo.'; else { S.volume=nv; S.note = dir>0?`Volume mais alto (${nv} de 10)`:`Volume mais baixo (${nv} de 10)`; } break; }
+    case 'clara': S.clara=!S.clara; S.note = S.clara ? 'Voz mais clara ligada. Vozes e agudos estão reforçados.' : 'Voz mais clara desligada. O som voltou ao normal.'; break;
+    case 'store': { const id=S.current.id; S.current=null; S.playing=false; S.screen='shelf'; setMsg(`O disco “${esc(disc(id).name)}” voltou para o seu lugar na estante.`); break; }
+    /* playlist (forma a) */
+    case 'new-mix': S.draft = {sel:[], q:'', album:'todos', name:suggestName(), renaming:false}; S.screen='playlist'; $('#main').innerHTML=''; break;
+    case 'chip': S.draft.album = d.id; refreshPlaylist(); return;
+    case 'pick': { const i = S.draft.sel.indexOf(d.k); if (i>=0) S.draft.sel.splice(i,1); else S.draft.sel.push(d.k); refreshPlaylist(); return; }
+    case 'mix-rename': S.draft.renaming = !S.draft.renaming; refreshPlaylist(); if (S.draft.renaming){ const nm=$('#nm'); if (nm) nm.focus(); } return;
+    case 'mix-save': {
+      const tracks = S.draft.sel.map(k => { const [id,i] = k.split(':'); return disc(id).tracks[+i]; });
+      const name = (S.draft.name||'').trim() || suggestName();
+      S.discs.push({id:'mix'+(++S.mixCount+1),name,color:'#1F5A2E',cover:'desenhada',mix:true,tracks});
+      S.draft=null; S.screen='shelf'; setMsg(`Pronto! O disco “${esc(name)}” está na estante, em “Discos que montei”.`); break;
+    }
+    /* "+" (forma b) */
+    case 'plus-open': S.plus = {open:true, track:+d.i, step:'menu'}; break;
+    case 'plus-cancel': S.plus.open=false; break;
+    case 'plus-step-list': S.plus.step='list'; break;
+    case 'plus-back': S.plus.step='menu'; break;
+    case 'plus-new': {
+      const dd = disc(S.current.id), t = dd.tracks[S.plus.track], name = suggestName();
+      const id = 'mix'+(++S.mixCount+1);
+      S.discs.push({id,name,color:'#1F5A2E',cover:'desenhada',mix:true,tracks:[t]});
+      S.plusResult = {discId:dd.id, track:S.plus.track, mixId:id, created:true, dup:false}; S.plus.open=false; armTimer(); break;
+    }
+    case 'plus-add': {
+      const dd = disc(S.current.id), t = dd.tracks[S.plus.track], m = disc(d.m);
+      const dup = m.tracks.some(x => x.t===t.t && x.fromId===t.fromId);
+      if (!dup) m.tracks.push(t);
+      S.plusResult = {discId:dd.id, track:S.plus.track, mixId:m.id, created:false, dup}; S.plus.open=false; armTimer(); break;
+    }
+    case 'undo-plus': {
+      const r = S.plusResult; if (!r) break;
+      if (r.created){ S.discs = S.discs.filter(x=>x.id!==r.mixId); }
+      else if (!r.dup){ const m = disc(r.mixId), t = disc(r.discId).tracks[r.track]; const i = m.tracks.lastIndexOf(t); if (i>=0) m.tracks.splice(i,1); }
+      S.plusResult = null; clearTimeout(timer); break;
+    }
+    /* caixa e edição */
+    case 'box-back': S.box = S.box.filter(x=>x!==d.id); break;
+    case 'box-del': S.boxDel = d.id; break;
+    case 'box-del-no': S.boxDel = null; break;
+    case 'box-del-yes': S.discs = S.discs.filter(x=>x.id!==d.id); S.box = S.box.filter(x=>x!==d.id); S.recent = S.recent.filter(x=>x!==d.id); S.boxDel=null; break;
+    case 'edit-open': { const dd = disc(S.current.id); S.edit = {id:dd.id, name:dd.name, cover:dd.cover}; S.screen='edit'; break; }
+    case 'cover': S.edit.cover = d.k; break;
+    case 'edit-cancel': S.edit=null; S.screen='radio'; break;
+    case 'edit-save': {
+      const dd = disc(S.edit.id); const prev = {name:dd.name, cover:dd.cover};
+      dd.name = (S.edit.name||'').trim() || dd.name; dd.cover = S.edit.cover; S.edit=null; S.screen='shelf';
+      setMsg(`Guardei o disco “${esc(dd.name)}”.`, {type:'edit', id:dd.id, prev}); break;
+    }
+    case 'to-box': { const id=S.edit.id; S.box.push(id); if (S.current && S.current.id===id){ S.current=null; S.playing=false; } S.edit=null; S.screen='shelf'; setMsg(`O disco “${esc(disc(id).name)}” foi para a Caixa. As músicas continuam no computador.`, {type:'box', id}); break; }
+    case 'undo-msg': {
+      const u = S.msg && S.msg.undo; if (!u) break;
+      if (u.type==='box') S.box = S.box.filter(x=>x!==u.id);
+      if (u.type==='edit'){ const dd = disc(u.id); dd.name = u.prev.name; dd.cover = u.prev.cover; }
+      S.msg=null; clearTimeout(timer); break;
+    }
+  }
+  render();
+}
+
+$('#win').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  if (b.getAttribute('aria-disabled')==='true' && !['vol'].includes(b.dataset.act)) return;
+  handle(b.dataset.act, b.dataset);
+});
+$('#xbtn').addEventListener('click', () => {
+  const n = $('#authornote'); n.style.display='inline-block';
+  n.textContent = 'O X fecharia o app agora e guardaria onde você parou (disco, faixa e posição).';
+  setTimeout(()=>{ n.style.display='none'; }, 6000);
+});
+document.addEventListener('keydown', e => {
+  const ae = document.activeElement, typing = ae && (ae.tagName==='INPUT' || ae.tagName==='TEXTAREA');
+  if (S.screen==='playlist' && !typing && e.key.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey){
+    const s = $('#search'); if (s) s.focus(); return;   // digitar vai direto para a busca
+  }
+  if (S.screen==='radio' && !typing && !S.plus.open){
+    if (e.key===' ' && ae===document.body){ e.preventDefault(); handle('toggle',{}); }   // com foco num botão, o espaço já o aciona
+    else if (e.key==='ArrowRight') handle('next',{});
+    else if (e.key==='ArrowLeft') handle('prev',{});
+    else if (e.key==='ArrowUp'){ e.preventDefault(); handle('vol',{d:'1'}); }
+    else if (e.key==='ArrowDown'){ e.preventDefault(); handle('vol',{d:'-1'}); }
+  }
+});
+
+/* ---------- painel de variantes ---------- */
+const GROUPS = [
+  ['visor','Visor do rádio (I1)',[['estado','Diz o estado: “TOCANDO: Faixa 3 de 12”'],['acao','Diz a ação: “Toque em Pausar para parar”']]],
+  ['conf','Confirmações e avisos',[['permanente','Ficam até a próxima ação'],['temporario','Somem sozinhos em 10 s']]],
+  ['memoria','Estante que lembra (I7)',[['sim','Com: continuar, recentes e lugar vazio'],['nao','Sem']]]
+];
+function buildVariants(){
+  $('#variants').innerHTML = GROUPS.map(g => `<fieldset><legend>${g[1]}</legend>${g[2].map(o=>`<label><input type="radio" name="v_${g[0]}" value="${o[0]}" ${V[g[0]]===o[0]?'checked':''}> ${o[1]}</label>`).join('')}</fieldset>`).join('');
+  document.querySelectorAll('#variants input').forEach(i => i.addEventListener('change', e => {
+    V[e.target.name.slice(2)] = e.target.value;
+    if (e.target.name==='v_conf') { clearTimeout(timer); armTimer(); }
+    S.plus.step='menu';
+    render();
+  }));
+}
+$('#reset').addEventListener('click', () => { clearTimeout(timer); S = fresh(); render(); });
+buildVariants();
+render();
+</script>
+</body>
+</html>

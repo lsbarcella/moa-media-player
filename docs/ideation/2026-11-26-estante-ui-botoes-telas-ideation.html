@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ideation: botões, ícones e telas do Estante</title>
+<style>
+:root{
+  --bg:#faf8f4; --fg:#22201c; --muted:#5a554c; --line:#ddd6c8; --card:#ffffff;
+  --accent:#8a4b12; --accent-soft:#f6e7d4; --accent-text:#5c3009;
+  --ok-soft:#e3efe0; --ok-text:#2c5a24; --warn-soft:#fbeed0; --warn-text:#6b4a00;
+  --no-soft:#f6dcdc; --no-text:#7a2323;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1b1a17; --fg:#ece7dd; --muted:#b4ad9f; --line:#3a372f; --card:#25231f;
+    --accent:#e0a265; --accent-soft:#3a2a18; --accent-text:#f1c99a;
+    --ok-soft:#1f3320; --ok-text:#a9d6a1; --warn-soft:#38300f; --warn-text:#e9cf85;
+    --no-soft:#3a1f1f; --no-text:#efb1b1;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 "Source Sans 3","Segoe UI",system-ui,-apple-system,sans-serif}
+.page{max-width:56rem;margin-inline:auto;padding:2rem 1.25rem 4rem}
+header h1{font-size:2rem;line-height:1.2;margin:.25rem 0 .75rem}
+.eyebrow{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.meta{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0 1rem;padding:0;list-style:none}
+.chip{display:inline-block;padding:.15rem .7rem;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:.85rem}
+.chip.id{background:var(--accent-soft);color:var(--accent-text);border-color:transparent;font-weight:700}
+.chip.ok{background:var(--ok-soft);color:var(--ok-text);border-color:transparent}
+.chip.warn{background:var(--warn-soft);color:var(--warn-text);border-color:transparent}
+.chip.no{background:var(--no-soft);color:var(--no-text);border-color:transparent}
+section{margin-top:2.5rem}
+h2{font-size:1.45rem;margin:0 0 .75rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+h3{font-size:1.2rem;margin:.1rem 0 .5rem}
+p,li,dd{max-width:72ch}
+.callout{background:var(--warn-soft);color:var(--warn-text);border-radius:.6rem;padding:.8rem 1rem;margin:1rem 0}
+.callout strong{color:inherit}
+nav.jump ol{margin:.25rem 0 0;padding-left:1.25rem}
+nav.jump a{color:var(--accent);text-decoration:none}
+nav.jump a:hover{text-decoration:underline}
+article.idea{background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:1.1rem 1.25rem;margin:1.1rem 0}
+article.idea header{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin-bottom:.4rem}
+article.idea header h3{margin:0;flex:1 1 18rem}
+dl{margin:.5rem 0 0}
+dt{font-weight:700;margin-top:.8rem;font-size:.9rem;color:var(--muted)}
+dd{margin:.15rem 0 0}
+dd ul{margin:.3rem 0;padding-left:1.2rem}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:.5rem .6rem;vertical-align:top;text-align:left}
+th{background:var(--accent-soft);color:var(--accent-text)}
+code{background:var(--accent-soft);color:var(--accent-text);padding:.05rem .3rem;border-radius:.25rem;font-size:.9em}
+footer.composition-signal{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
+.stats{display:flex;flex-wrap:wrap;gap:.6rem;margin:.5rem 0 0;padding:0;list-style:none}
+.stats li{background:var(--card);border:1px solid var(--line);border-radius:.6rem;padding:.4rem .8rem}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="eyebrow">Ideação · Estante</div>
+  <h1>Ideation: botões, ícones e telas do Estante</h1>
+  <ul class="meta">
+    <li class="chip">date: <time datetime="2026-11-26">2026-11-26</time></li>
+    <li class="chip">topic: estante-ui-botoes-telas</li>
+    <li class="chip">mode: elsewhere-software (tema de produto, ancorado nos documentos do projeto)</li>
+  </ul>
+  <p><strong>Focus:</strong> botões e ícones do rádio, tela Estante, criar playlist pelo botão grande, "+" dentro de um CD e manutenção da coleção pelo próprio usuário, dentro da metáfora de estante de músicas + rádio antigo.</p>
+  <ul class="stats">
+    <li>48 ideias brutas</li>
+    <li>29 candidatos após junção</li>
+    <li>7 sobreviventes</li>
+    <li>5 eixos, 4 com cobertura plena</li>
+  </ul>
+</header>
+
+<section id="topic-context">
+  <div class="eyebrow">Contexto</div>
+  <h2>Topic Context</h2>
+  <p>O Estante é um reprodutor de música offline para uma pessoa idosa que deve usá-lo sozinha, sem cuidador (ADR-0002). A metáfora já decidida pelo autor é uma <strong>estante de músicas</strong> com os álbuns (capas) e um <strong>rádio antigo</strong> como base para tocar. A janela abre como programa normal, com o X visível. O repositório hoje só tem uma janela GTK vazia; todo o desenho é novo.</p>
+  <p>Decisões fixas que as ideias respeitam: um clique ativa (sem duplo clique, arrastar, hover ou botão direito); alvos de pelo menos 64×64 px; fonte de pelo menos 20 px; contraste de pelo menos 7:1; ícones sempre com texto; caminho de volta sempre visível; sem jargão técnico; volume com botões "−" e "+" (sem botão giratório); sem aleatório nem repetir. A playlist é um <strong>disco novo na estante</strong> (virtual), criada por (a) um botão grande "Criar uma playlist" com marcação de músicas e digitação indo direto para a pesquisa, ou (b) um botão "+" em cada música dentro de um CD com "adicionar a uma playlist existente" e "criar uma nova playlist".</p>
+  <p><strong>Pesquisa externa (valor moderado):</strong> evidência mista sobre skeuomorfismo para idosos. Urbano et al. 2022 (idosos de 65 a 77 anos mais rápidos ou precisos em interfaces skeuomórficas) contra Ellis &amp; Marshall 2019 (preferência por flat em um app bancário), com a leitura de que o skeuomorfismo ajuda quando o objeto imitado é familiar, como um rádio. Guias de design para demência pedem rótulos de texto em ícones. Há prior art em players físicos simples (Juuke, rádio de dois knobs, Relish). Não há fonte direta sobre playlists para baixa literacia digital nem sobre manutenção de coleção com metáforas físicas: nessas áreas as ideias são <code>reasoned:</code>. <strong>As fontes vieram de resumos de busca e precisam ser conferidas antes de serem citadas no TCC.</strong></p>
+</section>
+
+<section id="topic-axes">
+  <div class="eyebrow">Eixos</div>
+  <h2>Topic Axes</h2>
+  <ol>
+    <li><strong>O rádio</strong> (tela Tocando agora): aparência, botões e ícones, visor, estado e volume.</li>
+    <li><strong>A estante</strong> (tela inicial): como as capas aparecem, como se acha um disco, orientação e caminho de volta.</li>
+    <li><strong>Criar uma playlist pelo botão grande</strong>: marcar músicas, busca ao digitar, nome, capa, resultado na estante.</li>
+    <li><strong>Adicionar a partir de uma música</strong> ("+" dentro do CD): as duas opções, confirmação, evitar erros.</li>
+    <li><strong>Cuidar da coleção</strong>: adicionar, renomear, trocar capa e remover disco, sem jargão e com segurança.</li>
+  </ol>
+</section>
+
+<section id="ranked-ideas">
+  <div class="eyebrow">Ideias ranqueadas</div>
+  <h2>Ranked Ideas</h2>
+  <div class="callout"><strong>Como ler:</strong> você decide UX e UI. Cada ideia traz as opções em aberto dentro de "Downsides", com prós e contras. A ordem pesa fundamentação (<code>direct:</code> acima de <code>external:</code> acima de <code>reasoned:</code>), valor esperado, alavancagem e custo. As confianças são estimativas minhas depois da verificação de contexto novo; nenhuma foi testada com usuário real.</div>
+  <nav class="jump" aria-label="Lista de ideias">
+    <ol>
+      <li><a href="#i1">1. O rádio que fala: visor de uma linha, estados em três canais e volume em degraus</a></li>
+      <li><a href="#i2">2. Disco em montagem: marcar, buscar ao digitar e guardar com nome e capa sugeridos</a></li>
+      <li><a href="#i3">3. "+" que responde no próprio lugar, com Desfazer</a></li>
+      <li><a href="#i4">4. "Tirar da estante" leva o disco para uma Caixa recuperável</a></li>
+      <li><a href="#i5">5. Sistema visual comum: Etiqueta de Disco e cabeçalho fixo com o caminho de volta</a></li>
+      <li><a href="#i6">6. Etiqueta de papel: renomear e trocar a capa com prévia ao vivo</a></li>
+      <li><a href="#i7">7. Estante que lembra: retomada visível, lugar vazio e "Ouvidos há pouco"</a></li>
+    </ol>
+  </nav>
+
+  <article class="idea" id="i1">
+    <header>
+      <span class="chip id">I1.</span>
+      <h3>O rádio que fala: visor de uma linha, estados em três canais e volume em degraus</h3>
+      <span class="chip">Eixo 1</span><span class="chip ok">Confiança 85%</span><span class="chip">Complexidade Low</span>
+    </header>
+    <dl>
+      <dt>Description (descrição)</dt>
+      <dd>O rádio da tela Tocando agora tem um visor de vidro, estilo mostrador de dial, com <strong>uma única frase grande</strong> que diz o estado em palavras: "TOCANDO: Faixa 3 de 12", "PAUSADO. Aperte Tocar para continuar", "Volume mais alto (6 de 10)". O estado tem sempre <strong>três canais iguais</strong>: uma lâmpada no visor, a palavra e a cor/forma do botão principal (Tocar verde e redondo, Pausar âmbar e quadrado). O visor é também o lugar das mensagens calmas de erro ("Não consegui tocar esta música. Vou tocar a próxima."). O volume é uma fileira de 8 a 10 lâmpadas ao lado de "−" e "+", com o texto "Volume: 6 de 10". No limite, o botão não fica mudo: vira "No máximo" ou "No mínimo".</dd>
+      <dt>Axis (eixo)</dt>
+      <dd>1. O rádio.</dd>
+      <dt>Basis (base)</dt>
+      <dd><code>direct:</code> o projeto exige que "o estado tocando/pausado seja óbvio, com texto e não só ícone", que o volume tenha "−" e "+" com indicação visual do nível e que erros apareçam como mensagem calma "no próprio lugar" (CLAUDE.md, seção 9). <code>external:</code> guias de design para demência recomendam rótulos de texto em ícones abstratos, porque as pessoas aprendem ícones e também os esquecem (a conferir na fonte). <code>reasoned:</code> um botão que para de responder no limite é a causa clássica de "quebrou" para quem tem pouca literacia digital.</dd>
+      <dt>Rationale (justificativa)</dt>
+      <dd>A maior dor de quem usa sozinho é clicar e não saber se algo aconteceu. O visor troca essa dúvida por uma confirmação em palavras, no mesmo lugar, a cada clique. Um único componente cobre estado, volume, feedback e erro, o que simplifica o desenho e a defesa na banca.</dd>
+      <dt>Downsides (custos e opções em aberto)</dt>
+      <dd>
+        <ul>
+          <li><strong>O visor diz o estado ("Tocando") ou a ação ("Toque para pausar")?</strong> Estado é mais fiel ao aparelho real; ação é mais direta, mas pode confundir quem lê a frase como se fosse um botão. Vale testar com o seu pai.</li>
+          <li>"O visor é o único lugar onde o app fala" é uma regra de desenho minha, não uma exigência do projeto.</li>
+          <li>Cor e forma não podem ser o único sinal (daltonismo, vista cansada); por isso o texto e a lâmpada continuam.</li>
+          <li>Dez degraus pode não bater com a granularidade real do volume do GStreamer; é preciso mapear.</li>
+          <li>Riscos que a base não cobre: nomes acessíveis para leitor de tela (Orca) e rótulos longos em português estourando o layout.</li>
+        </ul>
+      </dd>
+      <dt>Confidence (confiança)</dt>
+      <dd>85%. Apoiada em requisitos diretos e sem violar nenhuma decisão fixa.</dd>
+      <dt>Complexity (complexidade)</dt>
+      <dd>Low. É CSS do GTK 3 com um Label e uma barra de ícones; sem dependência nova.</dd>
+    </dl>
+  </article>
+
+  <article class="idea" id="i2">
+    <header>
+      <span class="chip id">I2.</span>
+      <h3>Disco em montagem: marcar, buscar ao digitar e guardar com nome e capa sugeridos</h3>
+      <span class="chip">Eixo 3</span><span class="chip ok">Confiança 80%</span><span class="chip warn">Complexidade Medium</span>
+    </header>
+    <dl>
+      <dt>Description (descrição)</dt>
+      <dd>O botão grande "Criar uma playlist" abre uma tela com as músicas em linhas largas (64 px) e <strong>caixas grandes de marcar</strong>. O foco já está na pesquisa: ao começar a digitar, o texto vai direto para a busca e filtra a lista. As músicas marcadas <strong>continuam contadas mesmo quando saem do filtro</strong>: um resumo fixo mostra "3 músicas escolhidas", e um "disco novo" ao lado vai se enchendo. A busca é atalho, nunca o único caminho: também dá para clicar numa capa e marcar as músicas dela. Ao terminar, o app propõe um <strong>nome</strong> ("Meu disco de 26/11") e uma <strong>capa</strong> (mosaico das primeiras capas, com opções grandes como "capa de cor com o nome"). O botão principal é "Guardar na estante"; "Mudar o nome" é secundário.</dd>
+      <dt>Axis (eixo)</dt>
+      <dd>3. Criar uma playlist pelo botão grande.</dd>
+      <dt>Basis (base)</dt>
+      <dd><code>direct:</code> a decisão 2a do autor (marcar músicas; digitar vai direto para a pesquisa) e a capa substituta determinística já prevista (CLAUDE.md, seção 8). <code>reasoned:</code> filtrar e marcar ao mesmo tempo costuma "perder" as marcas anteriores; mostrar o disco se enchendo responde à pergunta "onde foi parar o que marquei?"; um campo de nome vazio é onde muita gente desiste.</dd>
+      <dt>Rationale (justificativa)</dt>
+      <dd>Concretiza a decisão 2a e ataca os dois pontos de abandono prováveis: sumir a seleção ao filtrar e ter de inventar um nome. O idoso termina mesmo sem decidir tudo, mas pode mudar tudo.</dd>
+      <dt>Downsides (custos e opções em aberto)</dt>
+      <dd>
+        <ul>
+          <li>Nome por data repete quando há várias no mesmo dia; alternativa: "Meu disco 2", "Meu disco 3".</li>
+          <li>A sugestão automática pode gerar discos sem sentido para quem queria nomear; "Mudar o nome" precisa estar à vista.</li>
+          <li>Digitar é difícil com tremor ou baixa literacia, por isso o caminho só com mouse é obrigatório.</li>
+          <li>Com centenas de músicas, linhas de 64 px exigem rolagem longa; vale um filtro por disco.</li>
+          <li><strong>Passos numerados ("1. Escolha 2. Nomeie 3. Capa")</strong> foi descartado porque o nome e a capa sugeridos tiram os passos 2 e 3 do caminho crítico.</li>
+        </ul>
+      </dd>
+      <dt>Confidence (confiança)</dt>
+      <dd>80%.</dd>
+      <dt>Complexity (complexidade)</dt>
+      <dd>Medium. Exige estado de seleção persistente, filtro ao vivo e o modelo de disco virtual.</dd>
+    </dl>
+  </article>
+
+  <article class="idea" id="i3">
+    <header>
+      <span class="chip id">I3.</span>
+      <h3>"+" que responde no próprio lugar, com Desfazer</h3>
+      <span class="chip">Eixo 4</span><span class="chip ok">Confiança 80%</span><span class="chip warn">Complexidade Medium</span>
+    </header>
+    <dl>
+      <dt>Description (descrição)</dt>
+      <dd>Dentro de um CD, cada música tem um botão "+" de 64 px com texto. Ao clicar, abre um painel com as duas opções decididas: <strong>"Adicionar a uma playlist existente"</strong> e <strong>"Criar uma nova playlist"</strong>. Depois de escolher, o painel fecha e a própria linha da música mostra "Está no disco Domingo" com um botão <strong>"Desfazer"</strong>. Se a música já estiver lá, o botão diz "Já está neste disco", em vez de duplicar ou dar erro.</dd>
+      <dt>Axis (eixo)</dt>
+      <dd>4. Adicionar a partir de uma música.</dd>
+      <dt>Basis (base)</dt>
+      <dd><code>direct:</code> a decisão 2b do autor e a regra de que operações destrutivas sejam reversíveis ou peçam confirmação calma. <code>reasoned:</code> o erro mais provável é clicar de novo porque não houve resposta; confirmação visível no lugar e Desfazer substituem o "Tem certeza?", que seria um modal inesperado (CLAUDE.md, restrição 5).</dd>
+      <dt>Rationale (justificativa)</dt>
+      <dd>O maior risco do "+" é o usuário não saber se funcionou. A resposta fica onde ele está olhando, e o erro vira algo corrigível com um clique.</dd>
+      <dt>Downsides (custos e opções em aberto)</dt>
+      <dd>
+        <ul>
+          <li><strong>Variante (i), as duas frases do pedido:</strong> fiel à sua decisão, mas exige ler duas opções. <strong>Variante (ii), capas dos discos como "Em qual disco?":</strong> reconhecimento visual, com um "Disco novo" tracejado como primeira capa; reduz a leitura, mas troca as duas frases que você escolheu.</li>
+          <li><strong>Variante (iii):</strong> dizer "disco" no lugar de "playlist" nos rótulos internos, mantendo "Criar uma playlist" onde você pediu. Mais coerente com a metáfora, mas mistura dois vocabulários.</li>
+          <li><strong>Selo permanente vs. aviso temporário:</strong> permanente não depende da memória curta, mas ocupa espaço em cada linha; temporário é mais limpo, mas some.</li>
+          <li>Um "+" com texto em cada linha de música enche a lista; é preciso testar a densidade.</li>
+        </ul>
+      </dd>
+      <dt>Confidence (confiança)</dt>
+      <dd>80%.</dd>
+      <dt>Complexity (complexidade)</dt>
+      <dd>Medium. Precisa saber em quais discos cada faixa já está.</dd>
+    </dl>
+  </article>
+
+  <article class="idea" id="i4">
+    <header>
+      <span class="chip id">I4.</span>
+      <h3>"Tirar da estante" leva o disco para uma Caixa recuperável</h3>
+      <span class="chip">Eixo 5</span><span class="chip ok">Confiança 75%</span><span class="chip warn">Complexidade Medium</span>
+    </header>
+    <dl>
+      <dt>Description (descrição)</dt>
+      <dd>O botão nunca se chama "Remover" ou "Excluir": é <strong>"Tirar da estante"</strong>. O disco vai para uma <strong>Caixa</strong> visível na estante (com contador, "2 discos na caixa"). Dentro dela, cada disco tem "Colocar de volta na estante". A tela repete em texto simples: <em>"As músicas continuam no computador."</em> Não há "Tem certeza?" no uso do dia a dia, porque nada se perde.</dd>
+      <dt>Axis (eixo)</dt>
+      <dd>5. Cuidar da coleção.</dd>
+      <dt>Basis (base)</dt>
+      <dd><code>direct:</code> "Remover disco NÃO apaga arquivos sem deixar isso claro" e "operações destrutivas reversíveis ou com confirmação calma" (CLAUDE.md, seção 9). <code>external:</code> o princípio de preferir desfazer a confirmar (Nielsen Norman Group; a conferir antes de citar). <code>reasoned:</code> uma caixa de papelão no armário é uma imagem familiar de "guardar sem jogar fora"; a lixeira do computador não é.</dd>
+      <dt>Rationale (justificativa)</dt>
+      <dd>A ação mais perigosa da coleção deixa de ter risco, então o idoso pode arrumar a estante sem medo. Esta é a ideia com a base direta mais forte do eixo 5.</dd>
+      <dt>Downsides (custos e opções em aberto)</dt>
+      <dd>
+        <ul>
+          <li><strong>Risco de arquitetura:</strong> se a biblioteca é varrida por pasta a cada abertura, um disco "tirado" volta na varredura seguinte. É preciso uma lista de discos tirados guardada no cache, que a varredura respeite.</li>
+          <li><strong>"Apagar de vez": variante A:</strong> não existe na interface (zero risco; para apagar, só pelo gerenciador de arquivos). <strong>Variante B:</strong> existe só dentro da Caixa, com texto claro de que os arquivos serão apagados e dois botões grandes. A A é mais segura; a B dá autonomia completa. Decisão sua.</li>
+          <li>"Caixa" pode virar mais uma tela onde o idoso se perde; precisa do cabeçalho com o caminho de volta (I5).</li>
+          <li>Para a banca: remover sem confirmar só é defensável porque nada é destruído.</li>
+        </ul>
+      </dd>
+      <dt>Confidence (confiança)</dt>
+      <dd>75%.</dd>
+      <dt>Complexity (complexidade)</dt>
+      <dd>Medium. Exige a lista de exclusão no cache e a tela da Caixa.</dd>
+    </dl>
+  </article>
+
+  <article class="idea" id="i5">
+    <header>
+      <span class="chip id">I5.</span>
+      <h3>Sistema visual comum: Etiqueta de Disco e cabeçalho fixo com o caminho de volta</h3>
+      <span class="chip">Eixo 2</span><span class="chip ok">Confiança 75%</span><span class="chip">Complexidade Low</span>
+    </header>
+    <dl>
+      <dt>Description (descrição)</dt>
+      <dd>Duas peças de infraestrutura que toda tela herda. A <strong>Etiqueta de Disco</strong> é um único widget: capa quadrada + nome em letras grandes + uma cor sólida derivada do nome. Aparece pequena na estante, como janela do visor do rádio, no topo da tela de playlist e nas confirmações; o idoso aprende o que é "um disco" uma vez. O <strong>cabeçalho fixo</strong> tem a mesma altura e posição em toda tela: à esquerda o botão grande "← Voltar para a estante" (na Estante, o título "Minha estante"), no centro o nome da tela em 28 a 36 px ("Tocando agora", "Montando um disco novo").</dd>
+      <dt>Axis (eixo)</dt>
+      <dd>2. A estante.</dd>
+      <dt>Basis (base)</dt>
+      <dd><code>direct:</code> a regra de capa substituta determinística (CLAUDE.md, seção 8) e a regra 4 do ADR-0002: "Sempre há um caminho de volta visível em qualquer tela que não seja a Estante, e a tela atual é identificável de relance." <code>external:</code> "skeuomorphic reassurance", manter pistas visuais familiares e constantes (Kreps, Burmeister e Blaynee 2016; a conferir).</dd>
+      <dt>Rationale (justificativa)</dt>
+      <dd>É uma decisão de layout tomada uma vez que resolve a orientação em todas as telas, atuais e futuras. Qualquer tela nova herda o cabeçalho e já cumpre a regra do caminho de volta. Também é um ponto único para testar na banca.</dd>
+      <dt>Downsides (custos e opções em aberto)</dt>
+      <dd>
+        <ul>
+          <li>A regra 4 já pede quase isso; o ganho está em transformá-la em peça compartilhada, não em ideia nova.</li>
+          <li><strong>Cor por tela</strong> (variante) ajuda a reconhecer o lugar, mas não pode ser o único sinal; o texto da placa continua.</li>
+          <li><strong>Cor do rádio acompanhando o disco</strong> arrisca o contraste de 7:1 e a identidade do aparelho; precisa de cores derivadas já validadas.</li>
+          <li>A mesma etiqueta em muitos lugares pode fazer o idoso se perguntar "isto é um botão?"; só o que é clicável deve parecer clicável.</li>
+        </ul>
+      </dd>
+      <dt>Confidence (confiança)</dt>
+      <dd>75%.</dd>
+      <dt>Complexity (complexidade)</dt>
+      <dd>Low. Um widget e um cabeçalho reutilizados.</dd>
+    </dl>
+  </article>
+
+  <article class="idea" id="i6">
+    <header>
+      <span class="chip id">I6.</span>
+      <h3>Etiqueta de papel: renomear e trocar a capa com prévia ao vivo</h3>
+      <span class="chip">Eixo 5</span><span class="chip warn">Confiança 65%</span><span class="chip warn">Complexidade Medium</span>
+    </header>
+    <dl>
+      <dt>Description (descrição)</dt>
+      <dd>Dentro de um disco, um botão "Mexer no disco" abre uma tela com a <strong>etiqueta do disco</strong> como um papel branco: o nome atual em letras grandes e, abaixo, a capa atual com "Trocar a capa". Uma <strong>prévia mostra como o disco ficará na estante</strong>, atualizada a cada letra. Os botões são "Guardar" e "Deixar como estava"; fechar sem guardar equivale ao segundo. "Trocar a capa" abre uma gaveta com as imagens que o app já tem (a embutida, as da pasta e a capa desenhada) como cartões grandes de um clique. Um botão "Como era antes" desfaz o último ajuste.</dd>
+      <dt>Axis (eixo)</dt>
+      <dd>5. Cuidar da coleção.</dd>
+      <dt>Basis (base)</dt>
+      <dd><code>direct:</code> a ordem das capas já definida (embutida; folder.jpg/cover.jpg/front.jpg; capa substituta) alimenta a gaveta sem pedir arquivos externos (CLAUDE.md, seção 8). <code>external:</code> pistas visuais familiares tranquilizam idosos (Kreps et al. 2016, a conferir). O ADR-0002 admite o risco de que "renomear" não caiba naturalmente na metáfora; esta ideia ataca esse risco.</dd>
+      <dt>Rationale (justificativa)</dt>
+      <dd>Mostrar o resultado antes de guardar e permitir voltar reduz o medo de errar, sem diálogo de confirmação. Usa as imagens que o app já tem, então o idoso não navega em pastas.</dd>
+      <dt>Downsides (custos e opções em aberto)</dt>
+      <dd>
+        <ul>
+          <li>Renomear exige digitar, o que é difícil com tremor ou pouca prática; sugestões do MusicBrainz (quando houver internet) podem ajudar, mas dependem do marco da rede opcional.</li>
+          <li>"Como era antes" exige guardar o valor anterior e definir por quanto tempo.</li>
+          <li>A imagem "etiqueta de caneta / CD-R gravado em casa" (variante mais lúdica) não foi testada como familiar para o seu pai.</li>
+          <li>Essa é a ideia com a metáfora mais frágil; precisa ser validada no preview e com o usuário.</li>
+        </ul>
+      </dd>
+      <dt>Confidence (confiança)</dt>
+      <dd>65%.</dd>
+      <dt>Complexity (complexidade)</dt>
+      <dd>Medium. Tela de edição com prévia e armazenamento do valor anterior.</dd>
+    </dl>
+  </article>
+
+  <article class="idea" id="i7">
+    <header>
+      <span class="chip id">I7.</span>
+      <h3>Estante que lembra: retomada visível, lugar vazio e "Ouvidos há pouco"</h3>
+      <span class="chip">Eixo 2</span><span class="chip warn">Confiança 60%</span><span class="chip warn">Complexidade Medium</span>
+    </header>
+    <dl>
+      <dt>Description (descrição)</dt>
+      <dd>Três pequenas peças que respondem a "onde está o que eu estava ouvindo?". <strong>Retomada visível:</strong> ao abrir, se havia música, o app abre em Tocando agora com "Você parou na faixa 4" e um botão enorme "Continuar a ouvir"; nada toca sozinho sem o clique. <strong>Lugar vazio:</strong> o disco que está no rádio some da prateleira, deixando um espaço escuro "Em uso no rádio"; "Guardar o disco na estante" devolve a capa ao mesmo lugar. <strong>Ouvidos há pouco:</strong> a primeira prateleira mostra 4 a 6 discos recentes, antes da ordem alfabética.</dd>
+      <dt>Axis (eixo)</dt>
+      <dd>2. A estante.</dd>
+      <dt>Basis (base)</dt>
+      <dd><code>direct:</code> "abre direto na Estante ou, se havia algo tocando, em Tocando agora, no ponto em que parou" e o mapa "voltar = guardar o disco na estante" (CLAUDE.md, seção 9; ADR-0002). <code>reasoned:</code> a maioria das pessoas ouve poucos discos repetidamente, então uma prateleira de recentes tira a busca do caminho; um espaço vazio responde "onde está o disco?" sem exigir memória. <code>external:</code> o que funciona nos players físicos simples (Juuke, rádio de dois knobs) é poucas coisas à vista.</dd>
+      <dt>Rationale (justificativa)</dt>
+      <dd>Reduz o "me sinto perdido" na tela inicial e torna menos crítica a decisão aberta sobre a ordem da estante (álbum ou artista), porque o caso comum não depende dela.</dd>
+      <dt>Downsides (custos e opções em aberto)</dt>
+      <dd>
+        <ul>
+          <li><strong>"Nada toca sozinho" é decisão sua:</strong> o CLAUDE.md fala em retomar "no ponto em que parou" sem dizer se retoma com som. Com som é mais mágico, mas pode assustar; com um clique é mais seguro.</li>
+          <li><strong>Lugar vazio:</strong> falta definir o que o clique no espaço faz (o natural é levar ao rádio).</li>
+          <li>Discos duplicados em duas prateleiras (recentes e alfabética) podem confundir.</li>
+          <li><strong>Opcionais para comparar:</strong> um mini-rádio no rodapé das outras telas (para pausar sem voltar ao rádio; duplica o botão Pausar), e um índice de letras de 64 px; a versão extrema "só 6 capas" esconde a coleção e é fraca.</li>
+        </ul>
+      </dd>
+      <dt>Confidence (confiança)</dt>
+      <dd>60%. Peças isoladas sólidas, mas o conjunto depende de decisões suas.</dd>
+      <dt>Complexity (complexidade)</dt>
+      <dd>Medium. Exige histórico de reprodução e estado do disco em uso.</dd>
+    </dl>
+  </article>
+</section>
+
+<section id="rejection-summary">
+  <div class="eyebrow">Descartes</div>
+  <h2>Rejection Summary</h2>
+  <p>De 48 ideias brutas, 29 candidatos distintos foram criticados por um verificador de contexto novo e depois por mim. Ideias duplicadas foram fundidas na versão mais forte e as demais foram cortadas pelas razões abaixo.</p>
+  <table>
+    <thead><tr><th>#</th><th>Ideia</th><th>Reason Rejected</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Rádio de um botão só, com o resto numa "tampa"</td><td>Basis refuted: esconde Anterior, Próxima e Volume, contra a lista de botões já decidida para Tocando agora. A base (Relish) esconde ajustes por outro motivo.</td></tr>
+      <tr><td>2</td><td>Estante e rádio na mesma tela (bandeja no topo)</td><td>Viola as telas e o "Voltar para a estante" já decididos; Urbano 2022 trata de tarefas em várias páginas, não de fundir telas. Só vale se você quiser reabrir essa decisão.</td></tr>
+      <tr><td>3</td><td>Estante só de capas, sem legenda</td><td>Contradiz "texto sempre presente"; a capa embutida pode não ter nome legível. A "lacuna" de prior art não é apoio.</td></tr>
+      <tr><td>4</td><td>Playlist como "fita mixtape" ("Para quem é esta fita?")</td><td>Troca a metáfora decidida (playlist = disco novo) por "fita". A ideia de sugerir um nome entrou na I2.</td></tr>
+      <tr><td>5</td><td>Estante em prateleiras com tabuinhas A–C e botões Subir/Descer no lugar da rolagem</td><td>Fraca: depende da ordem álbum/artista (decisão aberta) e ignora que a roda do mouse não é arrastar. O índice de letras ficou como opção da I7.</td></tr>
+      <tr><td>6</td><td>Passos numerados "1. Escolha 2. Nome 3. Capa"</td><td>Conflita com nome e capa sugeridos, que tiram dois passos do caminho crítico; base apenas <code>reasoned:</code>.</td></tr>
+      <tr><td>7</td><td>Disco-guia "Monte seu primeiro disco"</td><td>Item falso que some sozinho (mágica oculta) e redundante com o botão grande "Criar uma playlist" já decidido.</td></tr>
+      <tr><td>8</td><td>"Guardar esta música" dentro do rádio</td><td>Terceiro caminho que você não pediu; mexe na lista fechada de botões de Tocando agora (scope overrun). Pode voltar como opção, se quiser.</td></tr>
+      <tr><td>9</td><td>Etiqueta de caneta (capa substituta editável)</td><td>Sobrepõe a I6; a familiaridade do CD-R gravado em casa não está verificada.</td></tr>
+      <tr><td>10</td><td>Balcão de conserto / oficina de objetos (caneta, tesoura, caixa, porta)</td><td>Sobrepõe a I4 e a I6; a variante de objetos é metáfora pesada demais, e a analogia com o Slider Box (mesa de mixagem para demência) é frouxa.</td></tr>
+      <tr><td>11</td><td>Computador propõe capa e nome por cartões na estante</td><td>Cartões sem o idoso pedir são uma interrupção, contra a restrição 5; depende da rede opcional (marco M6). Reconsiderar quando o M6 existir.</td></tr>
+      <tr><td>12</td><td>Mini-rádio fixo no rodapé</td><td>Duplica o botão Pausar em outra tela; mantido só como variante opcional da I7.</td></tr>
+      <tr><td>13</td><td>Combinações "Sugerir, não perguntar", "O que toca está sempre localizado" e o par uma tela × duas telas</td><td>Soma de ideias sem ganho próprio ou dependente de ideias rejeitadas; o essencial entrou nas I2, I6 e I7.</td></tr>
+      <tr><td>-</td><td>axis: Cuidar da coleção (parte "adicionar disco novo")</td><td>Lacuna deliberada: nenhuma ideia sobrevivente cobre como o idoso traz discos novos para a estante. Só duas ideias descartadas tocaram nisso. Depende da pasta de música e do marco de copiar CDs (M7).</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<footer class="composition-signal">Composed 2026-11-26 by ce-ideate from CLAUDE.md, docs/adr/0002-modelos-mentais-e-autonomia.md, docs/adr/0003-rede-opcional-musicbrainz.md and a web research digest.</footer>
+
+</div>
+</body>
+</html>
