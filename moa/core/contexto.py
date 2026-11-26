@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Callable
 
 from moa.core import box, custom_albums
+from moa.core.custom_albums import RascunhoDePlaylist
 from moa.core.config import Preferencias
 from moa.core.covers import refresh_covers
 from moa.core.db import Database
@@ -38,6 +39,7 @@ class Contexto:
         self.montados: list[MixDisc] = []           # discos montados que estão na estante
         self.caixa: list = []                       # discos e discos montados na Caixa
         self.faixas_por_caminho: dict = {}
+        self.rascunho: RascunhoDePlaylist | None = None   # a playlist que está sendo montada
         self.miniaturas: dict[str, Path | None] = {}
         self.carregando = True              # a primeira varredura ainda não terminou
         self._ouvintes_da_colecao: list[Callable[[], None]] = []
@@ -72,6 +74,11 @@ class Contexto:
         self.caixa = sorted(camadas.caixa, key=lambda d: d.sort_key)
         for funcao in list(self._ouvintes_da_colecao):
             funcao()
+
+    def novo_rascunho(self) -> RascunhoDePlaylist:
+        nomes = [d.title for d in self.montados + self.caixa]
+        self.rascunho = RascunhoDePlaylist(nomes)
+        return self.rascunho
 
     def disco(self, album_id: str | None):
         """Acha um disco (da estante, montado ou da Caixa) pelo id."""

@@ -101,3 +101,37 @@ def test_mix_com_zero_faixas_resolvidas_continua_existindo(db, colecao):
     ca.criar(db, "Vazio", caminhos(colecao, "Boleros 1"))
     [disco] = ca.carregar(db, {})
     assert disco.tracks == ()
+
+
+# -- rascunho da playlist ------------------------------------------------------------------------
+
+def test_rascunho_marcacoes_sobrevivem_ao_filtro_e_ao_limpar_o_filtro(colecao):
+    _, discos, _ = colecao
+    r = ca.RascunhoDePlaylist([], date(2026, 11, 26))
+    a, b, c = (str(t.path) for t in (discos[0].tracks[0], discos[0].tracks[1], discos[1].tracks[0]))
+    for caminho in (a, b, c):
+        r.alternar(caminho)
+    r.busca = "Valsas 1"
+    assert [f.title for _, f in r.filtrar(discos)] == ["Valsas 1"]
+    r.busca = ""
+    assert len(r.filtrar(discos)) == 6 and r.marcadas == [a, b, c]
+    r.alternar(b)
+    assert r.marcadas == [a, c] and not r.esta_marcada(b)
+
+
+def test_rascunho_filtra_por_disco_e_ignora_acentos_e_maiusculas(make_track, tmp_path):
+    raiz = tmp_path / "m"
+    make_track(raiz / "A", "01.mp3", title="Coração Valente", album="A")
+    make_track(raiz / "B", "01.mp3", title="Outra", album="B")
+    discos = scan(raiz)
+    r = ca.RascunhoDePlaylist([])
+    r.busca = "CORACAO"
+    assert [f.title for _, f in r.filtrar(discos)] == ["Coração Valente"]
+    r.busca = ""
+    r.disco_do_filtro = next(d.id for d in discos if d.title == "B")
+    assert [f.title for _, f in r.filtrar(discos)] == ["Outra"]
+
+
+def test_rascunho_ja_nasce_com_nome_sugerido_sem_repetir():
+    r = ca.RascunhoDePlaylist(["Meu disco de 26/11"], date(2026, 11, 26))
+    assert r.nome == "Meu disco de 26/11 (2)"

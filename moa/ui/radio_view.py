@@ -15,7 +15,7 @@ from gi.repository import Gtk  # noqa: E402
 
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.player import DEGRAU_MAXIMO  # noqa: E402
-from moa.ui.widgets import Capa, aviso, botao, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
+from moa.ui.widgets import aviso, capa_do_disco, botao, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
 
 LARGURA_PARA_EMPILHAR = 900
 
@@ -27,8 +27,8 @@ class RadioView:
         self.raiz.set_border_width(24)
         self.botao_principal: Gtk.Widget | None = None
         self.rotulo_do_tempo: Gtk.Label | None = None
-        # A tela de "montar disco" (U8) liga o botão "+" de cada música aqui.
-        self.ao_pedir_outro_disco = None
+        # O botão "+" de cada música abre o painel "Em qual disco?".
+        self.ao_pedir_outro_disco = self._pedir_outro_disco
         self._empilhado: bool | None = None
         self.raiz.connect("size-allocate", self._ao_mudar_de_tamanho)
         self.atualizar()
@@ -49,8 +49,8 @@ class RadioView:
         self.botao_principal = None
         self.rotulo_do_tempo = None
         visor = ctx.radio.visor()
-        if ctx.session.aviso is not None:
-            a = ctx.session.aviso
+        a = ctx.session.aviso
+        if a is not None and a.ancora is None:           # aviso com âncora aparece na linha da música
             self.raiz.pack_start(aviso(a.texto, ctx.session.desfazer if a.desfazer else None),
                                  False, False, 0)
         if visor is None:
@@ -87,8 +87,7 @@ class RadioView:
         moldura = caixa_h(14)
         moldura.get_style_context().add_class("moa-visor")
         disco = radio.disco
-        moldura.pack_start(Capa(disco, self.ctx.miniaturas.get(disco.id), 120),
-                           False, False, 0)
+        moldura.pack_start(capa_do_disco(self.ctx, disco, 120), False, False, 0)
         texto = caixa_v(4)
         texto.pack_start(rotulo(visor.linha_de_estado, "moa-forte"), False, False, 0)
         texto.pack_start(rotulo(visor.titulo, "moa-grande"), False, False, 0)
@@ -167,15 +166,20 @@ class RadioView:
         coluna = caixa_v(8)
         coluna.pack_start(rotulo("Músicas deste disco", "moa-grande"), False, False, 0)
         for i, musica in enumerate(disco.tracks):
+            moldura = caixa_v(6)
+            moldura.get_style_context().add_class("moa-linha")
             linha = caixa_h(8)
-            linha.get_style_context().add_class("moa-linha")
             if i == atual:
-                linha.get_style_context().add_class("moa-agora")
+                moldura.get_style_context().add_class("moa-agora")
             conteudo = caixa_h(12)
             conteudo.pack_start(rotulo(str(i + 1), "moa-forte", quebrar=False), False, False, 0)
             nomes = caixa_v(0)
             nomes.set_valign(Gtk.Align.CENTER)
             nomes.pack_start(rotulo(musica.title, xalign=0.0), False, False, 0)
+            if getattr(disco, "eh_montado", False):
+                origem = self.ctx.disco_de_origem(musica)
+                if origem is not None:
+                    nomes.pack_start(rotulo(f"do disco {origem.title}", "moa-nota"), False, False, 0)
             if i == atual:
                 nomes.pack_start(
                     rotulo("Tocando agora" if radio.tocando else "Parado aqui", "moa-nota"),
@@ -191,8 +195,17 @@ class RadioView:
                     botao("Colocar em outro disco", icone_nome="mais",
                           ao_clicar=lambda k=i: self.ao_pedir_outro_disco(k)),
                     False, False, 0)
-            coluna.pack_start(linha, False, False, 0)
+            moldura.pack_start(linha, False, False, 0)
+            a = self.ctx.session.aviso
+            if a is not None and a.ancora == str(musica.path):
+                moldura.pack_start(aviso(a.texto, self.ctx.session.desfazer if a.desfazer else None),
+                                   False, False, 0)
+            coluna.pack_start(moldura, False, False, 0)
         return coluna
+
+    def _pedir_outro_disco(self, indice: int) -> None:
+        self.ctx.session.acao()
+        self.ctx.session.abrir_painel_mais(self.ctx.radio.disco.tracks[indice])
 
     # -- tempo (chamado por um relógio da janela, sem redesenhar a tela) ------------------
 

@@ -172,6 +172,27 @@ button.moa-faixa:hover {{ background-color: {c['selbg']}; }}
 button.moa-faixa:focus {{ outline: 5px solid {c['focus']}; outline-offset: 3px; }}
 button.moa-faixa label {{ color: {c['ink']}; }}
 
+/* playlist: caixas de marcar */
+button.moa-marca {{ min-height: {ALVO_MINIMO_PX}px; padding: 6px 12px; background-image: none;
+                    background-color: {c['card']}; border: 2px solid {c['line']}; border-radius: 12px;
+                    box-shadow: none; }}
+button.moa-marca:hover {{ background-color: {c['selbg']}; }}
+button.moa-marca:focus {{ outline: 5px solid {c['focus']}; outline-offset: 3px; }}
+button.moa-marca label {{ color: {c['ink']}; }}
+button.moa-marca.moa-marcada {{ background-color: {c['selbg']}; border: 4px solid {c['green']}; }}
+.moa-caixinha {{ background-color: {c['card']}; border: 4px solid {c['ink']}; border-radius: 8px;
+                 min-width: 40px; min-height: 40px; }}
+button.moa-marcada .moa-caixinha {{ background-color: {c['green']}; border-color: {c['green']}; }}
+button.moa-marcada .moa-caixinha label {{ color: {c['white']}; }}
+button.moa-btn.moa-escolhida {{ background-color: {c['blue']}; border-color: {c['blue']}; color: {c['white']}; }}
+button.moa-btn.moa-escolhida label {{ color: {c['white']}; }}
+
+/* painel do "+" */
+.moa-veu {{ background-color: rgba(30, 25, 19, 0.6); padding: 20px; }}
+.moa-painel {{ background-color: {c['card']}; border: 4px solid {c['ink']}; border-radius: 16px; padding: 20px; }}
+.moa-novo {{ background-color: {c['card']}; border: 4px dashed {c['ink']}; border-radius: 6px; }}
+.moa-mais-grande {{ font-size: {round(48 * e)}px; font-weight: 800; }}
+
 /* escolhas (configurações, capas) */
 button.moa-opcao {{ min-height: {ALVO_MINIMO_PX}px; padding: 8px 16px; font-weight: 800;
                     background-image: none; background-color: {c['card']}; color: {c['ink']};

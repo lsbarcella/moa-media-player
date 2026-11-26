@@ -168,6 +168,54 @@ class Capa(Gtk.DrawingArea):
         return False
 
 
+class Mosaico(Gtk.DrawingArea):
+    """Capa de disco montado: 2x2 quadrados com as cores dos discos de onde vêm as faixas."""
+
+    def __init__(self, cores: list[str], lado: int = LADO_DA_CAPA):
+        super().__init__()
+        self.lado = lado
+        self.cores = cores or ["#444444"]
+        self.set_size_request(lado, lado)
+        self.set_halign(Gtk.Align.CENTER)
+        self.get_style_context().add_class("moa-capa")
+        self.connect("draw", self._desenhar)
+
+    def _desenhar(self, _area, cr) -> bool:
+        metade = self.lado / 2
+        for i in range(4):
+            cor = self.cores[i % len(self.cores)]
+            cr.set_source_rgb(*(int(cor[k:k + 2], 16) / 255 for k in (1, 3, 5)))
+            cr.rectangle((i % 2) * metade, (i // 2) * metade, metade, metade)
+            cr.fill()
+        if self.lado >= 120:                        # a etiqueta "Montado" só cabe nas capas grandes
+            cr.set_source_rgb(0.12, 0.1, 0.07)
+            cr.rectangle(0, self.lado - 30, self.lado, 30)
+            cr.fill()
+            cr.set_source_rgb(1, 1, 1)
+            layout = PangoCairo.create_layout(cr)
+            fonte = Pango.FontDescription("Sans Bold")
+            fonte.set_absolute_size(20 * Pango.SCALE)
+            layout.set_font_description(fonte)
+            layout.set_text("Montado", -1)
+            cr.move_to(8, self.lado - 28)
+            PangoCairo.show_layout(cr, layout)
+        return False
+
+
+def capa_do_disco(contexto, disco, lado: int = LADO_DA_CAPA) -> Gtk.Widget:
+    """A capa certa para o disco: miniatura/substituta (disco) ou mosaico (disco montado)."""
+    if getattr(disco, "eh_montado", False):
+        cores = []
+        for faixa in disco.tracks:
+            origem = contexto.disco_de_origem(faixa)
+            if origem is not None:
+                cor = substitute_cover(origem).background
+                if cor not in cores:
+                    cores.append(cor)
+        return Mosaico(cores, lado)
+    return Capa(disco, contexto.miniaturas.get(disco.id), lado)
+
+
 def aviso(texto: str, ao_desfazer=None) -> Gtk.Widget:
     """Faixa de aviso calmo. Fica até a próxima ação do usuário."""
     caixa = caixa_h(14)

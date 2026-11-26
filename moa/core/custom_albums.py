@@ -14,7 +14,8 @@ from datetime import date
 from typing import Iterable, Mapping
 
 from moa.core.db import Database
-from moa.core.models import MixDisc, Track
+from moa.core.models import Album, MixDisc, Track
+from moa.core.textutil import fold
 
 log = logging.getLogger(__name__)
 
@@ -76,3 +77,42 @@ def carregar(db: Database, faixas_por_caminho: Mapping[str, Track]) -> list[MixD
             faixas.append(faixa)
         discos.append(MixDisc(id=mix_id, title=nome, tracks=tuple(faixas)))
     return discos
+
+
+class RascunhoDePlaylist:
+    """O disco novo que o usuário está montando, antes de guardar. Sem GTK.
+
+    As músicas marcadas ficam guardadas AQUI, fora da lista que aparece na tela:
+    filtrar por disco ou por texto não desmarca nada (decisão do preview, I2).
+    """
+
+    TODOS = "todos"
+
+    def __init__(self, nomes_existentes: Iterable[str], hoje: date | None = None):
+        self.marcadas: list[str] = []          # caminhos, na ordem em que foram marcadas
+        self.disco_do_filtro: str = self.TODOS
+        self.busca: str = ""
+        self.nome: str = sugerir_nome(nomes_existentes, hoje)
+        self.renomeando = False
+
+    def alternar(self, caminho: str) -> None:
+        if caminho in self.marcadas:
+            self.marcadas.remove(caminho)
+        else:
+            self.marcadas.append(caminho)
+
+    def esta_marcada(self, caminho: str) -> bool:
+        return caminho in self.marcadas
+
+    def filtrar(self, discos: Iterable[Album]) -> list[tuple[Album, Track]]:
+        """Pares (disco, faixa) que passam no filtro de disco e no texto digitado."""
+        consulta = fold(self.busca.strip())
+        achados = []
+        for disco in discos:
+            if self.disco_do_filtro != self.TODOS and disco.id != self.disco_do_filtro:
+                continue
+            for faixa in disco.tracks:
+                if consulta and consulta not in fold(faixa.title) and consulta not in fold(disco.title):
+                    continue
+                achados.append((disco, faixa))
+        return achados

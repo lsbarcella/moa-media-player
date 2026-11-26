@@ -40,6 +40,7 @@ TITULOS = {
 class Aviso:
     texto: str
     desfazer: Callable[[], None] | None = None   # se existir, o aviso mostra "Desfazer"
+    ancora: str | None = None                    # se existir, o aviso aparece na linha dessa faixa
 
 
 class Session:
@@ -48,6 +49,7 @@ class Session:
         self.anterior = Tela.ESTANTE
         self.aviso: Aviso | None = None
         self.disco_aberto_id: str | None = None      # disco que a tela de editar está mexendo
+        self.faixa_do_painel = None                  # faixa cujo painel "+" está aberto (ou None)
         self._ouvintes: list[Callable[[], None]] = []
 
     # -- quem quer saber quando algo mudou -----------------------------------------
@@ -64,6 +66,7 @@ class Session:
     def ir_para(self, tela: Tela) -> None:
         """Muda de tela. É uma ação do usuário, então apaga o aviso."""
         self.aviso = None
+        self.faixa_do_painel = None
         if tela != self.tela:
             self.anterior = self.tela
             self.tela = tela
@@ -86,8 +89,20 @@ class Session:
             self.aviso = None
             self._avisar_que_mudou()
 
-    def mostrar_aviso(self, texto: str, desfazer: Callable[[], None] | None = None) -> None:
-        self.aviso = Aviso(texto, desfazer)
+    def mostrar_aviso(self, texto: str, desfazer: Callable[[], None] | None = None,
+                      ancora: str | None = None) -> None:
+        self.aviso = Aviso(texto, desfazer, ancora)
+        self._avisar_que_mudou()
+
+    # -- painel "Colocar em outro disco" (o "+" de cada música) -------------------------
+
+    def abrir_painel_mais(self, faixa) -> None:
+        self.aviso = None
+        self.faixa_do_painel = faixa
+        self._avisar_que_mudou()
+
+    def fechar_painel_mais(self) -> None:
+        self.faixa_do_painel = None
         self._avisar_que_mudou()
 
     def desfazer(self) -> None:

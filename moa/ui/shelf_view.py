@@ -16,7 +16,7 @@ from gi.repository import Gtk  # noqa: E402
 
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.session import Tela  # noqa: E402
-from moa.ui.widgets import Capa, aviso, botao, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
+from moa.ui.widgets import aviso, botao, capa_do_disco, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
 
 TEXTO_CARREGANDO = "Estou procurando os seus discos..."
 TEXTO_VAZIO = ("Ainda não há discos aqui. Quando houver músicas na pasta de música, "
@@ -43,7 +43,7 @@ class ShelfView:
             self.raiz.pack_start(aviso(a.texto, ctx.session.desfazer if a.desfazer else None),
                                  False, False, 0)
 
-        if not ctx.discos:
+        if not ctx.discos and not ctx.montados:
             texto = TEXTO_CARREGANDO if ctx.carregando else TEXTO_VAZIO
             cartao = caixa_v(0)
             cartao.get_style_context().add_class("moa-cartao")
@@ -52,11 +52,26 @@ class ShelfView:
             self.raiz.show_all()
             return
 
+        self._desenhar_acoes()
         self._desenhar_continuar()
         recentes = [d for d in (ctx.disco(i) for i in ctx.memoria.recentes(ctx.ids_dos_discos)) if d]
         self._desenhar_prateleira("Ouvidos há pouco", recentes)
         self._desenhar_prateleira("Meus discos", ctx.discos)
+        self._desenhar_prateleira("Discos que montei", ctx.montados)
         self.raiz.show_all()
+
+    def _desenhar_acoes(self) -> None:
+        linha = caixa_h(14)
+        criar = botao("Criar uma playlist", "moa-pri", "moa-grande", icone_nome="mais",
+                      ao_clicar=self._criar_playlist)
+        linha.pack_start(criar, False, False, 0)
+        self.botao_principal = criar
+        self.raiz.pack_start(linha, False, False, 0)
+
+    def _criar_playlist(self) -> None:
+        self.ctx.session.acao()
+        self.ctx.novo_rascunho()
+        self.ctx.session.ir_para(Tela.PLAYLIST)
 
     def _desenhar_continuar(self) -> None:
         ctx = self.ctx
@@ -119,7 +134,7 @@ class ShelfView:
             peca.pack_start(rotulo("Ir ao rádio", "moa-forte", centro=True), False, False, 0)
             clique = lambda: ctx.session.ir_para(Tela.RADIO)
         else:
-            peca.pack_start(Capa(disco, ctx.miniaturas.get(disco.id)), False, False, 0)
+            peca.pack_start(capa_do_disco(ctx, disco), False, False, 0)
             peca.pack_start(rotulo(disco.title, "moa-forte", centro=True, largura_maxima=14), False, False, 0)
             clique = lambda d=disco: self._pegar(d)
         b = Gtk.Button()

@@ -24,6 +24,8 @@ from gi.repository import Gdk, GLib, Gtk  # noqa: E402
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.session import Tela  # noqa: E402
 from moa.ui import theme  # noqa: E402
+from moa.ui.playlist_view import PlaylistView  # noqa: E402
+from moa.ui.plus_panel import PlusPanel  # noqa: E402
 from moa.ui.radio_view import RadioView  # noqa: E402
 from moa.ui.settings_view import SettingsView  # noqa: E402
 from moa.ui.shelf_view import ShelfView  # noqa: E402
@@ -46,7 +48,12 @@ class Conteudo:
 
         self.pilha = Gtk.Stack()
         self.pilha.set_transition_type(Gtk.StackTransitionType.NONE)
-        self.raiz.pack_start(self.pilha, True, True, 0)
+        # O painel do "+" fica POR CIMA da tela (dentro da janela, nunca uma janela nova).
+        self.sobreposicao = Gtk.Overlay()
+        self.sobreposicao.add(self.pilha)
+        self.plus = PlusPanel(contexto)
+        self.sobreposicao.add_overlay(self.plus.raiz)
+        self.raiz.pack_start(self.sobreposicao, True, True, 0)
 
         self.mini = caixa_h(14)
         self.mini.get_style_context().add_class("moa-mini")
@@ -56,6 +63,8 @@ class Conteudo:
         self.registrar(Tela.ESTANTE, ShelfView(contexto))
         self.registrar(Tela.RADIO, RadioView(contexto))
         self.registrar(Tela.CONFIGURACOES, SettingsView(contexto))
+        self.registrar(Tela.PLAYLIST, PlaylistView(contexto))
+        self._ultima_tela = None
 
         contexto.session.ao_mudar(self.redesenhar)
         contexto.radio.ao_mudar(self.redesenhar)
@@ -82,12 +91,16 @@ class Conteudo:
         sessao = self.ctx.session
         self._desenhar_cabecalho()
         visao = self.telas.get(sessao.tela, self.telas[Tela.ESTANTE])
+        if sessao.tela != self._ultima_tela and hasattr(visao, "ao_entrar"):
+            visao.ao_entrar()
+        self._ultima_tela = sessao.tela
         visao.atualizar()
+        self.plus.atualizar()
         self.pilha.set_visible_child_name(
             sessao.tela.value if sessao.tela in self.telas else Tela.ESTANTE.value)
         self._desenhar_mini()
         self.raiz.show_all()
-        alvo = visao.foco_inicial()
+        alvo = self.plus.primeiro_botao if sessao.faixa_do_painel is not None else visao.foco_inicial()
         if alvo is not None:
             alvo.grab_focus()
 
@@ -149,6 +162,15 @@ class Conteudo:
             return False
         if evento.state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.MOD1_MASK):
             return False
+        if self.ctx.session.faixa_do_painel is not None and evento.keyval == Gdk.KEY_Escape:
+            self.ctx.session.fechar_painel_mais()
+            return True
+        if self.ctx.session.tela == Tela.PLAYLIST:
+            codigo = Gdk.keyval_to_unicode(evento.keyval)
+            if codigo and chr(codigo).isprintable():
+                # Quem digita na tela de montar disco quer procurar: a letra vai direto para a busca.
+                self.telas[Tela.PLAYLIST].digitar(chr(codigo))
+                return True
         radio = self.ctx.radio
         if not radio.tem_disco:
             return False
