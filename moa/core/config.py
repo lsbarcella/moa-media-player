@@ -102,3 +102,28 @@ def salvar(config: Config, caminho: Path | None = None) -> None:
         except OSError:
             pass
         raise
+
+
+class Preferencias:
+    """A configuração atual + onde ela mora. Quem muda uma opção chama `mudar`.
+
+    Grava na hora (troca atômica) e avisa quem quer saber (por exemplo, a janela,
+    que troca o tema). Se a gravação falhar, o app segue com o valor na memória.
+    """
+
+    def __init__(self, caminho: Path | None = None):
+        self._caminho = caminho or caminho_padrao()
+        self.config = carregar(self._caminho)
+        self._ouvintes = []
+
+    def ao_mudar(self, funcao) -> None:
+        self._ouvintes.append(funcao)
+
+    def mudar(self, **mudancas) -> None:
+        self.config = _validar({**asdict(self.config), **mudancas})
+        try:
+            salvar(self.config, self._caminho)
+        except OSError as erro:
+            log.warning("não consegui gravar as preferências: %s", erro)
+        for funcao in list(self._ouvintes):
+            funcao()
