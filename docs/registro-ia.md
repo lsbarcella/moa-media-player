@@ -54,3 +54,9 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Pedido:** o autor criou o repositório público `lsbarcella/moa-media-player` com a licença GNU GPL v3 (quer software livre) e pediu o envio do trabalho para lá.
 - **Feito:** o histórico local foi colocado depois do commit inicial do remoto (`LICENSE`), com `git rebase`, sem conflitos e com os 145 testes passando. Conferida a compatibilidade das dependências com a GPL v3. O mutagen aparece como "GPL-2" no pacote do Debian, mas o código-fonte e os metadados dizem "versão 2 ou posterior", então é compatível. Criados o ADR-0009, a seção "Licença" do README e a restrição 7 do CLAUDE.md.
 - **Pendências para o autor:** escolher entre "somente GPL v3" e "GPL v3 ou posterior" antes de pôr cabeçalhos nos arquivos-fonte; definir a licença da arte do ícone.
+
+## 26/11/2026 — Correção da identidade nos commits
+
+- **Problema:** os commits foram gravados com um e-mail do autor que não era o da conta do GitHub, então o GitHub não ligava os commits à conta (sem foto), e esse e-mail ficou público no histórico. A causa foi a configuração local do git, que a IA não conferiu antes do primeiro push.
+- **Correção (autorizada pelo autor):** configurado o e-mail da conta do GitHub, reescrito o autor dos 14 commits (conteúdo e datas de autoria preservados, conferidos por comparação das árvores) e feito `force push` com trava de segurança.
+- **Lição para a IA:** conferir `git config user.email` e perguntar ao autor se é o e-mail certo antes do primeiro push para um repositório público.
