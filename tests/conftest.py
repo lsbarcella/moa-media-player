@@ -52,6 +52,23 @@ def audio_base(tmp_path_factory):
 
 
 @pytest.fixture
+def make_image():
+    """Cria uma imagem de verdade (jpg ou png) de uma cor só, no tamanho pedido."""
+    gi.require_version("GdkPixbuf", "2.0")
+    from gi.repository import GdkPixbuf
+
+    def _criar(destino: Path, largura: int = 40, altura: int = 40) -> Path:
+        destino.parent.mkdir(parents=True, exist_ok=True)
+        imagem = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, False, 8, largura, altura)
+        imagem.fill(0xCC3300FF)
+        formato = "jpeg" if destino.suffix.lower() in (".jpg", ".jpeg") else "png"
+        imagem.savev(str(destino), formato, [], [])
+        return destino
+
+    return _criar
+
+
+@pytest.fixture
 def make_track(audio_base):
     """Cria um arquivo de música de verdade, com as tags que você passar.
 
