@@ -28,10 +28,10 @@ _CODIFICADORES = {
 }
 
 
-def _gerar_audio(destino: Path) -> None:
+def _gerar_audio(destino: Path, buffers: int = 4) -> None:
     codificador = _CODIFICADORES[destino.suffix]
     pipeline = Gst.parse_launch(
-        "audiotestsrc num-buffers=4 samplesperbuffer=1024 ! audioconvert ! "
+        f"audiotestsrc num-buffers={buffers} samplesperbuffer=1024 ! audioconvert ! "
         f'audioresample ! {codificador} ! filesink location="{destino}"'
     )
     pipeline.set_state(Gst.State.PLAYING)
@@ -53,6 +53,14 @@ def audio_base(tmp_path_factory):
         _gerar_audio(arquivo)
         modelos[extensao] = arquivo.read_bytes()
     return modelos
+
+
+@pytest.fixture(scope="session")
+def faixa_longa(tmp_path_factory) -> Path:
+    """Um .wav de uns 4,6 segundos, para testar pausa e posição no meio da faixa."""
+    destino = tmp_path_factory.mktemp("faixa_longa") / "longa.wav"
+    _gerar_audio(destino, buffers=200)
+    return destino
 
 
 @pytest.fixture
