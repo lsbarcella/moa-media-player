@@ -59,6 +59,7 @@ Mapa de metáforas (ponto de partida, a refinar com o autor; ver ADR-0002):
 4. **Compatível com Python 3.10 ou mais recente** (Mint 21 usa 3.10; Mint 22 usa 3.12).
 5. **Nenhuma mensagem técnica para o idoso.** Nada de stack trace, diálogo de erro com jargão ou janela modal inesperada.
 6. **Nada de função que exija outra pessoa.** Se algo parece "difícil demais" para o idoso, redesenhe dentro da metáfora, não esconda atrás de um modo.
+7. **Software livre (GNU GPL v3).** Só use dependências, código e imagens com licença compatível, e confira a licença no ADR que introduzir cada novidade. Não copie trechos de fonte proprietária nem de GPL v2 somente. A arte do ícone deve ser original ou de licença livre (ADR-0009).
 
 ## 6. Stack (ver `docs/adr/0001-escolha-da-stack.md`)
 
@@ -218,6 +219,7 @@ O `tools/measure.sh` deve medir esses números de forma repetível, por exemplo 
 - O app abre como **janela de programa normal** (não tela cheia).
 - MusicBrainz é opcional e oportunista; o app funciona 100% offline.
 - Este escopo vale para o MVP.
+- **Licença: GNU GPL versão 3** (software livre), com o repositório público `lsbarcella/moa-media-player` no GitHub. Ver ADR-0009.
 - **Nome: Moa Media Player.** O autor escolheu o nome completo, sabendo que "Media Player" é genérico e em inglês. Pacote `moa`, ID `br.tcc.Moa`.
 - **Expansão futura:** depois do MVP, o autor pretende expandir para vídeos e fotos. Vídeo num notebook antigo é bem mais pesado que áudio e exigirá medição e um ADR antes de qualquer promessa.
 - **Audição:** o rádio terá um botão **"Voz mais clara"** (liga/desliga, estado em texto), que reforça agudos e voz. É a opção B1 do ADR-0004; pode evoluir para um controle "Tom" (B2) se o teste mostrar que não basta.
@@ -239,6 +241,7 @@ O `tools/measure.sh` deve medir esses números de forma repetível, por exemplo 
 - Detalhe de pesquisa: tratar o skeuomorfismo como **hipótese com evidência mista** (Urbano 2022 a favor, Ellis & Marshall 2019 contra), a validar com o usuário.
 
 **Em aberto:**
+- Licença: "somente GPL v3" ou "GPL v3 ou posterior" (decide os cabeçalhos dos arquivos-fonte), e a licença da arte do ícone (ADR-0009).
 - Valores do ajuste "Voz mais clara" (o estado padrão é desativado); precisam ser testados com ele ouvindo.
 - **Desenho visual dos botões, dos ícones e das telas** (inclusive da manutenção da coleção: adicionar, renomear, trocar capa, remover). Será explorado com `ce-ideate`, seguido de um preview em HTML.
 - Confirmação ao fechar pelo X (por padrão, não há).

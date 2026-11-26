@@ -48,3 +48,9 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Feito:** pacote renomeado de `estante` para `moa`, application ID `br.tcc.Moa`, comando `python3 -m moa`, título da janela, README, CLAUDE.md, ADR-0008 e o preview (agora `docs/preview/moa-preview.html`). A tela inicial continua se chamando "Estante". A ideação (`docs/ideation/`) foi mantida como registro datado, com o nome antigo.
 - **Verificação:** 145 testes passando; o app abre (rodou até o timeout). Uma busca web limitada não achou aplicativo com o mesmo nome; a marca não foi consultada. A IA avisou que "Moa" evoca no Brasil o Mestre Moa do Katendê, o que não é conflito de nome.
 - **Tropeço corrigido:** o primeiro commit da renomeação saiu só com os renomes de arquivo, sem as trocas de import, por um erro de comando da IA (o comando listava a pasta antiga, que não existia mais). Foi percebido antes de qualquer envio e corrigido com `--amend`.
+
+## 26/11/2026 — Licença GPL v3 e repositório no GitHub
+
+- **Pedido:** o autor criou o repositório público `lsbarcella/moa-media-player` com a licença GNU GPL v3 (quer software livre) e pediu o envio do trabalho para lá.
+- **Feito:** o histórico local foi colocado depois do commit inicial do remoto (`LICENSE`), com `git rebase`, sem conflitos e com os 145 testes passando. Conferida a compatibilidade das dependências com a GPL v3. O mutagen aparece como "GPL-2" no pacote do Debian, mas o código-fonte e os metadados dizem "versão 2 ou posterior", então é compatível. Criados o ADR-0009, a seção "Licença" do README e a restrição 7 do CLAUDE.md.
+- **Pendências para o autor:** escolher entre "somente GPL v3" e "GPL v3 ou posterior" antes de pôr cabeçalhos nos arquivos-fonte; definir a licença da arte do ícone.

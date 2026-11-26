@@ -26,6 +26,11 @@ python3 -m moa
 python3 -m pytest
 ```
 
+## Licença
+
+Moa Media Player é **software livre**, licenciado sob a **GNU General Public License versão 3**.
+O texto completo está em [LICENSE](LICENSE). Decisão registrada em `docs/adr/0009-licenca-gpl-v3.md`.
+
 ## Documentação
 
 - `docs/adr/`: registros de decisão de arquitetura
