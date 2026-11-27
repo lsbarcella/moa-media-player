@@ -40,7 +40,7 @@ PALETAS: dict[str, dict[str, str]] = {
 
 # Nome mostrado ao usuário para cada paleta (sem jargão) e as três cores da amostra.
 ROTULOS_DAS_PALETAS = {
-    "normal": "Cores normais",
+    "normal": "Cores padrão",
     "vermelho-verde": "Dificuldade com vermelho e verde",
     "azul-amarelo": "Dificuldade com azul e amarelo",
     "preto-e-branco": "Preto e branco, bem forte",

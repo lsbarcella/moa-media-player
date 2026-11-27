@@ -26,7 +26,7 @@ O CLAUDE.md deixava em aberto se haveria um controle de tamanho da letra visíve
 Adotar a C:
 
 - Um botão **"Configurações"** (texto sempre visível, de no mínimo 64 px) fica no cabeçalho, fora da tela de Configurações.
-- A tela de Configurações tem o **tamanho da letra** (Normal, Grande e Maior, com um exemplo ao vivo) e as **cores**: cores normais, dificuldade com vermelho e verde, dificuldade com azul e amarelo, e preto e branco bem forte. Os nomes evitam jargão ("protanopia" e similares não aparecem).
+- A tela de Configurações tem o **tamanho da letra** (Normal, Grande e Maior, com um exemplo ao vivo) e as **cores**: cores padrão, dificuldade com vermelho e verde, dificuldade com azul e amarelo, e preto e branco bem forte. Os nomes evitam jargão ("protanopia" e similares não aparecem).
 - O botão de volta da tela de Configurações diz **"Voltar para onde eu estava"**, porque ela abre em cima de qualquer tela.
 - Todas as paletas mantêm contraste de pelo menos 7:1 (conferido por cálculo).
 - O app **nunca usa só a cor** para comunicar algo: estado, seleção e volume têm sempre texto, forma ou posição. A configuração de cores é uma camada extra, não a base.
