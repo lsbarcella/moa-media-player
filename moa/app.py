@@ -4,6 +4,7 @@
 
 """Aplicação GTK. Gtk.Application garante instância única via D-Bus."""
 
+import logging
 import os
 from pathlib import Path
 
@@ -12,6 +13,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gio, GLib, Gtk  # noqa: E402
 
+from moa.core import autostart, logsetup  # noqa: E402
 from moa.core.config import Preferencias  # noqa: E402
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.db import Database  # noqa: E402
@@ -45,6 +47,24 @@ class MoaApp(Gtk.Application):
             flags=Gio.ApplicationFlags.FLAGS_NONE,
         )
         self.contexto: Contexto | None = None
+
+    def do_startup(self) -> None:
+        """Roda uma vez, no primeiro processo (as aberturas seguintes só pedem a janela)."""
+        Gtk.Application.do_startup(self)
+        dados = pasta_de_dados()
+        logsetup.configurar_log(dados)
+        logsetup.instalar_gancho_de_excecao(self._avisar_falha)
+        logging.getLogger(__name__).info("Moa Media Player iniciado")
+        autostart.garantir(Path(GLib.get_user_config_dir()), dados)
+
+    def _avisar_falha(self) -> None:
+        """Mostra a frase calma. Pode vir de outra thread, então passa pela principal."""
+        GLib.idle_add(self._mostrar_falha)
+
+    def _mostrar_falha(self) -> bool:
+        if self.contexto is not None:
+            self.contexto.session.mostrar_falha(logsetup.MSG_FALHA_INESPERADA)
+        return False        # False = não repetir
 
     def do_activate(self) -> None:
         # Se a janela já existe (app aberto de novo), só a traz para frente.

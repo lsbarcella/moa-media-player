@@ -25,13 +25,14 @@ from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.session import Tela  # noqa: E402
 from moa.ui import theme  # noqa: E402
 from moa.ui.box_view import BoxView  # noqa: E402
+from moa.ui.inibidor import Inibidor  # noqa: E402
 from moa.ui.edit_view import EditView  # noqa: E402
 from moa.ui.playlist_view import PlaylistView  # noqa: E402
 from moa.ui.plus_panel import PlusPanel  # noqa: E402
 from moa.ui.radio_view import RadioView  # noqa: E402
 from moa.ui.settings_view import SettingsView  # noqa: E402
 from moa.ui.shelf_view import ShelfView  # noqa: E402
-from moa.ui.widgets import botao, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
+from moa.ui.widgets import aviso, botao, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
 
 SEGUNDOS_ENTRE_GRAVACOES = 5
 
@@ -47,6 +48,10 @@ class Conteudo:
         self.cabecalho = caixa_h(16)
         self.cabecalho.get_style_context().add_class("moa-cabecalho")
         self.raiz.pack_start(self.cabecalho, False, False, 0)
+
+        # Faixa de falha inesperada (M5): aparece em qualquer tela, logo abaixo do cabeçalho.
+        self.area_da_falha = caixa_v(0)
+        self.raiz.pack_start(self.area_da_falha, False, False, 0)
 
         self.pilha = Gtk.Stack()
         self.pilha.set_transition_type(Gtk.StackTransitionType.NONE)
@@ -94,6 +99,7 @@ class Conteudo:
     def redesenhar(self) -> None:
         sessao = self.ctx.session
         self._desenhar_cabecalho()
+        self._desenhar_falha()
         visao = self.telas.get(sessao.tela, self.telas[Tela.ESTANTE])
         if sessao.tela != self._ultima_tela and hasattr(visao, "ao_entrar"):
             visao.ao_entrar()
@@ -128,6 +134,14 @@ class Conteudo:
         self.cabecalho.pack_start(rotulo(sessao.titulo, "moa-titulo", centro=True,
                                          quebrar=False), True, True, 0)
         self.cabecalho.pack_end(direita, False, False, 0)
+
+    def _desenhar_falha(self) -> None:
+        limpar(self.area_da_falha)
+        texto = self.ctx.session.falha
+        if texto is None:
+            return
+        self.area_da_falha.pack_start(aviso(texto), False, False, 0)
+        self.area_da_falha.show_all()
 
     def _desenhar_mini(self) -> None:
         radio = self.ctx.radio
@@ -212,6 +226,9 @@ class MainWindow(Gtk.ApplicationWindow):
         self.get_style_context().add_class("moa")
         self.conteudo = Conteudo(contexto)
         self.add(self.conteudo.raiz)
+        # Enquanto toca, o notebook não dorme nem apaga a tela (precisa da aplicação).
+        aplicacao = self.get_application()
+        self.inibidor = Inibidor(aplicacao, self, contexto.radio) if aplicacao else None
         # Janela normal de programa, com barra de título e X do sistema (ADR-0002).
         self.set_default_size(1100, 760)
         self._contador = 0
@@ -230,5 +247,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def _ao_fechar(self, _janela, _evento) -> bool:
         """Fechar pelo X salva o estado e encerra (não há botão de desligar)."""
+        if self.inibidor is not None:
+            self.inibidor.soltar()
         self.ctx.encerrar()
         return False

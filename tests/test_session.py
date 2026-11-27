@@ -72,3 +72,18 @@ def test_ouvintes_sao_avisados_das_mudancas():
     s.mostrar_aviso("x")
     s.acao()
     assert len(vezes) == 3
+
+
+def test_falha_inesperada_fica_ate_a_proxima_acao():
+    s = Session()
+    s.mostrar_falha("Algo não saiu como eu esperava.")
+    assert s.falha is not None
+    s.acao()
+    assert s.falha is None
+
+
+def test_ir_para_outra_tela_apaga_a_falha():
+    s = Session()
+    s.mostrar_falha("x")
+    s.ir_para(Tela.CAIXA)
+    assert s.falha is None

@@ -95,3 +95,12 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 
 - **Feito:** tela "Criar uma playlist" (digitar vai direto para a busca, marcações sobrevivem ao filtro), painel do "+" com as capas dos discos, tela da Caixa (com "Apagar de vez" só nela), tela "Mexendo no disco" (nome, capa, "Como era antes", "Tirar da estante"). 307 testes passando.
 - **Execução interrompida por limite de uso:** M5 a M9 NÃO foram feitos (robustez, MusicBrainz, cópia de CD, empacotamento, avaliação). ADRs 0013 em diante e o ADR do M4 sobre telas ainda não escritos.
+
+## 27/11/2026 — M5: robustez
+
+- **Pedido:** seguir o MVP pelo M5.
+- **Feito:** `core/logsetup.py` (log com rotação e gancho de exceções), `core/autostart.py`, `ui/inibidor.py` (suspensão), faixa de falha calma na janela (`Session.falha`), `do_startup` no `app.py`. ADR-0013.
+- **Verificação:** 328 testes passando (inclui o de instância única com barramento D-Bus próprio); o app real abre, grava o log e fecha sem erro.
+- **Achado:** no teste de instância única, o primeiro processo leva mais de 4 s para abrir num barramento novo; o teste espera o log dizer "iniciado".
+- **Decisão provisória:** a abertura automática só é criada quando o comando `moa` está instalado.
+- **NÃO testado:** suspensão real e abertura automática no login. O registro do M4 e o ADR das telas do M4 continuam por escrever.

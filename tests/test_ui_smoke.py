@@ -284,3 +284,31 @@ def test_voltar_para_a_estante_aparece_no_radio_e_funciona(app):
     abrir_radio(ctx, tocar=False)
     botao_com_texto(conteudo.cabecalho, "Voltar para a estante").clicked()
     assert ctx.session.tela == Tela.ESTANTE
+
+
+def test_falha_inesperada_mostra_frase_calma_em_qualquer_tela(app):
+    ctx, conteudo = app
+    from moa.core.logsetup import MSG_FALHA_INESPERADA
+    for tela in (Tela.ESTANTE, Tela.CAIXA, Tela.CONFIGURACOES):
+        ctx.session.ir_para(tela)
+        ctx.session.mostrar_falha(MSG_FALHA_INESPERADA)
+        girar(0.3)
+        assert MSG_FALHA_INESPERADA in textos(conteudo.raiz)
+        ctx.session.acao()
+        assert MSG_FALHA_INESPERADA not in textos(conteudo.raiz)
+
+
+def test_fechar_grava_onde_parou_e_reabrir_mostra_continuar_a_ouvir(tmp_path, musica):
+    ctx, conteudo = montar(tmp_path, musica)
+    disco = ctx.discos[0]
+    ctx.radio.abrir_disco(disco, indice=1, tocar=False)
+    ctx.encerrar()                    # o que o X da janela faz
+    ctx.banco.close()
+    # "reabre o app": novo contexto sobre o mesmo banco
+    ctx2, conteudo2 = montar(tmp_path, musica)
+    try:
+        t = textos(conteudo2.telas[Tela.ESTANTE].raiz)
+        assert f"Você parou em {disco.title}, faixa 2." in t
+        assert "Continuar a ouvir" in t
+    finally:
+        ctx2.encerrar(); ctx2.banco.close()

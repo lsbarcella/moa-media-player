@@ -49,6 +49,7 @@ class Session:
         self.tela = Tela.ESTANTE
         self.anterior = Tela.ESTANTE
         self.aviso: Aviso | None = None
+        self.falha: str | None = None                # frase calma de uma falha inesperada (M5)
         self.disco_aberto_id: str | None = None      # disco que a tela de editar está mexendo
         self.faixa_do_painel = None                  # faixa cujo painel "+" está aberto (ou None)
         self._ouvintes: list[Callable[[], None]] = []
@@ -67,6 +68,7 @@ class Session:
     def ir_para(self, tela: Tela) -> None:
         """Muda de tela. É uma ação do usuário, então apaga o aviso."""
         self.aviso = None
+        self.falha = None
         self.faixa_do_painel = None
         if tela != self.tela:
             self.anterior = self.tela
@@ -79,6 +81,7 @@ class Session:
     def voltar(self) -> None:
         """"Voltar para onde eu estava": usado pela tela de Configurações."""
         self.aviso = None
+        self.falha = None
         self.tela, self.anterior = self.anterior, Tela.ESTANTE
         self._avisar_que_mudou()
 
@@ -86,9 +89,15 @@ class Session:
 
     def acao(self) -> None:
         """Toda ação do usuário chama isto primeiro: o aviso anterior sai."""
-        if self.aviso is not None:
+        if self.aviso is not None or self.falha is not None:
             self.aviso = None
+            self.falha = None
             self._avisar_que_mudou()
+
+    def mostrar_falha(self, texto: str) -> None:
+        """Uma falha inesperada: frase calma em qualquer tela, até a próxima ação."""
+        self.falha = texto
+        self._avisar_que_mudou()
 
     def mostrar_aviso(self, texto: str, desfazer: Callable[[], None] | None = None,
                       ancora: str | None = None, rotulo_do_desfazer: str = "Desfazer") -> None:
