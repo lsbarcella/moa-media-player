@@ -24,6 +24,12 @@ checa "GTK 3 (PyGObject)" \
 checa "GStreamer" \
     "import gi; gi.require_version('Gst','1.0'); from gi.repository import Gst; Gst.init(None); assert Gst.ElementFactory.find('playbin')" \
     "gir1.2-gstreamer-1.0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good"
+checa "Copiar CD: leitura (cdparanoiasrc)" \
+    "import gi; gi.require_version('Gst','1.0'); from gi.repository import Gst; Gst.init(None); assert Gst.ElementFactory.find('cdparanoiasrc')" \
+    "gstreamer1.0-plugins-base libcdparanoia0"
+checa "Copiar CD: codificador FLAC (flacenc)" \
+    "import gi; gi.require_version('Gst','1.0'); from gi.repository import Gst; Gst.init(None); assert Gst.ElementFactory.find('flacenc')" \
+    "gstreamer1.0-plugins-good"
 checa "mutagen" "import mutagen" "python3-mutagen"
 checa "pytest (só desenvolvimento)" "import pytest" "python3-pytest"
 
