@@ -31,6 +31,11 @@ checa "Copiar CD: codificador FLAC (flacenc)" \
     "import gi; gi.require_version('Gst','1.0'); from gi.repository import Gst; Gst.init(None); assert Gst.ElementFactory.find('flacenc')" \
     "gstreamer1.0-plugins-good"
 checa "mutagen" "import mutagen" "python3-mutagen"
-checa "pytest (só desenvolvimento)" "import pytest" "python3-pytest"
+# Só para desenvolvimento (rodar os testes): se faltar, avisa, mas não é erro.
+if python3 -c "import pytest" 2>/dev/null; then
+    echo "OK      pytest (só desenvolvimento)"
+else
+    echo "AVISO   pytest não instalado; só é preciso para rodar os testes (sudo apt install python3-pytest)"
+fi
 
 exit $falhou
