@@ -1,6 +1,6 @@
 # Moa Media Player
 
-Reprodutor de música **offline**, **leve** e **acessível para idosos**, para Linux Mint (Cinnamon).
+Reprodutor de música **offline**, **leve** e **acessível para idosos**, para Linux Mint (XFCE).
 A interface imita uma estante de CDs: um clique na capa e o disco toca inteiro.
 O nome é uma homenagem ao pai do autor, Moacir.
 

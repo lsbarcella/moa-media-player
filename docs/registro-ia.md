@@ -114,3 +114,35 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Tropeço:** um teste meu estava errado (disco sem tags nunca gera pedido, então "reconsultar depois de 30 dias" não podia ser observado); corrigido usando um disco com ID.
 - **Decisão provisória:** `User-Agent` apenas `MoaMediaPlayer/0.1`, sem URL do projeto nem contato.
 - **NÃO testado:** servidores reais do MusicBrainz e do Cover Art Archive.
+
+## 27/11/2026 — Texto das cores e ambiente XFCE
+
+- **Pedido:** trocar "Cores normais" por "Cores padrão" nas Configurações; avaliar Windows; saber se o XFCE dá problema.
+- **Feito:** texto trocado em `theme.py`, no preview e no ADR-0006 (355 testes passam). CLAUDE.md e README passam a dizer Linux Mint XFCE. ADR-0016.
+- **Decisão do autor:** ambiente-alvo XFCE. Windows foi apresentado em três opções (A: mesma stack empacotada; B: outro toolkit; C: preparar o código sem entregar); a escolha ficou em aberto.
+- **NÃO testado:** inibição de suspensão, autostart e aparência no XFCE real.
+
+## 27/11/2026 — Instalador entra no plano (M8)
+
+- **Pedido:** um instalador executável, para o usuário não precisar resolver pacotes à mão (o `apt` do notebook não achou `gstreamer1.0-plugins-base`).
+- **Feito:** a meta foi escrita no M8 do CLAUDE.md. Nada implementado.
+- **Em aberto:** o formato do instalador (`.deb` com dependências embutidas, `.run` autoextraível ou script em volta do `.deb`); a IA apresenta as opções antes de implementar.
+
+## 27/11/2026 — Leitor de CD confirmado
+
+- **Informado pelo autor:** o notebook do pai tem leitor de CD. O M7 deixa de ser condicionado e entra no plano.
+- **Em aberto antes de implementar:** formato da cópia (FLAC ou MP3), pacotes de leitura e codificação no Mint XFCE (a confirmar no `check_deps.sh`, com ADR).
+
+## 27/11/2026 — M7 (parte 1): núcleo da cópia de CD
+
+- **Decisões do autor:** formato FLAC; leitura com cdparanoia.
+- **Feito:** `core/ripper.py` (copiar faixa a faixa para pasta provisória, tags mínimas, cancelar, resultados calmos, "Disco N"), 12 testes em `tests/test_ripper.py` com gerador de áudio no lugar do CD, `check_deps.sh` confere `cdparanoiasrc` e `flacenc`, ADR-0017, CLAUDE.md atualizado.
+- **NÃO testado:** CD de verdade (o leitor daqui está vazio) e a leitura do sumário (`contar_faixas_do_cd`). A tela de colocar o disco ainda não existe e precisa de proposta de desenho.
+
+## 27/11/2026 — M7 (parte 2): tela "Aparelho de CD"
+
+- **Pedido:** cinco opções de desenho para colocar um disco; o autor escolheu a **A (aparelho de CD)**.
+- **Feito:** preview em HTML com as 5 opções; `core/aparelho.py` (estados, textos do visor, cópia em thread, cancelar), `ui/cd_view.py`, botão "Colocar um disco" na Estante (também com a estante vazia), `Carregador.reler`, ligação no `app.py`, limpeza de sobras de cópia interrompida, ADR-0018.
+- **Verificação:** testes novos de núcleo (`test_aparelho.py`) e de tela (`test_cd_view.py`, com gerador de áudio no lugar do CD); telas desenhadas e conferidas por imagem.
+- **NÃO testado:** CD de verdade, a gaveta no XFCE, HD mecânico.
+- **Em aberto:** ouvir música durante a cópia; impedir a suspensão durante a cópia.

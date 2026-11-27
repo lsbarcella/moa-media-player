@@ -4,7 +4,7 @@ Este arquivo dá ao Claude Code o contexto do projeto. Leia-o inteiro antes de q
 
 ## 1. O projeto em uma frase
 
-Um reprodutor de música **offline por padrão**, **leve** e **autônomo para idosos**, que roda no **Linux Mint (Cinnamon)** em notebooks antigos. A interface reaproveita **imagens mentais que o idoso já tem do mundo real**: uma **estante de CDs** e **aparelhos de som antigos**. O usuário pega um disco da estante, coloca no aparelho e ele toca inteiro.
+Um reprodutor de música **offline por padrão**, **leve** e **autônomo para idosos**, que roda no **Linux Mint (XFCE)** em notebooks antigos. A interface reaproveita **imagens mentais que o idoso já tem do mundo real**: uma **estante de CDs** e **aparelhos de som antigos**. O usuário pega um disco da estante, coloca no aparelho e ele toca inteiro.
 
 Nome do aplicativo: **Moa Media Player** (decidido pelo autor). É uma homenagem ao pai do autor, Moacir; a "moa" é uma ave extinta da Nova Zelândia, e o ícone será uma moa com fones de ouvido. O nome pesquisado não conflita com nenhum aplicativo conhecido (busca limitada; marca não consultada).
 
@@ -76,7 +76,7 @@ Mapa de metáforas (ponto de partida, a refinar com o autor; ver ADR-0002):
 - Reproduza com o elemento `playbin`, desligando o vídeo nos flags.
 - Para o ambiente virtual de desenvolvimento, use `python3 -m venv --system-site-packages .venv`, já que o PyGObject vem do apt.
 - O ajuste "Voz mais clara" usa um equalizador do GStreamer. O `equalizer-3bands` está no `gstreamer1.0-plugins-good`, **que já é dependência** (confirmado na máquina de desenvolvimento). Confirmar o `equalizer-10bands` antes de usá-lo (ADR-0004).
-- Pacotes para a leitura de CD e a codificação (M7) ainda **não foram confirmados** no Mint. Verifique no `check_deps.sh` e registre em ADR antes de usar.
+- Cópia de CD (M7, ADR-0017): leitura com `cdparanoiasrc` (`gstreamer1.0-plugins-base` + `libcdparanoia0`) e gravação em **FLAC** com `flacenc` (`gstreamer1.0-plugins-good`). Os dois elementos existem na máquina de desenvolvimento; **falta confirmar no Mint XFCE do notebook** pelo `check_deps.sh`.
 
 ## 7. Arquitetura
 
@@ -103,11 +103,13 @@ moa/
 │   │   ├── config.py       # Preferências do próprio usuário (JSON)
 │   │   ├── custom_albums.py# "Discos montados" pelo usuário a partir de faixas existentes
 │   │   ├── musicbrainz.py  # Atualização opcional e oportunista de nomes e capas
-│   │   └── ripper.py       # Copiar um CD para a biblioteca (M7)
+│   │   ├── ripper.py       # Copiar um CD para a biblioteca (M7, ADR-0017)
+│   │   └── aparelho.py     # Estados e textos do "Aparelho de CD" (ADR-0018)
 │   └── ui/
 │       ├── window.py       # Janela principal e navegação entre telas
 │       ├── shelf_view.py   # Tela "estante": grade de capas
 │       ├── player_view.py  # Tela "tocando agora" (aparelho de som)
+│       ├── cd_view.py      # Tela "Aparelho de CD": colocar um disco (ADR-0018)
 │       ├── (telas de manutenção e de montar disco: desenho em aberto)
 │       ├── icons/          # Ícones de aparelhos antigos (SVG)
 │       └── style.css       # Tamanhos, cores e contraste
@@ -249,8 +251,7 @@ O `tools/measure.sh` deve medir esses números de forma repetível, por exemplo 
 - Mostrar ou não a barra de progresso da música, e se ela é clicável.
 - Comportamento ao fim do disco: parar ou voltar para a estante.
 - Paleta de cores e tema (claro, escuro ou alto contraste).
-- Versão do Linux Mint e especificações do notebook do usuário (CPU, RAM, tipo de disco), inclusive se há leitor de CD (condiciona o M7).
-- Formato da cópia de CDs (M7): FLAC ou MP3.
+- Versão do Linux Mint e especificações do notebook do usuário (CPU, RAM, tipo de disco), (o leitor de CD **existe**, confirmado pelo autor em 27/11/2026; falta a versão do Mint, a CPU, a RAM e o tipo de disco).
 
 ## 12. Roteiro de implementação
 
@@ -263,8 +264,8 @@ Siga em ordem. Termine cada marco com algo executável, uma explicação ao auto
 5. **M4 – Cuidar da coleção e montar discos:** os dois fluxos do próprio usuário (`core/custom_albums.py` e as telas correspondentes). **Antes de começar, fazer o `ce-ideate` e o preview em HTML do desenho (seção 11) e obter a aprovação do autor.**
 6. **M5 – Robustez:** erros amigáveis, log, instância única, inibir suspensão e abertura automática (`~/.config/autostart/`).
 7. **M6 – Rede opcional:** `core/musicbrainz.py`, fila de pendências, atualização em segundo plano, testes com respostas falsas.
-8. **M7 – Colocar um disco (copiar CD):** `core/ripper.py` e a tela correspondente. O disco entra offline como "Disco N", e o M6 o atualiza quando houver internet. **Condicionado a haver leitor de CD no notebook do usuário.** Se o prazo apertar, este marco é o primeiro a ser cortado, depois o M6.
-9. **M8 – Empacotamento:** arquivo `.desktop`, ícone e um pacote `.deb` com as dependências declaradas. Testar a instalação **sem internet**.
+8. **M7 – Colocar um disco (copiar CD):** `core/ripper.py` e a tela correspondente. O disco entra offline como "Disco N", e o M6 o atualiza quando houver internet. **O notebook do usuário tem leitor de CD (confirmado em 27/11/2026), então o marco está liberado.** Se o prazo apertar, este marco é o primeiro a ser cortado, depois o M6.
+9. **M8 – Empacotamento e instalador:** arquivo `.desktop`, ícone e um pacote `.deb` com as dependências declaradas. Testar a instalação **sem internet**. **Meta de instalação (pedida pelo autor em 27/11/2026):** um **instalador executável** que faça tudo sozinho, para ninguém precisar rodar `apt`, clonar repositório nem resolver pacote faltando à mão. Tem de instalar o app, as dependências, o atalho no menu e na Área de Trabalho e a abertura automática, e **funcionar em um notebook sem internet** (por isso as dependências precisam ir junto ou já estar no pacote). O desenho (por exemplo `.deb` com as dependências embutidas, `.run` autoextraível ou script que chama o `.deb`) é **decisão em aberto**: apresentar opções ao autor antes de implementar e registrar em ADR.
 10. **M9 – Avaliação:** `tools/measure.sh` e `docs/testes-usabilidade.md` com o roteiro de tarefas (ex.: "toque o disco X", "pause", "volte para a estante", "monte um disco com estas músicas"), a planilha de tempo e erros e o questionário SUS em português.
 
 ## 13. Comandos
