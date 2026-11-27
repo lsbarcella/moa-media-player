@@ -53,6 +53,19 @@ class Carregador:
         self.thread = threading.Thread(target=self._trabalhar, name="varredura", daemon=True)
         self.thread.start()
 
+    def reler(self) -> None:
+        """Procura a pasta de novo (um CD acabou de ser copiado). Sem rede: só a estante."""
+        threading.Thread(target=self._reler, name="releitura", daemon=True).start()
+
+    def _reler(self) -> None:
+        try:
+            discos, miniaturas = varrer(self._caminho_do_banco, self._contexto.pasta_musica,
+                                        self._pasta_miniaturas)
+        except Exception:
+            log.exception("não consegui reler a pasta depois de copiar o CD")
+            return
+        GLib.idle_add(self._entregar, discos, miniaturas)
+
     def _trabalhar(self) -> None:
         try:
             discos, miniaturas = varrer(self._caminho_do_banco, self._contexto.pasta_musica,

@@ -12,7 +12,10 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Callable
 
+from gi.repository import GLib
+
 from moa.core import box, custom_albums, musicbrainz
+from moa.core.aparelho import AparelhoDeCD
 from moa.core.custom_albums import RascunhoDePlaylist
 from moa.core.config import Preferencias
 from moa.core.covers import refresh_covers
@@ -22,6 +25,13 @@ from moa.core.player import Player
 from moa.core.radio import Radio
 from moa.core.session import Session
 from moa.core.state import Memoria
+
+
+def _na_thread_principal(funcao: Callable[[], None]) -> None:
+    def uma_vez() -> bool:
+        funcao()
+        return False            # False = não repetir
+    GLib.idle_add(uma_vez)
 
 
 class Contexto:
@@ -35,6 +45,8 @@ class Contexto:
         self.player = Player(sink_factory=sink_factory)
         self.radio = Radio(self.player, self.memoria, preferencias)
         self.pasta_miniaturas = pasta_miniaturas
+        # A cópia de CD roda numa thread; `idle_add` leva os avisos dela à thread principal.
+        self.aparelho = AparelhoDeCD(self.pasta_musica, despachar=_na_thread_principal)
         # O que o MusicBrainz trouxe numa abertura ANTERIOR. É lido uma vez, aqui, e não muda até
         # o app abrir de novo: a estante não se altera enquanto o idoso olha para ela (ADR-0003).
         self._camada_mb = banco.load_mb()
@@ -111,5 +123,6 @@ class Contexto:
 
     def encerrar(self) -> None:
         """Ao fechar pelo X: guarda onde parou, solta o som e fecha o banco."""
+        self.aparelho.encerrar()
         self.radio.guardar_posicao()
         self.player.encerrar()

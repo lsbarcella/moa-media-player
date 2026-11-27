@@ -85,5 +85,7 @@ class MoaApp(Gtk.Application):
                                      pasta_miniaturas=dados / "miniaturas")
             window = MainWindow(self.contexto, application=self)
             atualizador = Atualizador(caminho_do_banco, dados / "capas-musicbrainz", esta_online)
-            Carregador(self.contexto, caminho_do_banco, dados / "miniaturas", atualizador).iniciar()
+            carregador = Carregador(self.contexto, caminho_do_banco, dados / "miniaturas", atualizador)
+            self.contexto.aparelho.ao_copiar(carregador.reler)     # CD copiado: a estante relê a pasta
+            carregador.iniciar()
         window.present()

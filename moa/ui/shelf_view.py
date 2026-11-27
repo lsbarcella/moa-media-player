@@ -49,6 +49,11 @@ class ShelfView:
             cartao.get_style_context().add_class("moa-cartao")
             cartao.pack_start(rotulo(texto), False, False, 0)
             self.raiz.pack_start(cartao, False, False, 0)
+            if not ctx.carregando:      # com a estante vazia é por aqui que o primeiro disco entra
+                linha = caixa_h(14)
+                linha.pack_start(self._botao_colocar_disco(), False, False, 0)
+                self.botao_principal = linha.get_children()[0]
+                self.raiz.pack_start(linha, False, False, 0)
             self.raiz.show_all()
             return
 
@@ -65,11 +70,20 @@ class ShelfView:
         criar = botao("Criar uma playlist", "moa-pri", "moa-grande", icone_nome="mais",
                       ao_clicar=self._criar_playlist)
         linha.pack_start(criar, False, False, 0)
+        linha.pack_start(self._botao_colocar_disco(), False, False, 0)
         n = len(self.ctx.caixa)
         linha.pack_start(botao(f"A Caixa ({n} {'disco' if n == 1 else 'discos'})", "moa-grande",
                                icone_nome="caixa", ao_clicar=self._abrir_a_caixa), False, False, 0)
         self.botao_principal = criar
         self.raiz.pack_start(linha, False, False, 0)
+
+    def _botao_colocar_disco(self) -> Gtk.Widget:
+        copiando = self.ctx.aparelho.copiando
+        return botao("Ver a cópia do disco" if copiando else "Colocar um disco", "moa-grande",
+                     icone_nome="disco", ao_clicar=self._abrir_o_aparelho)
+
+    def _abrir_o_aparelho(self) -> None:
+        self.ctx.session.ir_para(Tela.APARELHO_DE_CD)
 
     def _abrir_a_caixa(self) -> None:
         self.ctx.session.ir_para(Tela.CAIXA)

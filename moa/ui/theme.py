@@ -156,6 +156,10 @@ button.moa-disco label {{ color: {c['ink']}; font-weight: 800; }}
 .moa-radio button.moa-clara-ligada {{ background-color: {c['lampon']}; }}
 .moa-radio button.moa-btn:focus {{ outline: 5px solid {c['white']}; outline-offset: 3px; }}
 .moa-volume {{ background-color: {c['dark']}; border-radius: 12px; padding: 10px; }}
+.moa-barra trough {{ min-height: 26px; background-color: {c['white']}; border: 3px solid {c['dark']};
+                     border-radius: 13px; }}
+.moa-barra progress {{ min-height: 26px; background-color: {c['green']}; background-image: none;
+                       border-radius: 10px; }}
 .moa-lampada {{ background-color: {c['dark']}; border: 3px solid {c['white']}; border-radius: 11px;
                 min-width: 22px; min-height: 22px; }}
 .moa-lampada.moa-acesa {{ background-color: {c['lampon']}; box-shadow: 0 0 10px {c['lampon']}; }}

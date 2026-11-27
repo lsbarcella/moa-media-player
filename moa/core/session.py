@@ -23,6 +23,7 @@ class Tela(Enum):
     PLAYLIST = "playlist"
     CAIXA = "caixa"
     EDITAR = "editar"
+    APARELHO_DE_CD = "aparelho_de_cd"
     CONFIGURACOES = "configuracoes"
 
 
@@ -32,6 +33,7 @@ TITULOS = {
     Tela.PLAYLIST: "Montando um disco novo",
     Tela.CAIXA: "A Caixa",
     Tela.EDITAR: "Mexendo no disco",
+    Tela.APARELHO_DE_CD: "Aparelho de CD",
     Tela.CONFIGURACOES: "Configurações",
 }
 

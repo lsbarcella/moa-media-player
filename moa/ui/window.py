@@ -25,6 +25,7 @@ from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.session import Tela  # noqa: E402
 from moa.ui import theme  # noqa: E402
 from moa.ui.box_view import BoxView  # noqa: E402
+from moa.ui.cd_view import CDView  # noqa: E402
 from moa.ui.inibidor import Inibidor  # noqa: E402
 from moa.ui.edit_view import EditView  # noqa: E402
 from moa.ui.playlist_view import PlaylistView  # noqa: E402
@@ -73,9 +74,11 @@ class Conteudo:
         self.registrar(Tela.PLAYLIST, PlaylistView(contexto))
         self.registrar(Tela.CAIXA, BoxView(contexto))
         self.registrar(Tela.EDITAR, EditView(contexto))
+        self.registrar(Tela.APARELHO_DE_CD, CDView(contexto))
         self._ultima_tela = None
 
         contexto.session.ao_mudar(self.redesenhar)
+        contexto.aparelho.ao_mudar(self.redesenhar)
         contexto.radio.ao_mudar(self.redesenhar)
         contexto.ao_mudar_a_colecao(self.redesenhar)
         contexto.preferencias.ao_mudar(self._ao_mudar_preferencia)
