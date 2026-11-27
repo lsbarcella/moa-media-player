@@ -104,3 +104,13 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Achado:** no teste de instância única, o primeiro processo leva mais de 4 s para abrir num barramento novo; o teste espera o log dizer "iniciado".
 - **Decisão provisória:** a abertura automática só é criada quando o comando `moa` está instalado.
 - **NÃO testado:** suspensão real e abertura automática no login. O registro do M4 e o ADR das telas do M4 continuam por escrever.
+
+## 27/11/2026 — Documentação do M4 e M6: rede opcional
+
+- **Pedido:** documentar o M4 e seguir para o M6.
+- **Feito (M4):** ADR-0014 (as quatro telas do M4). O diário do M4 já existia.
+- **Feito (M6):** `core/musicbrainz.py` (cliente com limite de 1 pedido por segundo, atualizador em segundo plano, `aplicar` e `capas_baixadas`), migração 4 do banco, `read_musicbrainz_album_id`, capas baixadas como alternativa em `refresh_covers`, camada lida uma vez por abertura no `Contexto`, rede disparada pelo `Carregador` depois de a estante aparecer, `esta_online` com `Gio.NetworkMonitor` e `MOA_SEM_REDE`. ADR-0015.
+- **Verificação:** 355 testes (26 novos, com servidor HTTP falso local, nenhum acesso à internet). Mutação em cinco regras (número de faixas na busca, nome só quando falta a tag, não tentar offline, camada lida uma vez): todas pegas. App real abre com 80 discos e o log diz "sem conexão".
+- **Tropeço:** um teste meu estava errado (disco sem tags nunca gera pedido, então "reconsultar depois de 30 dias" não podia ser observado); corrigido usando um disco com ID.
+- **Decisão provisória:** `User-Agent` apenas `MoaMediaPlayer/0.1`, sem URL do projeto nem contato.
+- **NÃO testado:** servidores reais do MusicBrainz e do Cover Art Archive.

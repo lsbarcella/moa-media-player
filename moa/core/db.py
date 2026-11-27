@@ -17,6 +17,7 @@ Princípios:
 - Só usamos o `sqlite3` que já vem no Python (sem dependência nova).
 """
 
+import json
 import logging
 import os
 import sqlite3
@@ -109,7 +110,22 @@ def _migracao_3(conexao: sqlite3.Connection) -> None:
         )""")
 
 
-MIGRACOES = [_migracao_1, _migracao_2, _migracao_3]
+def _migracao_4(conexao: sqlite3.Connection) -> None:
+    """O que veio do MusicBrainz, por disco (M6). Aditiva: as tags do usuário nunca são tocadas."""
+    conexao.execute("""
+        CREATE TABLE musicbrainz (
+            folder       TEXT PRIMARY KEY,   -- pasta do disco
+            status       TEXT NOT NULL,      -- 'ok' (achei) ou 'nada' (sem certeza: não muda nada)
+            mbid         TEXT,               -- identificador do álbum no MusicBrainz
+            title        TEXT,               -- nome do álbum
+            artist       TEXT,               -- artista do álbum
+            track_titles TEXT,               -- lista JSON com o nome de cada faixa, na ordem
+            cover_path   TEXT,               -- capa baixada (no cache do app)
+            checked_at   REAL NOT NULL       -- quando foi consultado (para tentar de novo depois)
+        )""")
+
+
+MIGRACOES = [_migracao_1, _migracao_2, _migracao_3, _migracao_4]
 
 
 class EsquemaMaisNovoQueOApp(Exception):
@@ -127,6 +143,19 @@ class Override:
     prev_cover_kind: str | None = None
     prev_cover_path: str | None = None
     has_prev: bool = False
+
+
+@dataclass(frozen=True)
+class RegistroMB:
+    """O que o MusicBrainz respondeu sobre um disco (ou que não achou nada confiável)."""
+
+    status: str                                  # 'ok' ou 'nada'
+    mbid: str | None = None
+    title: str | None = None
+    artist: str | None = None
+    track_titles: tuple[str, ...] = ()
+    cover_path: Path | None = None
+    checked_at: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -339,6 +368,36 @@ class Database:
     def delete_override(self, album_id: str) -> None:
         with self._transacao():
             self._conexao.execute("DELETE FROM overrides WHERE album_id = ?", (album_id,))
+
+    # -- MusicBrainz (M6) ----------------------------------------------------
+
+    def get_mb(self, pasta: str) -> RegistroMB | None:
+        return self.load_mb().get(pasta)
+
+    def load_mb(self) -> dict[str, RegistroMB]:
+        linhas = self._conexao.execute(
+            "SELECT folder, status, mbid, title, artist, track_titles, cover_path, checked_at "
+            "FROM musicbrainz").fetchall()
+        resultado = {}
+        for pasta, status, mbid, titulo, artista, faixas, capa, quando in linhas:
+            try:
+                nomes = tuple(str(n) for n in json.loads(faixas)) if faixas else ()
+            except ValueError:
+                nomes = ()
+            resultado[pasta] = RegistroMB(status, mbid, titulo, artista, nomes,
+                                          Path(capa) if capa else None, quando)
+        return resultado
+
+    def save_mb(self, pasta: str, registro: RegistroMB) -> None:
+        with self._transacao():
+            self._conexao.execute(
+                "INSERT OR REPLACE INTO musicbrainz VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (pasta, registro.status, registro.mbid, registro.title, registro.artist,
+                 json.dumps(list(registro.track_titles), ensure_ascii=False),
+                 str(registro.cover_path) if registro.cover_path else None, registro.checked_at))
+
+    def delete_mb_except(self, pastas: Iterable[str]) -> None:
+        self._apagar_exceto("musicbrainz", "folder", pastas)
 
     # -- cache das capas -----------------------------------------------------
 

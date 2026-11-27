@@ -19,7 +19,7 @@ from pathlib import Path
 from gi.repository import GLib
 
 from moa.core.contexto import Contexto
-from moa.core import box
+from moa.core import box, musicbrainz
 from moa.core.covers import refresh_covers
 from moa.core.db import Database
 from moa.core.library import refresh_library
@@ -33,14 +33,17 @@ def varrer(caminho_do_banco: Path, pasta_musica: Path, pasta_miniaturas: Path):
     try:
         discos = refresh_library(pasta_musica, banco)
         miniaturas = refresh_covers(discos, banco, pasta_miniaturas,
-                                    escolhas=box.escolhas_de_capa(banco))
+                                    escolhas=box.escolhas_de_capa(banco),
+                                    alternativas=musicbrainz.capas_baixadas(banco.load_mb()))
         return discos, miniaturas
     finally:
         banco.close()
 
 
 class Carregador:
-    def __init__(self, contexto: Contexto, caminho_do_banco: Path, pasta_miniaturas: Path):
+    def __init__(self, contexto: Contexto, caminho_do_banco: Path, pasta_miniaturas: Path,
+                 atualizador: "musicbrainz.Atualizador | None" = None):
+        self._atualizador = atualizador     # rede opcional (M6); None = nunca usa a rede
         self._contexto = contexto
         self._caminho_do_banco = caminho_do_banco
         self._pasta_miniaturas = pasta_miniaturas
@@ -58,6 +61,19 @@ class Carregador:
             log.exception("a varredura da pasta de música falhou")
             discos, miniaturas = list(self._contexto._brutos), dict(self._contexto.miniaturas)
         GLib.idle_add(self._entregar, discos, miniaturas)
+        self._atualizar_pela_rede(discos, miniaturas)
+
+    def _atualizar_pela_rede(self, discos, miniaturas) -> None:
+        """Depois que a estante já apareceu, tenta melhorar nomes e capas. Falha em silêncio.
+
+        O resultado só vale na PRÓXIMA abertura (ADR-0003): fica gravado no banco.
+        """
+        if self._atualizador is None:
+            return
+        try:
+            self._atualizador.executar(discos, miniaturas)
+        except Exception:
+            log.exception("a atualização pelo MusicBrainz falhou")
 
     def _entregar(self, discos, miniaturas) -> bool:
         self._contexto.definir_colecao(discos, miniaturas)

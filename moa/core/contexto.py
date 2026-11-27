@@ -12,7 +12,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Callable
 
-from moa.core import box, custom_albums
+from moa.core import box, custom_albums, musicbrainz
 from moa.core.custom_albums import RascunhoDePlaylist
 from moa.core.config import Preferencias
 from moa.core.covers import refresh_covers
@@ -35,6 +35,9 @@ class Contexto:
         self.player = Player(sink_factory=sink_factory)
         self.radio = Radio(self.player, self.memoria, preferencias)
         self.pasta_miniaturas = pasta_miniaturas
+        # O que o MusicBrainz trouxe numa abertura ANTERIOR. É lido uma vez, aqui, e não muda até
+        # o app abrir de novo: a estante não se altera enquanto o idoso olha para ela (ADR-0003).
+        self._camada_mb = banco.load_mb()
         self._brutos: list[Album] = []              # o que a varredura achou, sem as camadas
         self.discos: list[Album] = []               # na estante (sem a Caixa, com nomes editados)
         self.montados: list[MixDisc] = []           # discos montados que estão na estante
@@ -63,13 +66,15 @@ class Contexto:
         """
         if capas and self.pasta_miniaturas is not None:
             self.miniaturas = refresh_covers(self._brutos, self.banco, self.pasta_miniaturas,
-                                             escolhas=box.escolhas_de_capa(self.banco))
+                                             escolhas=box.escolhas_de_capa(self.banco),
+                                             alternativas=musicbrainz.capas_baixadas(self._camada_mb))
         self._recalcular()
 
     def _recalcular(self) -> None:
-        self.faixas_por_caminho = {str(t.path): t for d in self._brutos for t in d.tracks}
+        base = musicbrainz.aplicar(self._brutos, self._camada_mb)     # MusicBrainz por cima das tags
+        self.faixas_por_caminho = {str(t.path): t for d in base for t in d.tracks}
         montados = custom_albums.carregar(self.banco, self.faixas_por_caminho)
-        camadas = box.aplicar_camadas(self._brutos, montados, self.banco)
+        camadas = box.aplicar_camadas(base, montados, self.banco)         # a escolha do usuário vence
         self.discos = sorted(camadas.estante, key=lambda d: d.sort_key)
         self.montados = sorted(camadas.montados, key=lambda d: d.sort_key)
         self.caixa = sorted(camadas.caixa, key=lambda d: d.sort_key)

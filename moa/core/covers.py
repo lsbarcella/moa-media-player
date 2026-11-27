@@ -258,7 +258,8 @@ def make_thumbnail(fonte: CoverSource, pasta_cache: Path, tamanho: int = 256) ->
     return destino
 
 
-def _assinatura_do_disco(disco: Album, escolha: "CoverChoice | None" = None) -> str:
+def _assinatura_do_disco(disco: Album, escolha: "CoverChoice | None" = None,
+                         alternativa: Path | None = None) -> str:
     """Resumo que muda quando o disco muda, para saber se o cache da capa vale.
 
     Entram a data da pasta (muda quando um arquivo é criado ou apagado nela,
@@ -281,18 +282,25 @@ def _assinatura_do_disco(disco: Album, escolha: "CoverChoice | None" = None) -> 
                 resumo.update(f"|{estado.st_mtime_ns}|{estado.st_size}".encode())
             except OSError:
                 pass
+    if alternativa is not None:
+        # Uma capa baixada do MusicBrainz passa a valer: o cache antigo (sem capa) é descartado.
+        resumo.update(f"|alternativa|{alternativa}".encode())
     return resumo.hexdigest()
 
 
 def refresh_covers(discos: list[Album], db: "Database", pasta_cache: Path,
                    tamanho: int = 256,
-                   escolhas: "dict[str, CoverChoice] | None" = None) -> dict[str, Path | None]:
+                   escolhas: "dict[str, CoverChoice] | None" = None,
+                   alternativas: "dict[str, Path] | None" = None) -> dict[str, Path | None]:
     """Devolve a miniatura de cada disco (pelo `album.id`), usando o cache.
 
     Um disco que não mudou desde a última vez NÃO é reaberto: a decisão e a
     miniatura vêm do banco. Só os discos novos ou alterados passam por
     `find_cover` e `make_thumbnail`. O valor None significa "sem miniatura":
     a interface desenha a capa substituta.
+
+    `alternativas` são capas baixadas do MusicBrainz (M6): só valem para o disco que não tem
+    capa própria (a embutida e a da pasta vêm primeiro; a escolha do usuário vence tudo).
 
     Miniaturas que ninguém mais usa (disco apagado, imagem trocada) são
     removidas do cache.
@@ -301,9 +309,11 @@ def refresh_covers(discos: list[Album], db: "Database", pasta_cache: Path,
     resultado: dict[str, Path | None] = {}
 
     escolhas = escolhas or {}
+    alternativas = alternativas or {}
     for disco in discos:
         escolha = escolhas.get(disco.id)
-        assinatura = _assinatura_do_disco(disco, escolha)
+        alternativa = alternativas.get(disco.id)
+        assinatura = _assinatura_do_disco(disco, escolha, alternativa)
         registro = db.get_cover(disco.id)
 
         if registro is not None and registro.signature == assinatura:
@@ -314,7 +324,12 @@ def refresh_covers(discos: list[Album], db: "Database", pasta_cache: Path,
                 miniatura = make_thumbnail(fonte, pasta_cache, tamanho)
                 db.save_cover(disco.id, assinatura, fonte, miniatura)
         else:
-            fonte = escolha.source if escolha is not None else find_cover(disco)
+            if escolha is not None:
+                fonte = escolha.source
+            else:
+                fonte = find_cover(disco)
+                if fonte is None and alternativa is not None:
+                    fonte = CoverSource("file", alternativa)
             miniatura = make_thumbnail(fonte, pasta_cache, tamanho) if fonte else None
             db.save_cover(disco.id, assinatura, fonte, miniatura)
         resultado[disco.id] = miniatura

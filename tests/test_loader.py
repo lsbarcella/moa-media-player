@@ -71,3 +71,26 @@ def test_falha_na_varredura_nao_derruba_e_a_estante_deixa_de_carregar(tmp_path, 
         assert ctx.discos == [] and "a varredura da pasta de música falhou" in caplog.text
     finally:
         ctx.encerrar(); banco.close()
+
+
+def test_erro_da_rede_nao_derruba_a_estante(musica, tmp_path, caplog):
+    """A rede (M6) roda depois de a estante ser entregue, e uma falha dela só vai para o log."""
+    ordem = []
+
+    class AtualizadorQueQuebra:
+        def executar(self, discos, miniaturas):
+            ordem.append("rede")
+            raise RuntimeError("servidor estranho")
+
+    banco = Database(tmp_path / "moa.db")
+    ctx = Contexto(banco, Preferencias(tmp_path / "c.json"), musica)
+    ctx.ao_mudar_a_colecao(lambda: ordem.append("estante"))
+    try:
+        carregador = Carregador(ctx, tmp_path / "moa.db", tmp_path / "min", AtualizadorQueQuebra())
+        carregador.iniciar()
+        assert esperar(lambda: not ctx.carregando)
+        carregador.thread.join(5)
+        assert sorted(ordem) == ["estante", "rede"]
+        assert len(ctx.discos) == 2 and "a atualização pelo MusicBrainz falhou" in caplog.text
+    finally:
+        ctx.encerrar(); banco.close()

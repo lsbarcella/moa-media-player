@@ -14,6 +14,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gio, GLib, Gtk  # noqa: E402
 
 from moa.core import autostart, logsetup  # noqa: E402
+from moa.core.musicbrainz import Atualizador  # noqa: E402
 from moa.core.config import Preferencias  # noqa: E402
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.db import Database  # noqa: E402
@@ -38,6 +39,13 @@ def pasta_de_musica() -> Path:
 
 def pasta_de_dados() -> Path:
     return Path(GLib.get_user_data_dir()) / "moa"
+
+
+def esta_online() -> bool:
+    """Há conexão com a internet? (`Gio.NetworkMonitor`). Sempre falso com `MOA_SEM_REDE=1`."""
+    if os.environ.get("MOA_SEM_REDE"):
+        return False
+    return Gio.NetworkMonitor.get_default().get_connectivity() == Gio.NetworkConnectivity.FULL
 
 
 class MoaApp(Gtk.Application):
@@ -76,5 +84,6 @@ class MoaApp(Gtk.Application):
             self.contexto = Contexto(banco, Preferencias(), pasta_de_musica(),
                                      pasta_miniaturas=dados / "miniaturas")
             window = MainWindow(self.contexto, application=self)
-            Carregador(self.contexto, caminho_do_banco, dados / "miniaturas").iniciar()
+            atualizador = Atualizador(caminho_do_banco, dados / "capas-musicbrainz", esta_online)
+            Carregador(self.contexto, caminho_do_banco, dados / "miniaturas", atualizador).iniciar()
         window.present()
