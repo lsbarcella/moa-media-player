@@ -178,7 +178,7 @@ def _rgba(hexa: str, alfa: float) -> str:
     return f"rgba({int(h[0:2], 16)},{int(h[2:4], 16)},{int(h[4:6], 16)},{alfa})"
 
 
-def _css_do_aparelho(c: dict[str, str], grande: int, modo: str) -> str:
+def _css_do_aparelho(c: dict[str, str], modo: str) -> str:
     """Gabinete de madeira, visor de vidro, moldura de metal, grade do alto-falante e plaquinha."""
     if modo == "contorno":      # preto e branco: contorno duplo, sem veios nem degradê (KTD3)
         return f"""
@@ -282,7 +282,7 @@ def _css_do_movel(c: dict[str, str], modo: str) -> str:
 """
 
 
-def _css_das_teclas(c: dict[str, str], grande: int, modo: str) -> str:
+def _css_das_teclas(c: dict[str, str], modo: str) -> str:
     """CSS das teclas (botões de ação, escolhas e marcações), das lâmpadas e das variantes."""
     b, h, p = BORDA_PX, ALTURA_DA_TECLA_PX, PADDING_TOPO_PX
     pe = ALVO_MINIMO_PX
@@ -382,7 +382,7 @@ label {{ color: {c['ink']}; }}
 .moa-mini {{ background-color: {c['wood']}; padding: 8px 20px; }}
 .moa-mini label {{ color: {c['white']}; }}
 
-{_css_das_teclas(c, grande, modo)}
+{_css_das_teclas(c, modo)}
 
 /* estante */
 {_css_do_movel(c, modo)}
@@ -400,7 +400,7 @@ button.moa-disco label {{ color: {c['ink']}; font-weight: 800; }}
                      padding: 14px 18px; }}
 
 /* rádio */
-{_css_do_aparelho(c, grande, modo)}
+{_css_do_aparelho(c, modo)}
 .moa-visor .moa-nota-visor {{ background-color: {c['white']}; border-radius: 6px; padding: 2px 8px;
                               font-weight: 700; }}
 .moa-radio button.moa-btn {{ background-color: {c['btnradio']}; border-color: {c['dark']}; color: {c['ink']}; }}
@@ -420,7 +420,6 @@ button.moa-disco label {{ color: {c['ink']}; font-weight: 800; }}
                        border-radius: 10px; }}
 .moa-barra {{ background-color: {c['lampoff']}; border: 2px solid {c['white']}; border-radius: 4px;
               min-width: 14px; min-height: 34px; }}
-.moa-barra.moa-acesa {{ background-color: {c['lampon']}; box-shadow: 0 0 6px {c['lampon']}; }}
 
 /* lista de músicas */
 .moa-linha {{ background-color: {c['card']}; border: 2px solid {c['line']}; border-radius: 12px; padding: 6px; }}

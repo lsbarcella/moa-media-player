@@ -48,11 +48,6 @@ def posicao_do_marcador(faixa: int, total: int) -> float:
     return (max(1, min(total, faixa)) - 1) / (total - 1)
 
 
-def _rgb(paleta: str, token: str) -> tuple[float, float, float]:
-    cor = theme.PALETAS[paleta][token].lstrip("#")
-    return tuple(int(cor[i:i + 2], 16) / 255 for i in (0, 2, 4))
-
-
 class BotaoDeVolume(Gtk.DrawingArea):
     """Botão de volume: coroa de lâmpadas com lente em volta de um botão serrilhado que gira."""
 
@@ -89,7 +84,7 @@ class BotaoDeVolume(Gtk.DrawingArea):
             cr.set_source_surface(peca, round(x), round(y))
             cr.paint()
         # escala gravada: 11 traços finos (0 a 10) logo dentro da coroa
-        cr.set_source_rgb(*_rgb(paleta, "white"))
+        cr.set_source_rgb(*cairo_pecas.cor_rgb(paleta, "white"))
         cr.set_line_width(2)
         for k in range(self.maximo + 1):
             ang = math.radians(angulo_do_botao(k, self.maximo) - 90)
@@ -134,7 +129,7 @@ class EscalaDoVisor(Gtk.DrawingArea):
         w, h = self.get_allocated_width(), self.get_allocated_height()
         margem = 10
         largura_util = max(1, w - 2 * margem)
-        cr.set_source_rgb(*_rgb(paleta, "ink"))
+        cr.set_source_rgb(*cairo_pecas.cor_rgb(paleta, "ink"))
         cr.set_line_width(2)
         cr.move_to(margem, h - 6)                   # a linha da régua
         cr.line_to(w - margem, h - 6)
@@ -148,9 +143,9 @@ class EscalaDoVisor(Gtk.DrawingArea):
         cr.line_to(x - 7, 2)
         cr.line_to(x + 7, 2)
         cr.close_path()
-        cr.set_source_rgb(*_rgb(paleta, "danger" if theme.relevo(paleta) == "tons" else "ink"))
+        cr.set_source_rgb(*cairo_pecas.cor_rgb(paleta, "danger" if theme.relevo(paleta) == "tons" else "ink"))
         cr.fill_preserve()
-        cr.set_source_rgb(*_rgb(paleta, "ink"))
+        cr.set_source_rgb(*cairo_pecas.cor_rgb(paleta, "ink"))
         cr.set_line_width(1.5)
         cr.stroke()
         return False

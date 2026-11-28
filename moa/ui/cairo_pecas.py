@@ -22,7 +22,7 @@ import cairo
 from moa.ui import theme
 
 
-def _rgb(paleta: str, token: str) -> tuple[float, float, float]:
+def cor_rgb(paleta: str, token: str) -> tuple[float, float, float]:
     cor = theme.PALETAS[paleta][token].lstrip("#")
     return tuple(int(cor[i:i + 2], 16) / 255 for i in (0, 2, 4))
 
@@ -38,22 +38,22 @@ def desenhar_parafuso(cr: cairo.Context, w: int, h: int, paleta: str, estado: in
     cx, cy = w / 2, h / 2
     cr.arc(cx, cy, raio, 0, 2 * math.pi)
     if _contorno(paleta):
-        cr.set_source_rgb(*_rgb(paleta, "white"))
+        cr.set_source_rgb(*cor_rgb(paleta, "white"))
         cr.fill_preserve()
-        cr.set_source_rgb(*_rgb(paleta, "dark"))
+        cr.set_source_rgb(*cor_rgb(paleta, "dark"))
         cr.set_line_width(max(2.0, raio / 4))
         cr.stroke()
-        fenda = _rgb(paleta, "dark")
+        fenda = cor_rgb(paleta, "dark")
     else:
         brilho = cairo.RadialGradient(cx - raio / 3, cy - raio / 3, raio / 6, cx, cy, raio)
-        brilho.add_color_stop_rgb(0, *_rgb(paleta, "brass_hi"))
-        brilho.add_color_stop_rgb(1, *_rgb(paleta, "brass_lo"))
+        brilho.add_color_stop_rgb(0, *cor_rgb(paleta, "brass_hi"))
+        brilho.add_color_stop_rgb(1, *cor_rgb(paleta, "brass_lo"))
         cr.set_source(brilho)
         cr.fill_preserve()
-        cr.set_source_rgba(*_rgb(paleta, "dark"), 0.8)
+        cr.set_source_rgba(*cor_rgb(paleta, "dark"), 0.8)
         cr.set_line_width(1.2)
         cr.stroke()
-        fenda = _rgb(paleta, "dark")
+        fenda = cor_rgb(paleta, "dark")
     cr.save()
     cr.translate(cx, cy)
     cr.rotate(math.radians(45 * (estado % 4) + 20))
@@ -70,19 +70,19 @@ def desenhar_dobradica(cr: cairo.Context, w: int, h: int, paleta: str, estado: i
     """Dobradiça da lombada da caixa de CD: um cilindro de metal com um pino no meio."""
     cr.rectangle(0, 0, w, h)
     if _contorno(paleta):
-        cr.set_source_rgb(*_rgb(paleta, "white"))
+        cr.set_source_rgb(*cor_rgb(paleta, "white"))
         cr.fill_preserve()
-        cr.set_source_rgb(*_rgb(paleta, "dark"))
+        cr.set_source_rgb(*cor_rgb(paleta, "dark"))
         cr.set_line_width(2)
         cr.stroke()
     else:
         cilindro = cairo.LinearGradient(0, 0, w, 0)
-        cilindro.add_color_stop_rgb(0, *_rgb(paleta, "metal_lo"))
-        cilindro.add_color_stop_rgb(0.4, *_rgb(paleta, "metal_hi"))
-        cilindro.add_color_stop_rgb(1, *_rgb(paleta, "metal_lo"))
+        cilindro.add_color_stop_rgb(0, *cor_rgb(paleta, "metal_lo"))
+        cilindro.add_color_stop_rgb(0.4, *cor_rgb(paleta, "metal_hi"))
+        cilindro.add_color_stop_rgb(1, *cor_rgb(paleta, "metal_lo"))
         cr.set_source(cilindro)
         cr.fill()
-    cr.set_source_rgb(*_rgb(paleta, "dark"))
+    cr.set_source_rgb(*cor_rgb(paleta, "dark"))
     cr.arc(w / 2, h / 2, max(1.5, min(w, h) / 6), 0, 2 * math.pi)
     cr.fill()
 
@@ -99,24 +99,24 @@ def desenhar_serrilha(cr: cairo.Context, w: int, h: int, paleta: str, estado: in
         ang = 2 * math.pi * i / dentes
         cr.move_to(math.cos(ang) * raio * 0.86, math.sin(ang) * raio * 0.86)
         cr.line_to(math.cos(ang) * raio, math.sin(ang) * raio)
-    cr.set_source_rgb(*_rgb(paleta, "dark" if _contorno(paleta) else "metal_lo"))
+    cr.set_source_rgb(*cor_rgb(paleta, "dark" if _contorno(paleta) else "metal_lo"))
     cr.set_line_width(max(1.5, raio / 14))
     cr.stroke()
     cr.arc(0, 0, raio * 0.86, 0, 2 * math.pi)
     if _contorno(paleta):
-        cr.set_source_rgb(*_rgb(paleta, "white"))
+        cr.set_source_rgb(*cor_rgb(paleta, "white"))
         cr.fill_preserve()
-        cr.set_source_rgb(*_rgb(paleta, "dark"))
+        cr.set_source_rgb(*cor_rgb(paleta, "dark"))
         cr.set_line_width(3)
         cr.stroke()
     else:
         face = cairo.RadialGradient(-raio / 3, -raio / 3, raio / 8, 0, 0, raio)
-        face.add_color_stop_rgb(0, *_rgb(paleta, "metal_hi"))
-        face.add_color_stop_rgb(1, *_rgb(paleta, "metal_lo"))
+        face.add_color_stop_rgb(0, *cor_rgb(paleta, "metal_hi"))
+        face.add_color_stop_rgb(1, *cor_rgb(paleta, "metal_lo"))
         cr.set_source(face)
         cr.fill()
     # o traço indicador: mostra para onde o botão aponta
-    cr.set_source_rgb(*_rgb(paleta, "dark"))
+    cr.set_source_rgb(*cor_rgb(paleta, "dark"))
     cr.set_line_width(max(2.5, raio / 8))
     cr.set_line_cap(cairo.LINE_CAP_ROUND)
     cr.move_to(0, -raio * 0.25)
@@ -130,10 +130,10 @@ def desenhar_lente(cr: cairo.Context, w: int, h: int, paleta: str, estado: bool 
     raio = min(w, h) / 2 - 1
     cx, cy = w / 2, h / 2
     cr.arc(cx, cy, raio, 0, 2 * math.pi)
-    cr.set_source_rgb(*_rgb(paleta, "dark" if _contorno(paleta) else "metal_lo"))
+    cr.set_source_rgb(*cor_rgb(paleta, "dark" if _contorno(paleta) else "metal_lo"))
     cr.fill()
     cr.arc(cx, cy, raio * 0.78, 0, 2 * math.pi)
-    cr.set_source_rgb(*_rgb(paleta, "lampon" if estado else "lampoff"))
+    cr.set_source_rgb(*cor_rgb(paleta, "lampon" if estado else "lampoff"))
     cr.fill()
     if not _contorno(paleta):
         cr.arc(cx - raio * 0.25, cy - raio * 0.28, raio * 0.22, 0, 2 * math.pi)
@@ -173,23 +173,23 @@ def desenhar_caixa_de_cd(cr: cairo.Context, w: int, h: int, paleta: str, estado:
     cr.rectangle(g.arte_x, g.arte_y, g.arte_lado, g.arte_lado)
     cr.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
     if contorno:
-        cr.set_source_rgb(*_rgb(paleta, "white"))
+        cr.set_source_rgb(*cor_rgb(paleta, "white"))
     else:
         plastico = cairo.LinearGradient(0, 0, lado, lado)
-        plastico.add_color_stop_rgb(0, *_rgb(paleta, "metal_hi"))
-        plastico.add_color_stop_rgb(1, *_rgb(paleta, "metal_lo"))
+        plastico.add_color_stop_rgb(0, *cor_rgb(paleta, "metal_hi"))
+        plastico.add_color_stop_rgb(1, *cor_rgb(paleta, "metal_lo"))
         cr.set_source(plastico)
     cr.fill()
     cr.set_fill_rule(cairo.FILL_RULE_WINDING)
     # contorno só por fora (riscar o miolo sujaria a borda da arte)
     cr.new_path()
     _retangulo_arredondado(cr, 0.5, 0.5, lado - 1, lado - 1, 6)
-    cr.set_source_rgb(*_rgb(paleta, "dark"))
+    cr.set_source_rgb(*cor_rgb(paleta, "dark"))
     cr.set_line_width(3 if contorno else 1.5)
     cr.stroke()
     # lombada: faixa escura na esquerda (cinza-escuro, decisão em aberto do autor)
     cr.rectangle(g.quadro, g.quadro, g.lombada, lado - 2 * g.quadro)
-    cr.set_source_rgb(*_rgb(paleta, "dark"))
+    cr.set_source_rgb(*cor_rgb(paleta, "dark"))
     cr.fill()
     # duas dobradiças na lombada, em cima e embaixo
     dobradica = max(6, g.lombada - 2)
