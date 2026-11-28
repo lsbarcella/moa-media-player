@@ -56,9 +56,10 @@ class SettingsView:
             a = self.ctx.session.aviso
             self.raiz.pack_start(aviso(a.texto), False, False, 0)
 
-        colunas = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL if config.letra == "normal"
+        lado_a_lado = config.letra in ("pequeno", "normal")
+        colunas = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL if lado_a_lado
                           else Gtk.Orientation.VERTICAL, spacing=22)
-        colunas.set_homogeneous(config.letra == "normal")
+        colunas.set_homogeneous(lado_a_lado)
 
         letra = self._cartao("Tamanho da letra")
         for chave in LETRAS:

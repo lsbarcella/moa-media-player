@@ -69,3 +69,12 @@ def test_falha_no_meio_da_gravacao_mantem_o_arquivo_antigo_e_nao_deixa_temporari
     monkeypatch.undo()
     assert cfg.carregar(caminho).letra == "grande"
     assert [p.name for p in tmp_path.iterdir()] == ["config.json"]
+
+
+def test_a_letra_pequena_e_aceita_e_o_padrao_continua_normal(tmp_path):
+    from moa.core.config import Config, carregar
+    assert Config().letra == "normal"
+    (tmp_path / "c.json").write_text('{"letra": "pequeno"}', encoding="utf-8")
+    assert carregar(tmp_path / "c.json").letra == "pequeno"
+    (tmp_path / "c.json").write_text('{"letra": "minúscula"}', encoding="utf-8")
+    assert carregar(tmp_path / "c.json").letra == "normal"

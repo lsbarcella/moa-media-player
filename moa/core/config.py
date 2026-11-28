@@ -26,7 +26,7 @@ from moa.core.player import DEGRAU_MAXIMO, DEGRAU_PADRAO
 
 log = logging.getLogger(__name__)
 
-LETRAS = ("normal", "grande", "maior")
+LETRAS = ("pequeno", "normal", "grande", "maior")
 PALETAS = ("normal", "vermelho-verde", "azul-amarelo", "preto-e-branco")
 
 
