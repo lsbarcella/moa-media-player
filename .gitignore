@@ -5,3 +5,8 @@ __pycache__/
 *.csv.tmp
 dist/
 medicoes/
+
+# Restos do atualizador de teste (ADR-0020), caso o app seja rodado a partir desta pasta
+.moa-commit
+moa.anterior/
+tools.anterior/
