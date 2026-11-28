@@ -291,3 +291,11 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Feito:** escala 17/20/24 px (era 20/24/28); barra do pé numa linha, com um fio de andamento e o progresso clicável flutuando por cima só com o mouse na barra; painel do rádio com rolagem própria (só a lista rola); só a letra Maior empilha. Regras do CLAUDE.md reescritas (letra e exceção do hover). Testes novos: posição de "Abrir o rádio", hover com pausa e cancelamento, o progresso não redimensiona a tela, o painel não se move ao rolar a lista, letra e empilhamento.
 - **Incidente:** o app rodando desta pasta usou o atualizador de teste (ADR-0020) e trocou `moa/` e `tools/` pela `dev`, desfazendo o trabalho não comitado. Nada se perdeu (as pastas `*.anterior/` eram idênticas ao commit e o autor restaurou com `git checkout`). Lição: não rodar o app a partir do repositório de desenvolvimento com a atualização de teste ligada.
 - **NÃO testado:** no notebook do pai; se 17 px é legível para ele.
+
+## 28/11/2026 — Letra Pequena, escalas menores e rádio sem o botão de guardar (ADR-0029)
+
+- **Pedidos:** tirar o botão "Guardar o disco na estante e parar"; o rádio ainda era comido na vertical; painel com menos padding à esquerda, para dar espaço aos nomes das músicas; criar o tema de letra "Pequeno" (tamanho comum, para quem enxerga bem), manter o Normal como padrão e baixar todos os outros mais um pouco; e começar a discutir a tipografia do projeto.
+- **Feito:** escalas 14, 16, 18 e 21 px; opção Pequeno nas Configurações; botão removido da tela (a função fica, usada pela edição de discos); margens do rádio de 24 para 12 px; botão de volume de 132 para 104 px; painel colado no canto (ele herdava "expandir" e ficava a 108 px dele); ADR-0029 e CLAUDE.md.
+- **Achado:** o `Gtk.ScrolledWindow` herda "expandir" do conteúdo e, num `Gtk.Box`, o filho com `expand=False` mas que herdou `hexpand` ganha uma fatia do espaço livre e fica centralizado nela; `set_hexpand(False)` resolve.
+- **Tipografia:** só conversa nesta rodada (nada implementado); opções e recomendação foram apresentadas ao autor.
+- **NÃO testado:** no notebook do pai; se 16 px é legível como padrão.
