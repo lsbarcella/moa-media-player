@@ -118,3 +118,36 @@ def test_icone_igual_so_e_convertido_uma_vez():
     widgets.icone("mais")
     widgets.icone("mais", "#FFFFFF", "#1E1913")
     assert len(widgets._cache_de_icones) == 2
+
+
+def test_a_lista_nunca_troca_de_pai(app):
+    """Mudar um widget de pai refaz por dentro todas as linhas: era a travada com 371 faixas."""
+    ctx, conteudo = app
+    _abrir_no_radio(ctx)
+    visao = conteudo.telas[Tela.RADIO]
+    pai = visao._lista.get_parent()
+    for acao in (ctx.radio.volume_mais, ctx.radio.proxima, ctx.radio.alternar,
+                 ctx.radio.alternar_voz_mais_clara, ctx.radio.anterior):
+        acao()
+        assert visao._lista.get_parent() is pai
+
+
+def test_volume_nao_reaplica_o_tema(app, monkeypatch):
+    """Reaplicar o tema recalcula o estilo de todos os widgets; só a letra e a cor pedem isso."""
+    ctx, conteudo = app
+    _abrir_no_radio(ctx)
+    chamadas = []
+    monkeypatch.setattr("moa.ui.window.theme.aplicar", lambda *a: chamadas.append(a))
+    ctx.radio.volume_mais()
+    ctx.radio.alternar_voz_mais_clara()
+    assert chamadas == []
+
+
+def test_mudar_a_letra_ou_a_cor_reaplica_o_tema(app, monkeypatch):
+    ctx, conteudo = app
+    chamadas = []
+    monkeypatch.setattr("moa.ui.window.theme.aplicar", lambda *a: chamadas.append(a))
+    ctx.preferencias.mudar(letra="grande")
+    assert len(chamadas) == 1 and chamadas[0][1] == "grande"
+    ctx.preferencias.mudar(paleta="preto-e-branco")
+    assert len(chamadas) == 2

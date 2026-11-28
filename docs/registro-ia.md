@@ -186,3 +186,12 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Tropeço:** a primeira versão isolava o D-Bus (`dbus-run-session`) e media 25 s de abertura; era um artefato do isolamento (o app espera um serviço que não existe na sessão nova), não do app. Passei a medir na sessão real e a recusar rodar com um Moa aberto. Também a CPU tocando dava 4,6% por causa do meu próprio laço de espera; troquei por um laço de eventos e caiu para ~3,5%.
 - **Medido aqui (i5-9600K, `--rapido`):** abertura ~0,3 s, RAM ~85 MB em repouso, CPU tocando ~3,5%.
 - **NÃO rodado no notebook do pai.** Falta a rodada completa lá e a medida a frio depois de reiniciar.
+
+## 27/11/2026 — Medição travou no notebook; a causa real da travada da lista
+
+- **Relato do autor:** o `measure.sh` não existia lá (o atualizador só trocava `moa/`) e a medição ficou presa em "[mix] cronometrando as ações...".
+- **Atualizador:** passa a trocar também `tools/` (anterior em `tools.anterior/`); falha em `tools/` não impede a atualização; "voltar" devolve as duas pastas.
+- **Medição presa:** reproduzida aqui com 371 faixas. As faixas de teste eram curtas, o disco avançava sozinho o tempo todo e a tela nunca ficava parada para o cronômetro. As ações passam a usar faixas longas (links para um áudio de 5 min), a espera por "tela pronta" tem limite de 5 s e cada ação imprime o resultado ao terminar.
+- **Achado importante:** com a janela montada, o volume ainda custava ~440 ms com 371 faixas (e 49 ms com 20). Dois culpados, os dois por linha: (1) a lista trocava de pai a cada clique, o que desfaz e refaz por dentro as 371 linhas; (2) toda preferência (inclusive o volume) reaplicava o tema, e o GTK recalcula o estilo de todos os widgets. Corrigido: a lista agora fica sempre no mesmo lugar (só o painel do rádio é refeito) e o tema só é reaplicado quando a letra ou a cor mudam. Volume: ~35 ms com qualquer número de faixas; tocar/pausar e próxima: ~40 a 50 ms.
+- **Lição:** minha medida anterior (14 ms) usava uma janela não montada e por isso não via o custo do GTK. Medir sempre com a janela desenhada.
+- **NÃO testado:** no notebook do pai (HD mecânico, CPU antiga).
