@@ -146,3 +146,11 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Verificação:** testes novos de núcleo (`test_aparelho.py`) e de tela (`test_cd_view.py`, com gerador de áudio no lugar do CD); telas desenhadas e conferidas por imagem.
 - **NÃO testado:** CD de verdade, a gaveta no XFCE, HD mecânico.
 - **Em aberto:** ouvir música durante a cópia; impedir a suspensão durante a cópia.
+
+## 27/11/2026 — M8 (primeira etapa): pacote .deb e instaladores no plano
+
+- **Pedido:** gerar o `.deb` primeiro; registrar nos planos que o autor quer instaladores, principalmente para Windows, depois.
+- **Feito:** CLAUDE.md (M8 vira o `.deb`; novo M10 com o instalador `.run` offline e o Windows, com a decisão técnica em aberto), `tools/build_deb.sh`, `packaging/` (comando `moa`, `.desktop`, ícone provisório), `tests/test_packaging.py`, ADR-0019. O pacote tem ~68 KB.
+- **Verificação:** o pacote extraído roda `moa` a partir de `/`, e a abertura automática é criada com o caminho do comando.
+- **NÃO testado:** instalação em Mint limpo (`apt install ./arquivo.deb`), menu do XFCE, desinstalação.
+- **Pendência:** a janela em branco no notebook do pai ainda não foi diagnosticada (a saída do terminal e do log não chegou).
