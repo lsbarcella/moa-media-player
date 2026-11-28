@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview: aparência analógica do Moa Media Player</title>
+<style>
+/* ===== Tokens (os mesmos nomes do theme.py; a paleta troca só estes valores) ===== */
+:root{
+  --bg:#FAF5E9; --ink:#1E1913; --ink2:#4A4036; --card:#FFFFFF; --line:#CDBFA6;
+  --wood:#4A2A12; --wood-hi:#5E3518; --wood-lo:#3D220F; --wood2:#7A4A21;
+  --green:#1F4D2B; --amber:#FFD27A; --lampon:#B7E4A8; --lampoff:#4A3B2C;
+  --visor:#FFE9A8; --visor-hi:#FFF1C8; --visor-lo:#F2CF76; --dark:#2B2118;
+  --btnradio:#F6E9D2; --selbg:#EAF5E4; --focus:#0B3D91; --white:#FFFFFF;
+  --brass-hi:#E8CF8A; --brass:#D6B25C; --brass-lo:#9C7A2A;
+  --key-hi:#FFFFFF; --key-lo:#E4D4AE; --metal-hi:#EDEAE2; --metal-lo:#B9B3A6;
+  --capa1:#7A1F2B; --capa2:#24407A; --capa3:#1F5A2E; --capa4:#6B3A1A; --capa5:#5A2A6B; --capa6:#7A4A12;
+  --s:1; --u:20px;
+}
+[data-paleta="vv"]{ --green:#14407A; --lampon:#A8D4FF; --selbg:#E3EEFA; }
+[data-paleta="ay"]{ --green:#8A1538; --amber:#FFC2B0; --lampon:#FFD0DC; --selbg:#F9E3EA; }
+[data-paleta="pb"]{ --bg:#FFFFFF; --green:#000; --amber:#FFF; --lampon:#FFF; --selbg:#FFF; --visor:#FFF; --visor-hi:#FFF; --visor-lo:#FFF;
+  --wood:#000; --wood-hi:#000; --wood-lo:#000; --wood2:#000; --line:#000; --btnradio:#FFF; --key-hi:#FFF; --key-lo:#FFF;
+  --brass-hi:#FFF; --brass:#FFF; --brass-lo:#000; --metal-hi:#FFF; --metal-lo:#FFF; --lampoff:#000; --dark:#000; }
+[data-letra="g"]{--u:24px} [data-letra="m"]{--u:28px}
+
+*{box-sizing:border-box}
+body{margin:0;background:#E9E2D3;color:#1E1913;font:16px/1.5 "Segoe UI",system-ui,-apple-system,"Noto Sans",sans-serif}
+.pagina{max-width:1180px;margin:0 auto;padding:14px 16px 60px}
+.autor h1{font-size:1.35rem;margin:0 0 4px} .autor p{margin:.2rem 0;max-width:95ch;color:#3A3128}
+.controles{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:12px 0;padding:10px 12px;background:#FFFCF3;border:1px solid #B9AD96;border-radius:10px;position:sticky;top:0;z-index:5}
+.grupo{display:flex;gap:6px;align-items:center;flex-wrap:wrap} .grupo b{font-size:.9rem;margin-right:2px}
+.grupo button{font:inherit;font-size:.9rem;padding:5px 11px;border:2px solid #6B5E4A;border-radius:8px;background:#fff;cursor:pointer}
+.grupo button[aria-pressed="true"]{background:#2B2118;color:#fff;border-color:#2B2118}
+
+/* ===== A janela do app (20 px de base, como no app) ===== */
+#janela{font-size:var(--u);line-height:1.35;background:var(--bg);color:var(--ink);border:3px solid #2B2118;border-radius:10px;overflow:hidden}
+.titulo-janela{background:#2B2118;color:#fff;font-size:15px;padding:6px 10px;display:flex;justify-content:space-between}
+.cabecalho{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px;background:var(--card);border-bottom:3px solid var(--wood2)}
+.cabecalho h2{margin:0;font-size:calc(var(--u) * 1.5)}
+.conteudo{padding:20px 24px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:24px}
+@media (max-width:900px){.conteudo{grid-template-columns:1fr}}
+.faixa-titulo{font-size:calc(var(--u) * 1.2);font-weight:800;margin:0 0 8px}
+button{font-family:inherit}
+button:focus-visible{outline:5px solid var(--focus);outline-offset:3px}
+
+/* ===== TECLAS ===== */
+.tecla{min-height:64px;min-width:64px;padding:8px 18px;font-size:var(--u);font-weight:800;color:var(--ink);cursor:pointer;position:relative;
+  border:3px solid var(--ink);border-radius:14px;background:var(--card);box-shadow:none}
+.tecla.pri{background:var(--green);border-color:var(--green);color:#fff}
+.tecla.grande{min-height:88px;font-size:calc(var(--u) * 1.3);border-radius:40px;padding:10px 26px}
+.tecla.ambar{background:var(--amber);color:var(--ink)}
+.tecla .rotulo{position:relative;z-index:2}
+
+/* nível 2 e 3: relevo (sombra rígida = altura; o brilho é translúcido e fica na faixa de cima, nunca atrás da letra) */
+[data-nivel="2"] .tecla,[data-nivel="3"] .tecla{
+  background-image:linear-gradient(to bottom,rgba(255,255,255,.85) 0,rgba(255,255,255,0) 30%,rgba(0,0,0,.10) 100%);
+  background-color:var(--key-lo);border-color:var(--dark);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.9),0 6px 0 var(--dark);transform:translateY(0);transition:none}
+[data-nivel="2"] .tecla:active,[data-nivel="3"] .tecla:active,.tecla.baixada{
+  transform:translateY(5px);box-shadow:inset 0 3px 0 rgba(0,0,0,.28),0 1px 0 var(--dark);
+  background-image:linear-gradient(to bottom,rgba(0,0,0,.14),rgba(0,0,0,.02) 60%)}
+[data-nivel="2"] .tecla.pri,[data-nivel="3"] .tecla.pri{background-color:var(--green);color:#fff;
+  background-image:linear-gradient(to bottom,rgba(255,255,255,.30) 0,rgba(255,255,255,.30) 22%,rgba(255,255,255,0) 23%,rgba(0,0,0,.18) 100%);border-color:var(--dark)}
+[data-nivel="2"] .tecla.ambar,[data-nivel="3"] .tecla.ambar{background-color:var(--amber);color:var(--ink)}
+[data-nivel="3"] .tecla{box-shadow:inset 0 2px 0 rgba(255,255,255,.9),inset 0 -3px 0 rgba(0,0,0,.14),inset 0 0 0 5px rgba(255,255,255,.18),0 6px 0 var(--dark)}
+[data-nivel="3"] .tecla.baixada,[data-nivel="3"] .tecla:active{box-shadow:inset 0 3px 0 rgba(0,0,0,.28),inset 0 0 0 5px rgba(0,0,0,.05),0 1px 0 var(--dark)}
+[data-nivel="3"] .tecla.redonda{border-radius:44px}
+.tecla.inativa{background:#E4DCCB;color:var(--ink2);border-style:dashed}
+
+/* ===== LÂMPADAS ===== */
+.lampada{width:22px;height:22px;border-radius:50%;background:var(--lampoff);border:3px solid #fff;display:inline-block;vertical-align:middle}
+.lampada.acesa{background:var(--lampon);box-shadow:0 0 10px var(--lampon)}
+[data-nivel="3"] .lampada{border:3px solid var(--metal-lo);background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.55) 0,rgba(255,255,255,0) 40%),var(--lampoff);box-shadow:0 0 0 2px var(--dark),inset 0 -2px 0 rgba(0,0,0,.35)}
+[data-nivel="3"] .lampada.acesa{background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.85) 0,rgba(255,255,255,0) 45%),var(--lampon);box-shadow:0 0 0 2px var(--dark),0 0 12px var(--lampon)}
+.estado{display:flex;align-items:center;gap:10px;font-weight:800}
+
+/* ===== GABINETE DO RÁDIO ===== */
+.gabinete{background:var(--wood);border:4px solid var(--dark);border-radius:22px;padding:18px;color:#fff;position:relative;display:flex;flex-direction:column;gap:14px}
+[data-nivel="2"] .gabinete,[data-nivel="3"] .gabinete{
+  background-image:
+    repeating-linear-gradient(90deg,rgba(0,0,0,.10) 0,rgba(0,0,0,.10) 2px,rgba(255,255,255,.03) 2px,rgba(255,255,255,.03) 7px,rgba(0,0,0,.06) 7px,rgba(0,0,0,.06) 9px,rgba(255,255,255,0) 9px,rgba(255,255,255,0) 17px),
+    linear-gradient(to bottom,var(--wood-hi),var(--wood) 55%,var(--wood-lo));
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.12),inset 0 -4px 0 rgba(0,0,0,.35),0 10px 0 var(--dark)}
+[data-nivel="3"] .gabinete{box-shadow:0 0 0 3px var(--brass),0 0 0 5px var(--brass-lo),inset 0 3px 0 rgba(255,255,255,.14),inset 0 -4px 0 rgba(0,0,0,.35),0 14px 0 var(--dark);margin:6px}
+.parafuso{display:none;position:absolute;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--metal-lo) 60%,#6c665a);border:1px solid var(--dark)}
+.parafuso::after{content:"";position:absolute;left:2px;right:2px;top:50%;height:2px;margin-top:-1px;background:var(--dark);transform:rotate(35deg)}
+[data-nivel="3"] .parafuso{display:block}
+.p1{left:9px;top:9px}.p2{right:9px;top:9px}.p3{left:9px;bottom:9px}.p4{right:9px;bottom:9px}
+.placa-nome{display:none;align-self:flex-end;margin:-6px 12px -4px 0;padding:2px 16px;border-radius:6px;font-weight:800;letter-spacing:.12em;font-size:calc(var(--u) * .75);color:var(--ink);
+  background:linear-gradient(to bottom,var(--brass-hi),var(--brass));border:2px solid var(--brass-lo);box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+[data-nivel="3"] .placa-nome{display:block}
+[data-paleta="pb"] .placa-nome{border:3px solid #000;background:#fff}
+
+/* visor */
+.visor{background:var(--visor);color:var(--ink);border:5px solid var(--dark);border-radius:14px;padding:12px;display:flex;gap:14px;position:relative}
+[data-nivel="2"] .visor,[data-nivel="3"] .visor{
+  background-image:linear-gradient(120deg,rgba(255,255,255,.55) 0,rgba(255,255,255,0) 18%),linear-gradient(to bottom,var(--visor-hi),var(--visor) 45%,var(--visor-lo));
+  box-shadow:inset 0 6px 0 rgba(0,0,0,.28),inset 0 -2px 0 rgba(255,255,255,.55)}
+[data-nivel="3"] .visor{border-color:var(--dark);box-shadow:0 0 0 3px var(--brass),0 0 0 5px var(--brass-lo),inset 0 6px 0 rgba(0,0,0,.28),inset 0 -2px 0 rgba(255,255,255,.55)}
+.visor .textos{flex:1;min-width:0} .visor .t1{font-weight:800} .visor .t2{font-size:calc(var(--u) * 1.3);font-weight:800}
+.visor .nota{display:inline-block;background:#fff;border-radius:6px;padding:2px 8px;font-weight:700;margin-top:4px}
+.escala{display:none;margin-top:8px}
+[data-nivel="3"] .escala{display:block}
+.escala svg{width:100%;height:46px;display:block}
+.escala text{font-size:11px;font-family:inherit;fill:#1E1913;font-weight:700}
+
+/* teclas em moldura */
+.teclado{display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:12px}
+.teclado .tecla{padding:8px 6px}
+[data-nivel="2"] .teclado{background:var(--wood-lo);padding:12px;border-radius:14px;box-shadow:inset 0 5px 0 rgba(0,0,0,.45),inset 0 -2px 0 rgba(255,255,255,.12)}
+[data-nivel="3"] .teclado{padding:14px 14px 20px;border-radius:12px;border:3px solid var(--dark);position:relative;
+  background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.35) 0,rgba(255,255,255,.35) 1px,rgba(0,0,0,.05) 1px,rgba(0,0,0,.05) 3px),linear-gradient(to bottom,var(--metal-hi),var(--metal-lo));
+  background-color:var(--metal-hi);box-shadow:inset 0 2px 0 rgba(255,255,255,.8),inset 0 -3px 0 rgba(0,0,0,.25)}
+
+/* volume */
+.volume{background:var(--dark);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center}
+.vol-linha{display:flex;align-items:center;gap:12px;width:100%;justify-content:space-between}
+.vol-linha .tecla{flex:1}
+.barras{display:flex;gap:4px;align-items:center}
+.barra{width:14px;height:34px;border-radius:4px;background:var(--lampoff);border:2px solid #fff}
+.barra.acesa{background:var(--lampon);box-shadow:0 0 6px var(--lampon)}
+[data-nivel="2"] .barra{width:20px;height:20px;border-radius:50%;height:20px}
+[data-nivel="2"] .barra.acesa{box-shadow:0 0 8px var(--lampon)}
+[data-nivel="3"] .barras{display:none}
+.botao-volume{display:none} [data-nivel="3"] .botao-volume{display:block}
+.botao-volume svg{width:180px;height:150px;display:block}
+.volume .legenda{display:flex;gap:8px;align-items:center;font-weight:800;color:#fff}
+.alto-falante{display:none;height:46px;border-radius:10px;border:3px solid var(--dark)}
+[data-nivel="3"] .alto-falante{display:block;
+  background-image:repeating-linear-gradient(45deg,rgba(0,0,0,.35) 0,rgba(0,0,0,.35) 2px,rgba(255,255,255,.08) 2px,rgba(255,255,255,.08) 6px),repeating-linear-gradient(-45deg,rgba(0,0,0,.35) 0,rgba(0,0,0,.35) 2px,rgba(255,255,255,0) 2px,rgba(255,255,255,0) 6px);
+  background-color:#6b5a3e;box-shadow:inset 0 4px 0 rgba(0,0,0,.45)}
+[data-paleta="pb"] .alto-falante{background:#fff;border:3px solid #000}
+
+/* lista de músicas */
+.lista{display:flex;flex-direction:column;gap:8px}
+.linha{background:var(--card);border:2px solid var(--line);border-radius:12px;padding:6px;display:flex;gap:10px;align-items:center}
+.linha.agora{border:4px solid var(--green);background:var(--selbg)}
+.linha .nome{flex:1;padding:6px 8px;font-weight:600} .linha .nota{font-size:.8em;color:var(--ink2);font-weight:600;display:block}
+.linha .tecla{font-size:calc(var(--u) * .8);min-height:64px}
+
+/* ===== ESTANTE ===== */
+.estante{grid-column:1/-1}
+.placa{display:inline-block;background:var(--wood);color:#fff;border-radius:8px;padding:4px 16px;font-weight:800;margin-bottom:10px}
+[data-nivel="3"] .placa{background:linear-gradient(to bottom,var(--brass-hi),var(--brass));color:var(--ink);border:2px solid var(--brass-lo);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 3px 0 var(--dark);position:relative;padding:4px 26px}
+[data-nivel="3"] .placa::before,[data-nivel="3"] .placa::after{content:"";position:absolute;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--metal-lo));border:1px solid var(--brass-lo)}
+[data-nivel="3"] .placa::before{left:7px} [data-nivel="3"] .placa::after{right:7px}
+[data-paleta="pb"] .placa{background:#fff!important;color:#000!important;border:3px solid #000!important}
+.nicho{padding:16px 16px 4px;border-radius:6px 6px 0 0}
+[data-nivel="2"] .nicho,[data-nivel="3"] .nicho{
+  background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.12) 0,rgba(0,0,0,.12) 2px,rgba(255,255,255,0) 2px,rgba(255,255,255,0) 14px),linear-gradient(to bottom,var(--wood-lo),var(--wood));
+  background-color:var(--wood);box-shadow:inset 0 10px 14px rgba(0,0,0,.55),inset 8px 0 8px rgba(0,0,0,.3),inset -8px 0 8px rgba(0,0,0,.3)}
+.discos{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-end}
+.disco{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:3px solid transparent;border-radius:12px;padding:6px;cursor:pointer;color:var(--ink);font-weight:800;font-size:var(--u)}
+[data-nivel="2"] .nicho .disco,[data-nivel="3"] .nicho .disco{color:#fff}
+.disco:active .capa{transform:translateY(3px)}
+
+.capa{width:140px;height:140px;position:relative;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;font-weight:800;line-height:1.1;padding:8px;background:var(--c);box-shadow:0 3px 0 rgba(0,0,0,.35);border-radius:6px}
+[data-nivel="2"] .capa,[data-nivel="3"] .capa{padding:0;border-radius:6px;background:linear-gradient(135deg,rgba(255,255,255,.65) 0,rgba(255,255,255,.18) 40%,rgba(255,255,255,.4) 100%),#C5CED3;border:2px solid var(--dark);box-shadow:0 5px 0 rgba(0,0,0,.45),inset 0 0 0 2px rgba(255,255,255,.5)}
+[data-nivel="2"] .capa .arte,[data-nivel="3"] .capa .arte{position:absolute;left:22px;right:8px;top:8px;bottom:8px;background:var(--c);display:flex;align-items:center;justify-content:center;padding:6px}
+.capa .arte{display:contents}
+.capa .lombada{display:none}
+[data-nivel="2"] .capa .lombada,[data-nivel="3"] .capa .lombada{display:block;position:absolute;left:0;top:0;bottom:0;width:15px;border-radius:5px 0 0 5px;background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(0,0,0,.25));border-right:1px solid rgba(255,255,255,.4)}
+[data-nivel="3"] .capa .lombada::before,[data-nivel="3"] .capa .lombada::after{content:"";position:absolute;left:3px;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--metal-lo));border:1px solid var(--dark)}
+[data-nivel="3"] .capa .lombada::before{top:12px} [data-nivel="3"] .capa .lombada::after{bottom:12px}
+.capa .reflexo{display:none}
+[data-nivel="2"] .capa .reflexo,[data-nivel="3"] .capa .reflexo{display:block;position:absolute;left:0;top:0;width:60%;height:100%;pointer-events:none;
+  background:linear-gradient(115deg,rgba(255,255,255,.38) 0,rgba(255,255,255,.38) 30%,rgba(255,255,255,0) 31%)}
+.capa .texto{position:relative;z-index:2}
+.vao{width:140px;height:140px;border-radius:6px;background:var(--dark);border:4px dashed var(--ink2);display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;font-weight:800;padding:8px}
+[data-nivel="2"] .vao,[data-nivel="3"] .vao{border:2px solid #000;background:linear-gradient(to bottom,#120d08,#2B2118);box-shadow:inset 0 8px 10px rgba(0,0,0,.8),inset 0 -2px 0 rgba(255,255,255,.12)}
+.tampo{height:16px;background:var(--wood2);margin:0}
+[data-nivel="2"] .tampo,[data-nivel="3"] .tampo{height:30px;background-image:linear-gradient(to bottom,#C99A63 0,#C99A63 38%,var(--wood2) 38%,var(--wood2) 74%,var(--wood-lo) 74%);box-shadow:0 6px 0 rgba(0,0,0,.35);border-radius:0 0 6px 6px}
+[data-nivel="3"] .tampo{background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.08) 0,rgba(0,0,0,.08) 2px,rgba(255,255,255,0) 2px,rgba(255,255,255,0) 18px),linear-gradient(to bottom,#D3A670 0,#D3A670 38%,var(--wood2) 38%,var(--wood2) 74%,var(--wood-lo) 74%)}
+[data-paleta="pb"] .tampo{background:#000!important;height:16px}
+
+/* ===== Configurações: banco de teclas (I2) ===== */
+.banco{display:flex;gap:10px}
+.banco .tecla{flex:1;min-width:0;padding-top:30px}
+.banco .tecla .luz{position:absolute;left:50%;top:6px;margin-left:-8px;width:16px;height:16px;border-radius:50%;background:var(--lampoff);border:2px solid #fff}
+[data-nivel="3"] .banco .tecla .luz,[data-nivel="2"] .banco .tecla .luz{border-color:var(--dark)}
+.banco .tecla.baixada .luz{background:var(--lampon);box-shadow:0 0 8px var(--lampon)}
+[data-nivel="1"] .banco .tecla.baixada{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* ===== Painel lateral ===== */
+.apoio{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:900px){.apoio{grid-template-columns:1fr}}
+.cartao{background:#FFFCF3;border:1px solid #B9AD96;border-radius:10px;padding:10px 14px;font-size:.92rem}
+.cartao h3{font-size:1rem;margin:0 0 6px}
+table{border-collapse:collapse;width:100%;font-size:.88rem} th,td{border:1px solid #B9AD96;padding:4px 8px;text-align:left;vertical-align:top} th{background:#EFE6D2}
+.ok{color:#0F5A24;font-weight:700} .falha{color:#8A1220;font-weight:700}
+</style>
+</head>
+<body>
+<div class="pagina">
+<div class="autor">
+  <h1>Preview: a aparência analógica do Moa Media Player</h1>
+  <p>Desenho em HTML, só para aprovar a aparência antes de implementar. A tela é a mesma nos três níveis; troque o <b>nível de detalhe</b>, a <b>paleta</b> e o <b>tamanho da letra</b> e use as teclas de verdade: elas descem ao apertar, o botão de volume gira com “Mais baixo/Mais alto”, a “Voz mais clara” fica travada.</p>
+  <p><b>1</b> é o visual de hoje, chapado. <b>2</b> é o conjunto de ideias da ideação (teclas com curso, madeira, vidro, capa em caixa de CD, prateleira com profundidade). <b>3</b> é o mesmo conjunto com mais detalhe: metal escovado, parafusos, botão de volume desenhado com serrilha e escala gravada, lâmpadas com lente, grade de alto-falante e plaquinhas de latão.</p>
+</div>
+
+<div class="controles" role="group" aria-label="Controles do preview">
+  <div class="grupo" id="g-nivel"><b>Nível de detalhe:</b>
+    <button data-nivel="1" aria-pressed="false">1 · Simples (hoje)</button>
+    <button data-nivel="2" aria-pressed="false">2 · Aparelho</button>
+    <button data-nivel="3" aria-pressed="true">3 · Aparelho detalhado</button></div>
+  <div class="grupo" id="g-paleta"><b>Paleta:</b>
+    <button data-paleta="normal" aria-pressed="true">Padrão</button>
+    <button data-paleta="vv" aria-pressed="false">Vermelho-verde</button>
+    <button data-paleta="ay" aria-pressed="false">Azul-amarelo</button>
+    <button data-paleta="pb" aria-pressed="false">Preto e branco</button></div>
+  <div class="grupo" id="g-letra"><b>Letra:</b>
+    <button data-letra="n" aria-pressed="true">Normal</button>
+    <button data-letra="g" aria-pressed="false">Grande</button>
+    <button data-letra="m" aria-pressed="false">Maior</button></div>
+</div>
+
+<div id="janela" data-nivel="3" data-paleta="normal" data-letra="n">
+  <div class="titulo-janela"><span>Moa Media Player</span><span>✕</span></div>
+  <div class="cabecalho">
+    <button class="tecla" type="button"><span class="rotulo">◀ Voltar para a estante</span></button>
+    <h2>Tocando agora</h2>
+    <button class="tecla" type="button"><span class="rotulo">⚙ Configurações</span></button>
+  </div>
+
+  <div class="conteudo">
+    <!-- O RÁDIO -->
+    <section class="gabinete" aria-label="Rádio">
+      <span class="parafuso p1"></span><span class="parafuso p2"></span><span class="parafuso p3"></span><span class="parafuso p4"></span>
+      <div class="placa-nome">MOA</div>
+      <div class="estado"><span class="lampada" id="lamp-estado"></span><span id="palavra">PARADO</span></div>
+      <div class="visor">
+        <div class="capa" style="--c:var(--capa2);width:120px;height:120px;flex:none"><span class="lombada"></span><span class="arte"><span class="texto">Boleros</span></span><span class="reflexo"></span></div>
+        <div class="textos">
+          <div class="t1" id="visor-estado">PARADO. Aperte Tocar para ouvir o disco.</div>
+          <div class="t2" id="visor-titulo">Bolero 3</div>
+          <div>Disco: Boleros</div>
+          <div id="visor-faixa">Faixa 3 de 12</div>
+          <div class="escala" aria-hidden="true">
+            <svg viewBox="0 0 300 46" preserveAspectRatio="none" id="escala-svg"></svg>
+          </div>
+        </div>
+      </div>
+      <div class="teclado">
+        <button class="tecla" id="anterior" type="button"><span class="rotulo">⏮ Anterior</span></button>
+        <button class="tecla pri grande" id="tocar" type="button"><span class="rotulo" id="tocar-rotulo">▶ Tocar</span></button>
+        <button class="tecla" id="proxima" type="button"><span class="rotulo">Próxima ⏭</span></button>
+      </div>
+      <div class="volume">
+        <div class="barras" id="barras" aria-hidden="true"></div>
+        <div class="botao-volume" id="botao-volume" aria-hidden="true"></div>
+        <div class="vol-linha">
+          <button class="tecla" id="menos" type="button"><span class="rotulo" id="menos-rotulo">Mais baixo</span></button>
+          <button class="tecla" id="mais" type="button"><span class="rotulo" id="mais-rotulo">Mais alto</span></button>
+        </div>
+        <div class="legenda">🔈 <span id="vol-texto">Volume: 6 de 10</span></div>
+      </div>
+      <button class="tecla" id="clara" type="button" aria-pressed="false"><span class="rotulo" id="clara-rotulo">Voz mais clara: desligada</span></button>
+      <div class="alto-falante" aria-hidden="true"></div>
+    </section>
+
+    <!-- LISTA -->
+    <section>
+      <p class="faixa-titulo">Músicas deste disco</p>
+      <div class="lista" id="lista"></div>
+      <p class="faixa-titulo" style="margin-top:18px">Configurações: tamanho da letra</p>
+      <div class="banco" id="banco">
+        <button class="tecla" data-b="n" type="button"><span class="luz"></span><span class="rotulo">Normal</span></button>
+        <button class="tecla" data-b="g" type="button"><span class="luz"></span><span class="rotulo">Grande</span></button>
+        <button class="tecla" data-b="m" type="button"><span class="luz"></span><span class="rotulo">Maior</span></button>
+      </div>
+    </section>
+
+    <!-- A ESTANTE -->
+    <section class="estante">
+      <span class="placa">Meus discos</span>
+      <div class="nicho"><div class="discos">
+        <button class="disco" type="button"><div class="capa" style="--c:var(--capa1)"><span class="lombada"></span><span class="arte"><span class="texto">Samba</span></span><span class="reflexo"></span></div>Samba</button>
+        <button class="disco" type="button"><div class="vao">Em uso no rádio</div>Ir ao rádio</button>
+        <button class="disco" type="button"><div class="capa" style="--c:var(--capa3)"><span class="lombada"></span><span class="arte"><span class="texto">Antigos</span></span><span class="reflexo"></span></div>Antigos</button>
+        <button class="disco" type="button"><div class="capa" style="--c:var(--capa4)"><span class="lombada"></span><span class="arte"><span class="texto">MIX</span></span><span class="reflexo"></span></div>MIX</button>
+        <button class="disco" type="button"><div class="capa" style="--c:var(--capa5)"><span class="lombada"></span><span class="arte"><span class="texto">Tangos</span></span><span class="reflexo"></span></div>Tangos</button>
+      </div></div>
+      <div class="tampo"></div>
+    </section>
+  </div>
+</div>
+
+<div class="apoio">
+  <div class="cartao">
+    <h3>Como cada peça seria feita no app (GTK 3)</h3>
+    <table>
+      <thead><tr><th>Peça</th><th>Nível 2</th><th>Nível 3</th></tr></thead>
+      <tbody>
+        <tr><td>Teclas, gabinete, visor, prateleira, lâmpadas</td><td>CSS do GTK (degradês e sombras rígidas)</td><td>CSS do GTK (mais camadas)</td></tr>
+        <tr><td>Capa em caixa de CD</td><td>Desenho no <code>Capa</code> (Cairo, já é desenho próprio)</td><td>Idem, com dobradiça e reflexo</td></tr>
+        <tr><td>Botão de volume com serrilha e escala</td><td>(não tem)</td><td>Widget novo em Cairo</td></tr>
+        <tr><td>Escala gravada “Faixa X de Y” no visor</td><td>(não tem)</td><td>Desenho em Cairo (uma linha de traços e um marcador)</td></tr>
+        <tr><td>Parafusos, plaquinhas de latão, grade do alto-falante</td><td>(não tem)</td><td>CSS (a grade) e SVG/Cairo pequenos (parafusos)</td></tr>
+      </tbody>
+    </table>
+    <p>Custo medido: relevo em CSS ≈ custo do chapado (11,5 contra 11,3 ms por desenho, na máquina de desenvolvimento). As peças em Cairo (capa, botão, escala) pedem cache do desenho para não custar em CPU antiga.</p>
+  </div>
+  <div class="cartao">
+    <h3>Contraste de texto no pior ponto do degradê (meta: 7:1)</h3>
+    <table id="contraste"><thead><tr><th>Texto sobre…</th><th>Razão</th><th></th></tr></thead><tbody></tbody></table>
+    <p>A última linha é a armadilha: se o brilho do “Tocar” cobrir a letra, o contraste cai abaixo de 7:1. Por isso o brilho fica só na faixa de cima da tecla.</p>
+  </div>
+</div>
+</div>
+
+<script>
+(function(){
+  var J = document.getElementById("janela");
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* ---- controles do preview: nível, paleta, letra ---- */
+  function ativar(grupoId, attr, valor){
+    document.querySelectorAll("#"+grupoId+" button").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset[attr]===valor)); });
+    J.setAttribute("data-"+attr, valor);
+  }
+  document.querySelectorAll("#g-nivel button").forEach(function(b){ b.onclick=function(){ ativar("g-nivel","nivel",b.dataset.nivel); }; });
+  document.querySelectorAll("#g-paleta button").forEach(function(b){ b.onclick=function(){ ativar("g-paleta","paleta",b.dataset.paleta); }; });
+  document.querySelectorAll("#g-letra button").forEach(function(b){ b.onclick=function(){ ativar("g-letra","letra",b.dataset.letra); marcarBanco(b.dataset.letra); }; });
+
+  /* ---- estado do aparelho ---- */
+  var S = {vol:6, tocando:false, clara:false, faixa:3, total:12};
+  var TITULOS = []; for (var t=1;t<=12;t++) TITULOS.push("Bolero "+t);
+
+  /* barras (nível 1) e lâmpadas redondas (nível 2) */
+  for (var i=0;i<10;i++){ var d=document.createElement("span"); d.className="barra"; $("barras").appendChild(d); }
+
+  /* ---- o botão de volume desenhado (nível 3): é o que seria um widget em Cairo ---- */
+  var NS="http://www.w3.org/2000/svg";
+  function el(tag, attrs, pai){ var e=document.createElementNS(NS,tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if(pai) pai.appendChild(e); return e; }
+  var CX=90, CY=76;
+  function pol(raio, graus){ var r=graus*Math.PI/180; return [CX+raio*Math.sin(r), CY-raio*Math.cos(r)]; }
+  var svg = el("svg",{viewBox:"0 0 180 150"}, $("botao-volume"));
+  var defs = el("defs",{},svg);
+  var corpo = el("radialGradient",{id:"gMetal",cx:".35",cy:".3",r:".85"},defs);
+  el("stop",{"offset":"0","stop-color":"#FFFFFF"},corpo); el("stop",{"offset":".5","stop-color":"#CFC9BB"},corpo); el("stop",{"offset":"1","stop-color":"#8D8677"},corpo);
+  var tampa = el("radialGradient",{id:"gTampa",cx:".35",cy:".3",r:".9"},defs);
+  el("stop",{"offset":"0","stop-color":"#FFFFFF"},tampa); el("stop",{"offset":"1","stop-color":"#BDB6A6"},tampa);
+  /* escala gravada de 0 a 10, dentro da coroa de lâmpadas */
+  for (var n=0;n<=10;n++){
+    var ang=-135+27*n, longo=(n%5===0), p1=pol(longo?47:50,ang), p2=pol(56,ang);
+    el("line",{x1:p1[0],y1:p1[1],x2:p2[0],y2:p2[1],stroke:"#2B2118","stroke-width":longo?3:2,"stroke-linecap":"round"},svg);
+  }
+  var t0=pol(70,-135), t10=pol(70,135);
+  var x0=el("text",{x:t0[0]-12,y:t0[1]+16,"font-size":"12","font-weight":"700","text-anchor":"middle"},svg); x0.textContent="0"; x0.style.fill="#fff";
+  var x10=el("text",{x:t10[0]+12,y:t10[1]+16,"font-size":"12","font-weight":"700","text-anchor":"middle"},svg); x10.textContent="10"; x10.style.fill="#fff";
+  /* coroa de 10 lâmpadas (uma por degrau) */
+  var lampadas=[];
+  for (var k=1;k<=10;k++){ var q=pol(70,-135+27*k); var c=el("circle",{cx:q[0],cy:q[1],r:6.5,stroke:"#2B2118","stroke-width":2},svg); lampadas.push(c); }
+  /* a cabeça do botão: base metálica com serrilha */
+  el("circle",{cx:CX,cy:CY+3,r:43,fill:"#000",opacity:".35"},svg);
+  el("circle",{cx:CX,cy:CY,r:42,fill:"url(#gMetal)",stroke:"#2B2118","stroke-width":2},svg);
+  for (var z=0;z<40;z++){ var za=z*9, a1=pol(37,za), a2=pol(41,za); el("line",{x1:a1[0],y1:a1[1],x2:a2[0],y2:a2[1],stroke:"#2B2118","stroke-width":1.5,opacity:".55"},svg); }
+  el("circle",{cx:CX,cy:CY,r:32,fill:"url(#gTampa)",stroke:"#2B2118","stroke-width":2},svg);
+  el("circle",{cx:CX,cy:CY,r:26,fill:"none",stroke:"#2B2118","stroke-width":1,opacity:".35"},svg);
+  var traco = el("line",{x1:CX,y1:CY-8,x2:CX,y2:CY-30,stroke:"#1E1913","stroke-width":6,"stroke-linecap":"round"},svg);
+
+  /* ---- escala gravada no visor: "Faixa X de 12" (nível 3) ---- */
+  var esc = $("escala-svg");
+  el("line",{x1:10,y1:26,x2:290,y2:26,stroke:"#1E1913","stroke-width":2},esc);
+  for (var m=1;m<=12;m++){ var xx=10+(m-1)*(280/11); el("line",{x1:xx,y1:20,x2:xx,y2:32,stroke:"#1E1913","stroke-width":m%3===1?3:2},esc);
+    if (m===1||m===6||m===12){ var tx=el("text",{x:xx,y:44,"text-anchor":"middle"},esc); tx.textContent=String(m); } }
+  var marcador = el("polygon",{points:"0,0 -7,-11 7,-11",fill:"#7A1F2B",stroke:"#1E1913","stroke-width":1.5},esc);
+
+  /* ---- desenhar tudo conforme o estado ---- */
+  function render(){
+    $("lamp-estado").classList.toggle("acesa", S.tocando);
+    $("palavra").textContent = S.tocando ? "TOCANDO" : "PARADO";
+    $("visor-estado").textContent = S.tocando ? "TOCANDO: Faixa "+S.faixa+" de "+S.total : "PARADO. Aperte Tocar para ouvir o disco.";
+    $("visor-titulo").textContent = TITULOS[S.faixa-1];
+    $("visor-faixa").textContent = "Faixa "+S.faixa+" de "+S.total;
+    var tocar = $("tocar");
+    tocar.classList.toggle("pri", !S.tocando); tocar.classList.toggle("ambar", S.tocando);
+    $("tocar-rotulo").textContent = S.tocando ? "⏸ Pausar" : "▶ Tocar";
+    /* volume */
+    document.querySelectorAll("#barras .barra").forEach(function(b,idx){ b.classList.toggle("acesa", idx < S.vol); });
+    lampadas.forEach(function(c,idx){ c.style.fill = idx < S.vol ? "var(--lampon)" : "var(--lampoff)"; });
+    traco.setAttribute("transform","rotate("+(-135+27*S.vol)+" "+CX+" "+CY+")");
+    $("vol-texto").textContent = "Volume: "+S.vol+" de 10";
+    $("menos-rotulo").textContent = S.vol<=0 ? "No mínimo" : "Mais baixo";
+    $("mais-rotulo").textContent = S.vol>=10 ? "No máximo" : "Mais alto";
+    $("menos").classList.toggle("inativa", S.vol<=0); $("mais").classList.toggle("inativa", S.vol>=10);
+    /* voz mais clara: tecla travada */
+    $("clara").classList.toggle("baixada", S.clara); $("clara").setAttribute("aria-pressed", String(S.clara));
+    $("clara-rotulo").textContent = "Voz mais clara: " + (S.clara ? "ligada ✓" : "desligada");
+    /* escala do visor */
+    marcador.setAttribute("transform","translate("+(10+(S.faixa-1)*(280/11))+" 20)");
+    /* lista */
+    var lista=$("lista"); lista.innerHTML="";
+    var ini=Math.max(1,Math.min(S.faixa-1,S.total-3));
+    for (var f=ini; f<ini+4; f++){
+      var row=document.createElement("div"); row.className="linha"+(f===S.faixa?" agora":"");
+      var nome=document.createElement("div"); nome.className="nome";
+      nome.innerHTML=f+"  "+TITULOS[f-1]+(f===S.faixa?'<span class="nota">'+(S.tocando?"Tocando agora":"Parado aqui")+"</span>":"");
+      var btn=document.createElement("button"); btn.className="tecla"; btn.type="button"; btn.innerHTML='<span class="rotulo">＋ Colocar em outro disco</span>';
+      row.appendChild(nome); row.appendChild(btn); lista.appendChild(row);
+    }
+  }
+  $("tocar").onclick=function(){ S.tocando=!S.tocando; render(); };
+  $("anterior").onclick=function(){ S.faixa=Math.max(1,S.faixa-1); render(); };
+  $("proxima").onclick=function(){ S.faixa=Math.min(S.total,S.faixa+1); render(); };
+  $("menos").onclick=function(){ S.vol=Math.max(0,S.vol-1); render(); };
+  $("mais").onclick=function(){ S.vol=Math.min(10,S.vol+1); render(); };
+  $("clara").onclick=function(){ S.clara=!S.clara; render(); };
+  function marcarBanco(l){ document.querySelectorAll("#banco .tecla").forEach(function(b){ b.classList.toggle("baixada", b.dataset.b===l); }); }
+  document.querySelectorAll("#banco .tecla").forEach(function(b){ b.onclick=function(){ ativar("g-letra","letra",b.dataset.b); marcarBanco(b.dataset.b); }; });
+  marcarBanco("n"); render();
+
+  /* ---- contraste no pior ponto do degradê ---- */
+  function lum(h){ h=h.replace("#",""); var c=[0,2,4].map(function(i){ var v=parseInt(h.substr(i,2),16)/255; return v<=0.03928? v/12.92 : Math.pow((v+0.055)/1.055,2.4); }); return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2]; }
+  function razao(a,b){ var x=lum(a), y=lum(b); return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05); }
+  function misturar(base, topo, alfa){ var b=base.replace("#",""), t=topo.replace("#",""), r="#"; for (var i=0;i<6;i+=2){ var v=Math.round(parseInt(b.substr(i,2),16)*(1-alfa)+parseInt(t.substr(i,2),16)*alfa); r+=("0"+v.toString(16)).slice(-2); } return r; }
+  var PARES = [
+    ["Branco sobre a madeira (do trecho mais claro ao mais escuro)", "#FFFFFF", ["#5E3518","#3D220F"]],
+    ["Tinta sobre o latão da plaquinha (claro e médio)", "#1E1913", ["#E8CF8A","#D6B25C"]],
+    ["Tinta sobre o vidro do visor (claro e escuro)", "#1E1913", ["#FFF1C8","#F2CF76"]],
+    ["Tinta sobre a face da tecla (clara e escura)", "#1E1913", ["#FFFFFF","#E4D4AE"]],
+    ["Branco sobre o verde do Tocar (letra abaixo do brilho)", "#FFFFFF", ["#1F4D2B"]],
+    ["Branco sobre as capas (as cinco cores)", "#FFFFFF", ["#7A1F2B","#24407A","#1F5A2E","#6B3A1A","#5A2A6B"]],
+    ["ARMADILHA: branco sobre o verde se o brilho cobrisse a letra", "#FFFFFF", [misturar("#1F4D2B","#FFFFFF",.30)]]
+  ];
+  var corpoTab = document.querySelector("#contraste tbody");
+  PARES.forEach(function(p){
+    var piores = Math.min.apply(null, p[2].map(function(bg){ return razao(p[1], bg); }));
+    var tr=document.createElement("tr"), ok = piores>=7;
+    tr.innerHTML="<td>"+p[0]+"</td><td>"+piores.toFixed(1).replace(".",",")+":1</td><td class='"+(ok?"ok":"falha")+"'>"+(ok?"passa":"falha")+"</td>";
+    corpoTab.appendChild(tr);
+  });
+})();
+</script>
+</body>
+</html>

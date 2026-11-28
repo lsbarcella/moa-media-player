@@ -175,8 +175,7 @@ def test_volume_atualiza_barras_texto_e_botoes(app):
     ctx.radio.volume_mais()
     degrau = ctx.player.degrau_de_volume
     assert f"Volume: {degrau} de 10" in textos(p.corpo)
-    acesas = [b.get_style_context().has_class("moa-acesa") for b in p.barras]
-    assert acesas == [k < degrau for k in range(10)]
+    assert p.botao_volume.degrau == degrau
     ctx.player.definir_degrau_de_volume(10)
     ctx.radio.volume_menos(); ctx.radio.volume_mais()
     assert "No máximo" in textos(p.mais) and p.mais.get_style_context().has_class("moa-inativo")

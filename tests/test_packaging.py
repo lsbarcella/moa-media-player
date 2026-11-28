@@ -32,7 +32,7 @@ def _dpkg(*args):
 
 def test_controle_declara_as_dependencias_do_projeto(deb):
     controle = _dpkg("-f", str(deb))
-    for pacote in ("python3 (>= 3.10)", "python3-gi", "gir1.2-gtk-3.0", "gir1.2-gstreamer-1.0",
+    for pacote in ("python3 (>= 3.10)", "python3-gi", "python3-gi-cairo", "gir1.2-gtk-3.0", "gir1.2-gstreamer-1.0",
                    "gstreamer1.0-plugins-base", "gstreamer1.0-plugins-good",
                    "python3-mutagen", "libcdparanoia0"):
         assert pacote in controle

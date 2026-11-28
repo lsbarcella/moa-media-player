@@ -19,6 +19,7 @@ from gi.repository import Gtk  # noqa: E402
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.session import Tela  # noqa: E402
 from moa.ui.cartao_de_atualizacao import cartao_de_atualizacao, deve_aparecer_na_estante  # noqa: E402     # ATUALIZACAO_DE_TESTE
+from moa.ui import ornamentos  # noqa: E402
 from moa.ui.widgets import EmPedacos, texto_de, aviso, botao, capa_do_disco, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
 
 log = logging.getLogger(__name__)
@@ -212,6 +213,7 @@ class ShelfView:
         secao = caixa_v(12)
         placa = Gtk.Box()
         placa.get_style_context().add_class("moa-placa")
+        ornamentos.instalar_parafusos(placa, diametro=10, margem=5)
         placa.pack_start(rotulo(titulo, quebrar=False), False, False, 0)
         placa.set_halign(Gtk.Align.START)
         secao.pack_start(placa, False, False, 0)

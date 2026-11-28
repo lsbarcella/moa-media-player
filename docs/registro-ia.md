@@ -225,3 +225,30 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Feito:** `docs/testes-usabilidade.md` (objetivos, preparação, condução, 13 tarefas com sucesso e tempo máximo, planilha, questionário SUS em português com a conta da pontuação, conversa final, limites) e `docs/usabilidade/planilha-de-tempo-e-erros.csv`; README atualizado (telas, medição, atualização de teste, usabilidade, Lixeira); "A Caixa" virou "A Lixeira" na tela, no ícone (uma lixeira nova), no CLAUDE.md, no preview e nos testes (ADR-0023); nomes internos (`Tela.CAIXA`, tabela `box`) ficaram.
 - **Bug da playlist, NÃO reproduzido:** montei o cenário completo (MIX de 371 faixas tocando no rádio, duas playlists antigas, uma nova criada pela tela) e a estante mostrou tudo certo, com os dados no banco também corretos. Mesmo assim blindei dois pontos: um item que falha ao desenhar não esconde os outros (vai para o log), e a estante só marca o desenho como pronto depois de terminar sem erro. Adicionei o teste do relato. Para achar a causa de verdade, preciso do `~/.local/share/moa/moa.log` do notebook, de quando acontece.
 - **NÃO testado:** no notebook do pai.
+
+## 28/11/2026 — Aparência analógica (skeuomorfismo): ideação e preview
+
+- **Pedido:** melhorar a interface com skeuomorfismo de verdade, trocando os "quadradões" por objetos analógicos (CLAUDE.md, seção 11: o desenho visual dos botões e das telas é decisão em aberto, a explorar com `ce-ideate` e um preview em HTML).
+- **Ideação** (`docs/ideation/2026-11-28-aparencia-analogica-ideation.html`): 31 ideias brutas em 5 eixos, 7 sobreviventes (tecla com curso, teclas travadas, capa em caixa de CD, estante com profundidade, botão de volume que gira sozinho, rádio de gabinete, interruptor "Simples/Aparelho"), 15 cortadas com motivo. Feita sem subagentes (por custo); as bases foram conferidas relendo o código e medindo.
+- **Medição:** relevo em CSS (degradê, sombra rígida ou borrada, veios de madeira, visor de vidro) custa o mesmo que o chapado (~11,5 ms por desenho da tela do rádio, na máquina de desenvolvimento). Armadilha: degradê opaco esconde a cor do botão (o "Tocar" verde virou creme com letra branca).
+- **Pedido de refinamento do autor:** "ainda muito, muito simples; tem como deixar um pouco mais detalhado?" Resposta: `docs/preview/aparencia-analogica.html`, a mesma tela em três níveis de detalhe (1 hoje, 2 aparelho, 3 aparelho detalhado), com teclas que descem, botão de volume que gira, "Voz mais clara" travada, as 4 paletas, 3 tamanhos de letra e uma tabela de contraste no pior ponto do degradê.
+- **Achados do preview:** o brilho da tecla verde só pode ficar na faixa de cima (senão o branco cai para 4,3:1); o latão que leva texto precisa ser claro (o escuro dá 5,9:1); o preto e branco funciona com relevo por contorno e sombra; o nível 3 exige peças desenhadas em Cairo (botão de volume, escala do visor, dobradiça), com cache.
+- **Decisão pendente do autor:** qual nível implementar e se entra o interruptor "Simples/Aparelho" (I7). Recomendação: nível 2 inteiro primeiro; depois, do nível 3, o botão de volume e a capa com dobradiça.
+- **NÃO testado:** nada disto foi implementado no app; o preview é HTML (navegador), não GTK. O custo de desenho foi medido só para CSS, não para as peças em Cairo.
+
+## 28/11/2026 — Aparência analógica, nível 3: implementação
+
+- **Pedido:** "Vamos direto pro nível 3. Pode dar seguimento com /lfg." O autor escolheu o nível 3 do preview, sem passar pelo nível 2 isolado; o interruptor "Simples ou Aparelho" (I7) ficou de fora por não ter sido decidido.
+- **Feito** (plano em `docs/plans/2026-11-28-0136-feat-aparencia-analogica-nivel-3-plan.md`, decisão no ADR-0024), em unidades pequenas:
+  - tokens de material e checagem de contraste no pior ponto do degradê (`theme.MATERIAIS`, `contraste_no_pior_ponto`);
+  - teclas com curso e teclas travadas com lâmpada (Voz mais clara, banco de teclas de Configurações, marcação da playlist);
+  - peças em Cairo com cache (`cairo_pecas.py`): parafuso, dobradiça, serrilha, lente, caixa de CD;
+  - rádio de madeira com latão, visor de vidro, moldura de metal, grade e parafusos (`ornamentos.py`);
+  - botão de volume e régua do visor (`instrumentos.py`);
+  - capa em caixa de CD (o miolo transparente impede que o reflexo cubra a arte);
+  - estante com profundidade e a mesma luz nas outras telas;
+  - `tools/telas.py` (72 imagens das telas) e `python3-gi-cairo` no `.deb` e no `check_deps.sh`.
+- **Verificação:** a suíte passou de 489 para mais de 600 testes (tokens, contraste no pior ponto nas quatro paletas, estados das teclas, pixels das peças em Cairo, cache, miolo transparente da caixa). Imagens das seis telas conferidas nas quatro paletas e nas escalas de letra. `measure.sh` antes e depois: ações iguais, RAM +1 MB.
+- **Achados no caminho:** (1) o `btnradio` (fundo das teclas do rádio) era bege também no preto e branco, corrigido no token; (2) a regra da nota do visor foi apagada sem querer num corte de CSS e restaurada com teste; (3) a guarda de tamanho dos parafusos escondia os da placa pequena da estante e foi ajustada; (4) o `check_deps.sh` precisa de `gi.require_foreign('cairo')`, pois importar `cairo` funciona mesmo sem `python3-gi-cairo`.
+- **Decisões que seguem do autor:** I7 (interruptor), clicar no botão de volume, barra de progresso, cor da lombada, sombra rígida.
+- **NÃO testado:** no notebook do pai (Pentium T4300). O custo das peças em Cairo só foi medido na máquina de desenvolvimento.

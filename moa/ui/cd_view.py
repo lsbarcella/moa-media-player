@@ -21,6 +21,7 @@ from gi.repository import Gtk  # noqa: E402
 from moa.core.aparelho import MSG_SEM_GAVETA, Momento  # noqa: E402
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.session import Tela  # noqa: E402
+from moa.ui import ornamentos  # noqa: E402
 from moa.ui.widgets import aviso, botao, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
 
 
@@ -69,6 +70,7 @@ class CDView:
     def _aparelho(self, momento: Momento, visor) -> Gtk.Widget:
         corpo = caixa_v(14)
         corpo.get_style_context().add_class("moa-radio")      # mesma família do rádio
+        ornamentos.instalar_parafusos(corpo)
 
         moldura = caixa_h(14)
         moldura.get_style_context().add_class("moa-visor")

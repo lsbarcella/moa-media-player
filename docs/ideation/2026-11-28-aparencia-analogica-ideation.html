@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ideação: aparência analógica do Moa</title>
+<style>
+:root{
+  color-scheme: light dark;
+  --bg:#FAF7F0; --card:#FFFFFF; --ink:#1E1913; --ink2:#4A4036; --line:#D8CDB8;
+  --accent:#1F4D2B; --accent-soft:#E6F1E4; --accent-text:#143A1F;
+  --warn-soft:#FFF1B8; --warn-text:#5A4300; --info-soft:#E3EEFA; --info-text:#0B3D6B;
+  --wood:#4A2A12; --svg-bg:#F3EBDC; --svg-ink:#1E1913; --svg-key:#FBF3E0; --svg-key-dark:#CDBA94; --svg-shadow:#2B2118;
+  --svg-green:#1F4D2B; --svg-lamp:#7FD36A; --svg-glass:#FFE9A8;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#16130F; --card:#211C16; --ink:#F3EDE0; --ink2:#C9BFAE; --line:#3B3328;
+    --accent:#8FD39A; --accent-soft:#1E3324; --accent-text:#BFE8C6;
+    --warn-soft:#3B3210; --warn-text:#F3DC8A; --info-soft:#142638; --info-text:#A9CCF0;
+    --wood:#7A4A21; --svg-bg:#2A241B; --svg-ink:#F3EDE0; --svg-key:#4A3F30; --svg-key-dark:#2B2118; --svg-shadow:#0C0A07;
+    --svg-green:#3E8C52; --svg-lamp:#8FE07A; --svg-glass:#7A6A33;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI","Noto Sans",sans-serif}
+.page{max-width:920px;margin-inline:auto;padding:28px 20px 80px}
+header.top{border-bottom:2px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+.eyebrow{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);font-weight:700}
+h1{font-size:1.9rem;line-height:1.2;margin:.2rem 0 .6rem}
+h2{font-size:1.35rem;margin:2.2rem 0 .6rem;padding-top:.4rem}
+h3{font-size:1.1rem;margin:0 0 .4rem}
+p,li{max-width:72ch}
+dl.meta{display:grid;grid-template-columns:max-content 1fr;gap:.25rem 1rem;margin:.6rem 0 0}
+dl.meta dt{font-weight:700;color:var(--ink2)} dl.meta dd{margin:0}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 0}
+.pill{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 12px;font-size:.88rem}
+nav.jump{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 18px;margin:12px 0 18px}
+nav.jump ol{margin:.2rem 0 0;padding-left:1.3rem} nav.jump a{color:var(--accent)}
+article.idea{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:16px 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
+.chip{border-radius:999px;padding:2px 11px;font-size:.8rem;font-weight:700;background:var(--accent-soft);color:var(--accent-text)}
+.chip.id{background:var(--info-soft);color:var(--info-text)}
+.chip.warn{background:var(--warn-soft);color:var(--warn-text)}
+article.idea dl{display:grid;grid-template-columns:9.5rem 1fr;gap:.5rem 1rem;margin:.6rem 0 0}
+article.idea dt{font-weight:700;color:var(--ink2)} article.idea dd{margin:0}
+article.idea dd ul{margin:.2rem 0;padding-left:1.1rem}
+figure{margin:12px 0 4px} figure svg{width:100%;height:auto;border-radius:10px;background:var(--svg-bg);border:1px solid var(--line)}
+figcaption{font-size:.85rem;color:var(--ink2);margin-top:4px;max-width:72ch}
+table{border-collapse:collapse;width:100%;font-size:.93rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--accent-soft);color:var(--accent-text)}
+.callout{background:var(--warn-soft);color:var(--warn-text);border-radius:12px;padding:12px 16px;margin:14px 0}
+.callout strong{color:inherit}
+.evidence{background:var(--info-soft);color:var(--info-text);border-radius:12px;padding:12px 16px;margin:14px 0}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88em;background:var(--accent-soft);color:var(--accent-text);padding:1px 5px;border-radius:5px}
+footer.composition-signal{margin-top:40px;border-top:1px solid var(--line);padding-top:12px;font-size:.85rem;color:var(--ink2)}
+svg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;fill:var(--svg-ink)}
+@media (max-width:640px){article.idea dl{grid-template-columns:1fr} article.idea dt{margin-top:.4rem}}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="top">
+  <div class="eyebrow">Ideação · Aparência analógica</div>
+  <h1>Ideação: como transformar os “quadradões” do Moa em objetos analógicos</h1>
+  <dl class="meta">
+    <dt>date</dt><dd><time datetime="2026-11-28">2026-11-28</time></dd>
+    <dt>topic</dt><dd>aparencia-analogica</dd>
+    <dt>focus</dt><dd>Fazer a interface parecer aparelhos de som antigos de verdade (teclas, mostradores, madeira, caixa de CD, lixeira), sem sair das regras de acessibilidade e de leveza do projeto.</dd>
+    <dt>mode</dt><dd>tema deste código (a aparência da interface do app), ancorado no CSS e nos widgets reais</dd>
+  </dl>
+  <div class="stats">
+    <span class="pill">31 ideias brutas</span>
+    <span class="pill">16 absorvidas em 7 sobreviventes</span>
+    <span class="pill">15 cortadas</span>
+    <span class="pill">5 eixos, todos com sobrevivente</span>
+  </div>
+</header>
+
+<section id="grounding-context">
+  <h2>Grounding Context</h2>
+  <h3>Codebase Context</h3>
+  <p>O Moa é um reprodutor de música offline para uma pessoa idosa que deve usá-lo sozinha, em um notebook antigo (Pentium T4300, HDD). A metáfora já decidida pelo autor é uma estante de músicas, um rádio antigo para ouvir e um aparelho de CD para colocar discos; <code>CLAUDE.md</code> diz que “os ícones imitam aparelhos de som antigos (decisão do autor)” e deixa o <strong>desenho visual dos botões, dos ícones e das telas</strong> como decisão em aberto, “explorado com <code>ce-ideate</code>, seguido de um preview em HTML”. Esta ideação é essa exploração, e a anterior (<code>2026-11-26-estante-ui-botoes-telas</code>) tratou do fluxo e da estrutura das telas, não do material e da aparência.</p>
+  <p><strong>Hoje tudo é chapado de propósito.</strong> <code>moa/ui/theme.py</code> gera o CSS a partir de tokens de cor; os botões levam <code>background-image: none; box-shadow: none</code> (linhas 104-105, 123, 174, 181, 203), com borda de 3 px e canto arredondado. As únicas “dicas de objeto” são a prateleira (<code>.moa-tabua</code>, uma borda inferior de 16 px, linha 121), a sombra rígida da capa (<code>.moa-capa</code>, <code>0 3px 0 rgba(0,0,0,.35)</code>, linha 127), o rádio em madeira lisa (140-141) e as lâmpadas com brilho (165, 168).</p>
+  <p><strong>Regras que toda ideia respeita</strong> (<code>CLAUDE.md</code> seções 5 e 9; <code>theme.py</code>): GTK 3 com CSS e sem GPU; áreas clicáveis de pelo menos 64×64 px; letra base de 20 px; contraste de texto de pelo menos 7:1, que os testes conferem por pares de tokens (<code>PARES_DE_CONTRASTE</code>, linhas 56-62); ícones sempre com texto; foco de teclado bem visível; nada depende de arrastar, duplo clique ou passar o mouse; volume com “−” e “+” (“com a imagem do botão do aparelho”); quatro paletas (padrão, vermelho-verde, azul-amarelo e preto e branco); só arte original ou livre (GPL v3); sem dependência nova.</p>
+
+  <div class="evidence">
+    <strong>Evidência de custo (medida nesta sessão).</strong> Desenhei a tela do rádio fora da tela, 25 vezes por variante, com CSS de teste por cima do tema. Resultado, na máquina de desenvolvimento (só a proporção importa, o notebook do usuário é ~5 a 6 vezes mais lento):
+    <table>
+      <thead><tr><th>Variante</th><th>Tempo por desenho</th></tr></thead>
+      <tbody>
+        <tr><td>Atual (chapado)</td><td>11,5 ms</td></tr>
+        <tr><td>Tecla com degradê e sombra rígida</td><td>11,3 ms</td></tr>
+        <tr><td>Tecla com degradê e sombra borrada de 12 px</td><td>11,7 ms</td></tr>
+        <tr><td>Painel de madeira com veios (<code>repeating-linear-gradient</code>)</td><td>11,5 ms</td></tr>
+        <tr><td>Tudo junto: teclas, veios, visor de vidro</td><td>11,5 ms</td></tr>
+        <tr><td>Tudo junto, mas com sombras borradas</td><td>11,7 ms</td></tr>
+      </tbody>
+    </table>
+    <p>Conclusão: <strong>relevo em CSS não é o que pesa</strong>; o custo fixo de desenhar a janela domina. Uma armadilha apareceu na imagem: um degradê <em>opaco</em> em <code>background-image</code> fica por cima de <code>background-color</code>, e o botão “Tocar” (verde, letra branca) virou creme com letra branca, ilegível. Relevo precisa ser camada <em>translúcida</em> sobre a cor do token. Não medi imagens (<code>border-image</code>) nem desenho em Cairo de muitos objetos.</p>
+  </div>
+
+  <p><strong>Pesquisa (mista).</strong> <code>CLAUDE.md</code> trata o skeuomorfismo como “hipótese com evidência mista (Urbano 2022 a favor, Ellis &amp; Marshall 2019 contra), a validar com o usuário”. A leitura da ideação anterior: ajuda quando o objeto imitado é familiar (um rádio). As fontes vieram de resumos de busca e precisam ser conferidas antes de citar no TCC.</p>
+</section>
+
+<section id="topic-axes">
+  <h2>Topic Axes</h2>
+  <ol>
+    <li><strong>Teclas e botões</strong>: o que se aperta (Tocar, Pausar, Anterior, Próxima, volume, “Colocar um disco”, as escolhas das Configurações).</li>
+    <li><strong>Mostradores e luzes</strong>: o que informa (visor, lâmpadas, volume, andamento).</li>
+    <li><strong>Móveis e superfícies</strong>: onde as coisas ficam (estante, gabinete do rádio, painéis, títulos de seção).</li>
+    <li><strong>Discos e capas</strong>: o objeto-disco (a capa na estante, o vão do disco em uso, a Lixeira).</li>
+    <li><strong>Linguagem comum e custo</strong>: tokens de relevo, as quatro paletas, desempenho no Pentium, contraste e como comparar com a versão simples.</li>
+  </ol>
+</section>
+
+<section id="ranked-ideas">
+  <h2>Ranked Ideas</h2>
+  <p>Como ler: você decide UX e UI. Cada ideia traz, em “Downsides”, as opções em aberto com prós e contras. A ordem pesa fundamentação (<code>direct:</code> acima de <code>external:</code> acima de <code>reasoned:</code>), valor esperado, alavancagem e custo. As confianças são estimativas minhas; nenhuma foi testada com o usuário.</p>
+  <div class="callout" id="refinamento">
+    <strong>Refinamento (28/11, depois do primeiro desenho).</strong> O autor achou as ideias “ainda muito, muito simples” e pediu mais detalhe. Em vez de só reescrever o texto, montei um <strong>preview em HTML com a mesma tela em três níveis de detalhe</strong> (<code>docs/preview/aparencia-analogica.html</code>), com teclas que descem, botão de volume que gira, “Voz mais clara” travada, as quatro paletas e três tamanhos de letra. Abra o arquivo e troque o nível para comparar.
+  </div>
+  <table id="niveis-de-detalhe">
+    <thead><tr><th>Nível</th><th>O que tem</th><th>Como seria feito</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1. Simples</strong> (hoje)</td><td>Botões chapados, borda grossa, volume em barras.</td><td>CSS atual.</td></tr>
+      <tr><td><strong>2. Aparelho</strong></td><td>I1 a I4 e o essencial de I6: teclas com curso e sombra rígida, “Tocar” abaulado, gabinete de madeira com veios, visor de vidro, lâmpadas redondas, capa em caixa de CD com lombada e reflexo, prateleira com quina e fundo recuado, vão côncavo para o disco em uso.</td><td>CSS do GTK, mais o desenho da moldura no <code>Capa</code> (Cairo).</td></tr>
+      <tr><td><strong>3. Aparelho detalhado</strong></td><td>Tudo do nível 2, mais: moldura de metal escovado para as teclas, moldura de latão no gabinete e no visor, parafusos, plaquinhas de latão com parafusos, <strong>botão de volume desenhado</strong> (serrilha, escala gravada de 0 a 10, coroa de 10 lâmpadas com lente), escala gravada “Faixa X de 12” no visor com marcador, grade de tecido do alto-falante, dobradiças na lombada da capa.</td><td>CSS (grade, latão, lâmpadas) e peças desenhadas em Cairo/SVG: botão de volume, escala do visor, parafusos e dobradiça. Pede cache do desenho.</td></tr>
+    </tbody>
+  </table>
+  <p><strong>O que o preview ensinou</strong> (medido no preview, com o cálculo de contraste em cada nível):</p>
+  <ul>
+    <li><strong>O brilho da tecla verde só pode ficar na faixa de cima.</strong> Se o brilho cobrir a letra, o branco sobre o verde cai para 4,3:1 (meta 7:1); com o brilho só na faixa de cima, a letra fica em 9,7:1.</li>
+    <li><strong>O latão que leva texto precisa ser claro.</strong> Tinta sobre latão de #E8CF8A a #D6B25C passa (8,6:1); o latão escuro (#B8902E) daria 5,9:1 e falha. O latão escuro serve só para molduras sem texto.</li>
+    <li><strong>O preto e branco funciona</strong> com relevo só por contorno, sombra e fios duplos, sem tons; o gabinete vira preto, a placa branca, e todas as peças continuam legíveis.</li>
+    <li><strong>O nível 3 não é só CSS.</strong> Botão de volume, escala do visor e dobradiças são peças desenhadas; cada uma precisa de uma versão guardada em cache para não custar numa CPU antiga. O ganho de “parece de verdade” é grande, mas o custo de implementação também.</li>
+  </ul>
+  <p><strong>Para decidir:</strong> qual nível entra. Minha recomendação é fazer o <strong>nível 2 inteiro primeiro</strong> (é CSS, custo medido de ~zero, e já muda a cara do app) e depois subir do nível 3 as peças de maior ganho, uma por vez, medindo no notebook: o <strong>botão de volume</strong> e a <strong>capa com dobradiça</strong> antes de parafusos e grade, que são só decoração.</p>
+
+  <nav class="jump" aria-label="Lista das ideias">
+    <strong>Ir para</strong>
+    <ol>
+      <li><a href="#i1">I1. Tecla com curso e relevo em camadas translúcidas</a></li>
+      <li><a href="#i2">I2. Teclas que ficam travadas, com lâmpada</a></li>
+      <li><a href="#i3">I3. A capa em caixa de CD</a></li>
+      <li><a href="#i4">I4. A estante de madeira com profundidade</a></li>
+      <li><a href="#i5">I5. O botão de volume que gira sozinho, com a coroa de lâmpadas</a></li>
+      <li><a href="#i6">I6. O rádio de gabinete: madeira, teclas em moldura e visor de vidro</a></li>
+      <li><a href="#i7">I7. Um interruptor “Simples ou Aparelho” para comparar</a></li>
+    </ol>
+  </nav>
+
+  <!-- I1 -->
+  <article class="idea" id="i1">
+    <div class="chips"><span class="chip id">I1.</span><span class="chip">Eixo 1 e 5</span><span class="chip">Confiança 85%</span><span class="chip">Complexidade Low</span></div>
+    <h3>I1. Tecla com curso e relevo em camadas translúcidas</h3>
+    <dl>
+      <dt>Description</dt>
+      <dd>Os botões deixam de ser retângulos de borda grossa e viram <strong>teclas de aparelho</strong>: uma face levemente abaulada (um brilho translúcido por cima da cor do token), uma <strong>sombra rígida embaixo</strong> que dá a “altura” da tecla (como a que a capa já usa) e um fio claro no topo. Ao apertar (<code>:active</code>), a tecla <strong>desce</strong> o mesmo tanto da sombra e a sombra some: o apertar vira o feedback. Tudo sai de poucos tokens novos em <code>theme.py</code> (altura da tecla, intensidade do brilho), então as quatro paletas herdam o relevo. No preto e branco o relevo vem de <strong>contorno duplo</strong>, sem tons. O “Tocar” abaulado e redondo é a mesma regra em escala maior.</dd>
+      <dt>Axis</dt><dd>Teclas e botões (e Linguagem comum e custo).</dd>
+      <dt>Basis</dt>
+      <dd><code>direct:</code> hoje os botões são <code>background-image: none; box-shadow: none</code> (<code>theme.py</code>:104-105) e a capa já usa sombra rígida (<code>theme.py</code>:127); a medição acima mostra relevo com custo praticamente igual ao chapado e mostra o erro a evitar (degradê opaco escondendo o verde do “Tocar”). Os testes já conferem 7:1 por pares de tokens (<code>theme.py</code>:56-62), então o relevo entra no mesmo mecanismo. <code>reasoned:</code> uma tecla que desce é a explicação mais antiga de “apertei”, e o app já pede feedback em palavras e lâmpada; o movimento é um terceiro canal, sem texto novo.</dd>
+      <dt>Rationale</dt>
+      <dd>É a base de todas as outras: define a linguagem (uma direção de luz, uma altura de tecla) que as ideias I2, I5 e I6 reaproveitam. E é barata e segura: só CSS e tokens, sem imagem, sem dependência e sem custo de desenho medido.</dd>
+      <dt>Downsides</dt>
+      <dd><ul>
+        <li>Com o mouse, o clique dura uns 100 ms: o “descer” aparece rápido. O aviso em palavras (visor) continua sendo o feedback principal.</li>
+        <li>O brilho tem de ser <em>translúcido</em>; para cada token (verde, âmbar, azul, perigo) o pior ponto do degradê precisa passar 7:1. Pede um teste novo que olhe o fundo mais claro sob a letra, não só a cor base.</li>
+        <li>No preto e branco, “relevo por contorno duplo” é a parte mais difícil de acertar sem tons; talvez precise de uma segunda rodada de desenho.</li>
+        <li>Opção em aberto: a sombra rígida pode ser preta ou da cor do aparelho (marrom). Preta é mais legível; marrom é mais quente.</li>
+      </ul></dd>
+    </dl>
+    <figure>
+      <svg viewBox="0 0 650 170" role="img" aria-label="Quatro teclas: em repouso, apertada, degradê opaco errado e brilho translúcido certo">
+        <rect x="0" y="0" width="650" height="170" fill="var(--svg-bg)"/>
+        <rect x="29" y="64" width="112" height="46" rx="12" fill="var(--svg-shadow)"/>
+        <rect x="29" y="50" width="112" height="46" rx="12" fill="var(--svg-key)" stroke="var(--svg-ink)" stroke-width="3"/>
+        <rect x="39" y="54" width="92" height="3" rx="1.5" fill="#fff" opacity=".8"/>
+        <text x="85" y="80" text-anchor="middle" font-size="14" font-weight="700">Tecla</text>
+        <text x="85" y="132" text-anchor="middle" font-size="12">Em repouso</text>
+        <text x="85" y="148" text-anchor="middle" font-size="12">sombra de 6 px</text>
+        <rect x="189" y="64" width="112" height="46" rx="12" fill="var(--svg-shadow)"/>
+        <rect x="189" y="62" width="112" height="46" rx="12" fill="var(--svg-key-dark)" stroke="var(--svg-ink)" stroke-width="3"/>
+        <text x="245" y="92" text-anchor="middle" font-size="14" font-weight="700">Tecla</text>
+        <text x="245" y="132" text-anchor="middle" font-size="12">Apertada</text>
+        <text x="245" y="148" text-anchor="middle" font-size="12">desce, a sombra some</text>
+        <rect x="354" y="64" width="112" height="46" rx="12" fill="var(--svg-shadow)"/>
+        <rect x="354" y="50" width="112" height="46" rx="12" fill="#EFE3C8" stroke="var(--svg-ink)" stroke-width="3"/>
+        <text x="410" y="80" text-anchor="middle" font-size="14" font-weight="700" style="fill:#fff">Tocar</text>
+        <text x="410" y="132" text-anchor="middle" font-size="12">Errado: degradê opaco</text>
+        <text x="410" y="148" text-anchor="middle" font-size="12">esconde o verde</text>
+        <rect x="514" y="64" width="112" height="46" rx="12" fill="var(--svg-shadow)"/>
+        <rect x="514" y="50" width="112" height="46" rx="12" fill="var(--svg-green)" stroke="var(--svg-ink)" stroke-width="3"/>
+        <rect x="520" y="54" width="100" height="16" rx="8" fill="#fff" opacity=".22"/>
+        <text x="570" y="80" text-anchor="middle" font-size="14" font-weight="700" style="fill:#fff">Tocar</text>
+        <text x="570" y="132" text-anchor="middle" font-size="12">Certo: brilho translúcido</text>
+        <text x="570" y="148" text-anchor="middle" font-size="12">sobre o verde</text>
+      </svg>
+      <figcaption>Ilustração direcional do conceito, não é um desenho final. As quatro teclas dizem o mesmo que o texto da ideia.</figcaption>
+    </figure>
+  </article>
+
+  <!-- I2 -->
+  <article class="idea" id="i2">
+    <div class="chips"><span class="chip id">I2.</span><span class="chip">Eixo 1</span><span class="chip">Confiança 80%</span><span class="chip">Complexidade Low</span></div>
+    <h3>I2. Teclas que ficam travadas, com lâmpada</h3>
+    <dl>
+      <dt>Description</dt>
+      <dd>Tudo o que é liga/desliga ou “uma escolha entre várias” passa a ser uma <strong>tecla que fica baixada</strong> quando está ativa, com uma <strong>lâmpada-piloto</strong> acesa acima e o texto em palavras. Isso vale para a “Voz mais clara: ligada” (hoje só muda de cor e de texto), para o tamanho da letra e as cores em Configurações (as escolhas viram um banco de teclas em que apertar uma solta as outras, como as teclas de ondas dos rádios antigos) e para a marcação de músicas na playlist. A posição (baixada ou alta) vira o <strong>terceiro canal do estado</strong>, ao lado do texto e da lâmpada.</dd>
+      <dt>Axis</dt><dd>Teclas e botões.</dd>
+      <dt>Basis</dt>
+      <dd><code>direct:</code> o app já promete que “o Moa nunca usa só a cor para dizer algo: sempre há também texto e formas” (<code>settings_view.py</code>:78), mas as escolhas de hoje se distinguem por cor de fundo e uma borda mais grossa (<code>.moa-escolhida</code>, <code>.moa-marcada</code>, <code>theme.py</code>:186-191, 206) e a “Voz mais clara” troca cor e texto. <code>reasoned:</code> teclas mecânicas que ficam presas são o jeito analógico de dizer “está ligado” sem texto, e a posição é uma forma que o daltonismo não afeta.</dd>
+      <dt>Rationale</dt>
+      <dd>Reforça uma regra que o projeto já escreveu, com um recurso visual (forma e posição) que serve também às paletas de daltonismo e ao preto e branco.</dd>
+      <dt>Downsides</dt>
+      <dd><ul>
+        <li>Só para <em>estados</em>. “Tocar” e “Pausar” são ações; hoje um botão troca pelo outro. Num gravador de fita o PLAY fica baixado enquanto toca. Trocar o texto é mais claro; <strong>recomendo manter a troca</strong> e deixar o travado só para liga/desliga e escolhas.</li>
+        <li>Um banco de teclas em que apertar uma solta as outras muda o comportamento da escolha de letra e de cor; o desenho de hoje já faz isso, só muda a aparência.</li>
+        <li>Depende de I1 (a tecla com curso) para a posição baixada ser perceptível.</li>
+      </ul></dd>
+    </dl>
+    <figure>
+      <svg viewBox="0 0 560 150" role="img" aria-label="Três teclas: duas altas e uma travada embaixo com lâmpada acesa">
+        <rect x="0" y="0" width="560" height="150" fill="var(--svg-bg)"/>
+        <g>
+          <circle cx="86" cy="26" r="9" fill="var(--svg-key-dark)" stroke="var(--svg-ink)" stroke-width="2"/>
+          <rect x="26" y="52" width="120" height="44" rx="12" fill="var(--svg-shadow)"/>
+          <rect x="26" y="40" width="120" height="44" rx="12" fill="var(--svg-key)" stroke="var(--svg-ink)" stroke-width="3"/>
+          <text x="86" y="67" text-anchor="middle" font-size="13" font-weight="700">Normal</text>
+          <text x="86" y="124" text-anchor="middle" font-size="12">alta: não escolhida</text>
+        </g>
+        <g>
+          <circle cx="280" cy="26" r="9" fill="var(--svg-lamp)" stroke="var(--svg-ink)" stroke-width="2"/>
+          <rect x="220" y="52" width="120" height="44" rx="12" fill="var(--svg-shadow)"/>
+          <rect x="220" y="50" width="120" height="44" rx="12" fill="var(--svg-key-dark)" stroke="var(--svg-ink)" stroke-width="3"/>
+          <text x="280" y="77" text-anchor="middle" font-size="13" font-weight="700">Grande ✓</text>
+          <text x="280" y="124" text-anchor="middle" font-size="12">baixada + lâmpada acesa + texto</text>
+        </g>
+        <g>
+          <circle cx="474" cy="26" r="9" fill="var(--svg-key-dark)" stroke="var(--svg-ink)" stroke-width="2"/>
+          <rect x="414" y="52" width="120" height="44" rx="12" fill="var(--svg-shadow)"/>
+          <rect x="414" y="40" width="120" height="44" rx="12" fill="var(--svg-key)" stroke="var(--svg-ink)" stroke-width="3"/>
+          <text x="474" y="67" text-anchor="middle" font-size="13" font-weight="700">Maior</text>
+          <text x="474" y="124" text-anchor="middle" font-size="12">alta: não escolhida</text>
+        </g>
+      </svg>
+      <figcaption>Ilustração direcional: um banco de teclas de “tamanho da letra” em que a escolhida fica baixada e acende a lâmpada.</figcaption>
+    </figure>
+  </article>
+
+  <!-- I3 -->
+  <article class="idea" id="i3">
+    <div class="chips"><span class="chip id">I3.</span><span class="chip">Eixo 4</span><span class="chip">Confiança 75%</span><span class="chip">Complexidade Medium</span></div>
+    <h3>I3. A capa em caixa de CD</h3>
+    <dl>
+      <dt>Description</dt>
+      <dd>Cada disco da estante deixa de ser um quadrado e vira uma <strong>caixa de CD</strong>: uma moldura de plástico transparente, uma <strong>lombada com a dobradiça</strong> do lado esquerdo e um reflexo diagonal claro <em>só na moldura</em>, sem passar por cima da arte. A sombra rígida atual vira o “contato com a prateleira”. A capa substituta (nome em letras grandes) ganha a mesma moldura, então um disco sem capa também parece um CD. O desenho entra no <code>Capa</code>, que já é uma área de desenho própria.</dd>
+      <dt>Axis</dt><dd>Discos e capas.</dd>
+      <dt>Basis</dt>
+      <dd><code>direct:</code> a capa é um <code>Gtk.DrawingArea</code> desenhado à mão (<code>widgets.py</code> <code>class Capa</code>), com a classe <code>moa-capa</code> e a sombra rígida (<code>theme.py</code>:127), e é o objeto que mais se repete na tela (80 discos na estante de teste, <code>ADR-0021</code>). <code>reasoned:</code> o que o usuário reconhece na estante é a capa; enquadrá-la como a caixa que ele já segurou faz a estante parecer a dele sem esconder a arte que ele usa para escolher.</dd>
+      <dt>Rationale</dt>
+      <dd>É o maior ganho de “parece de verdade” por widget, no objeto mais visto, e não mexe na leitura do disco: o nome e a arte continuam onde estão.</dd>
+      <dt>Downsides</dt>
+      <dd><ul>
+        <li>A moldura e a lombada tiram uns 10% da área útil da capa; num disco com texto na arte isso corta pouco, mas é preciso conferir com capas reais.</li>
+        <li>Desenhar 80 caixas a cada redesenho em CPU antiga custa; a moldura deve ser desenhada <em>uma vez</em> por tamanho (superfície guardada) e só a arte é pintada por cima.</li>
+        <li>O reflexo não pode passar por cima da arte nem da capa substituta: ela é branca sobre cor e precisa do 7:1.</li>
+        <li>Opção em aberto: lombada colorida pela cor do disco, ou sempre cinza-escuro. Cinza é mais neutro; colorida ajuda a achar o disco.</li>
+      </ul></dd>
+    </dl>
+    <figure>
+      <svg viewBox="0 0 560 216" role="img" aria-label="Capa chapada de hoje e a proposta em caixa de CD com lombada e reflexo na moldura">
+        <rect x="0" y="0" width="560" height="216" fill="var(--svg-bg)"/>
+        <text x="110" y="24" text-anchor="middle" font-size="13" font-weight="700">Hoje</text>
+        <rect x="46" y="46" width="128" height="128" fill="var(--svg-shadow)" opacity=".35"/>
+        <rect x="42" y="42" width="128" height="128" fill="#7A1F2B"/>
+        <text x="106" y="112" text-anchor="middle" font-size="14" font-weight="700" style="fill:#fff">Samba</text>
+        <text x="400" y="24" text-anchor="middle" font-size="13" font-weight="700">Proposta</text>
+        <rect x="334" y="46" width="136" height="136" rx="6" fill="var(--svg-shadow)" opacity=".35"/>
+        <rect x="328" y="38" width="136" height="136" rx="6" fill="var(--svg-key-dark)" stroke="var(--svg-ink)" stroke-width="2"/>
+        <rect x="328" y="38" width="16" height="136" rx="6" fill="var(--svg-shadow)" opacity=".55"/>
+        <polygon points="356,40 408,40 340,172 330,172 330,150" fill="#fff" opacity=".28"/>
+        <rect x="350" y="52" width="104" height="108" fill="#7A1F2B"/>
+        <text x="402" y="112" text-anchor="middle" font-size="14" font-weight="700" style="fill:#fff">Samba</text>
+        <text x="280" y="208" text-anchor="middle" font-size="12">o reflexo e a lombada ficam na moldura; a arte e o texto da capa ficam limpos</text>
+      </svg>
+      <figcaption>Ilustração direcional do conceito. Proporções e cores são placeholders.</figcaption>
+    </figure>
+  </article>
+
+  <!-- I4 -->
+  <article class="idea" id="i4">
+    <div class="chips"><span class="chip id">I4.</span><span class="chip">Eixo 3 e 4</span><span class="chip">Confiança 80%</span><span class="chip">Complexidade Low</span></div>
+    <h3>I4. A estante de madeira com profundidade</h3>
+    <dl>
+      <dt>Description</dt>
+      <dd>A prateleira ganha <strong>corpo</strong>: o tampo claro visto de cima, a <strong>quina chanfrada</strong> na frente (um degradê curto de claro para escuro) e uma sombra por baixo; o fundo da estante fica um tom mais escuro e <strong>recuado</strong> (sombra interna), para os discos parecerem ficar em pé <em>dentro</em> dela. Os títulos de seção (“Meus discos”, “Ouvidos há pouco”) viram uma <strong>plaquinha de latão</strong> presa na quina. O espaço do disco que está no rádio, hoje uma caixa tracejada escura, vira um <strong>vão côncavo</strong> (sombra interna) com o texto “Em uso no rádio”: dá para ver que ali faltou um disco.</dd>
+      <dt>Axis</dt><dd>Móveis e superfícies (e Discos e capas).</dd>
+      <dt>Basis</dt>
+      <dd><code>direct:</code> a prateleira hoje é só <code>.moa-tabua {border-bottom: 16px solid ...}</code> (<code>theme.py</code>:121), as plaquinhas são retângulos marrons (<code>.moa-placa</code>, 119-120) e o disco em uso é <code>.moa-vazio</code> com borda tracejada (<code>theme.py</code>:128; <code>shelf_view.py</code> <code>_peca</code>). A medição mostra que gradiente e sombras não pesam. <code>reasoned:</code> uma estante só é lida como móvel se tiver espessura e uma direção de luz; é um ganho de “objeto” que não mexe em nenhum texto.</dd>
+      <dt>Rationale</dt>
+      <dd>É a ideia mais barata que muda a primeira impressão da tela inicial, e o vão côncavo transforma uma caixinha tracejada em uma explicação visual (“o disco está lá no rádio”).</dd>
+      <dt>Downsides</dt>
+      <dd><ul>
+        <li>Mais espessura de prateleira (uns 16 a 24 px por fileira) ocupa mais altura; com letra “Maior” a estante rola mais.</li>
+        <li>A luz tem de vir sempre do mesmo lado em tudo (teclas, prateleira, visor), ou o conjunto parece errado.</li>
+        <li>No preto e branco o “latão” e a madeira não existem; a prateleira vira contorno duplo e a plaquinha, um retângulo de fio grosso.</li>
+        <li>Texto sobre o latão precisa de zona lisa: o brilho fica nas bordas da placa, nunca atrás das letras.</li>
+      </ul></dd>
+    </dl>
+    <figure>
+      <svg viewBox="0 0 650 190" role="img" aria-label="Corte de lado de uma prateleira: fundo recuado, tampo claro, quina chanfrada e sombra, com um disco em pé">
+        <rect x="0" y="0" width="650" height="190" fill="var(--svg-bg)"/>
+        <rect x="40" y="20" width="360" height="110" fill="var(--wood)" opacity=".85"/>
+        <rect x="40" y="20" width="360" height="14" fill="var(--svg-shadow)" opacity=".5"/>
+        <text x="250" y="76" font-size="13" style="fill:#fff" font-weight="700">fundo recuado</text>
+        <text x="250" y="94" font-size="13" style="fill:#fff" font-weight="700">(sombra interna)</text>
+        <polygon points="30,130 410,130 430,148 20,148" fill="#B98A57"/>
+        <text x="330" y="143" text-anchor="middle" font-size="12" style="fill:#1E1913" font-weight="700">tampo (visto de cima)</text>
+        <rect x="20" y="148" width="410" height="14" fill="#7A4A21"/>
+        <rect x="20" y="148" width="410" height="4" fill="#fff" opacity=".35"/>
+        <rect x="20" y="162" width="410" height="5" fill="var(--svg-shadow)" opacity=".45"/>
+        <rect x="120" y="56" width="70" height="74" rx="4" fill="var(--svg-key-dark)" stroke="var(--svg-ink)" stroke-width="2"/>
+        <rect x="126" y="64" width="58" height="58" fill="#7A1F2B"/>
+        <ellipse cx="155" cy="132" rx="38" ry="5" fill="var(--svg-shadow)" opacity=".5"/>
+        <text x="462" y="62" font-size="12" font-weight="700">luz de cima</text>
+        <path d="M470 70 L470 100" stroke="var(--svg-ink)" stroke-width="2" fill="none"/>
+        <polygon points="470,108 464,98 476,98" fill="var(--svg-ink)"/>
+        <text x="462" y="150" font-size="12">quina chanfrada</text>
+        <text x="462" y="168" font-size="12">+ sombra por baixo</text>
+      </svg>
+      <figcaption>Ilustração direcional: corte lateral da prateleira. Cores e medidas são placeholders.</figcaption>
+    </figure>
+  </article>
+
+  <!-- I5 -->
+  <article class="idea" id="i5">
+    <div class="chips"><span class="chip id">I5.</span><span class="chip">Eixo 2</span><span class="chip">Confiança 70%</span><span class="chip">Complexidade Medium</span></div>
+    <h3>I5. O botão de volume que gira sozinho, com a coroa de lâmpadas</h3>
+    <dl>
+      <dt>Description</dt>
+      <dd>O volume ganha um <strong>botão giratório desenhado</strong> (cabeça redonda com um traço indicador) cercado por uma <strong>coroa de 10 lâmpadas</strong> pequenas e redondas, que se acendem até o degrau atual. O botão <strong>não é arrastável</strong>: ele gira sozinho quando se aperta “Mais baixo” ou “Mais alto”, que ficam um de cada lado, grandes e com texto. O texto “Volume: 6 de 10” continua embaixo. Nos extremos, o botão e o texto dizem “No mínimo” e “No máximo”, como hoje.</dd>
+      <dt>Axis</dt><dd>Mostradores e luzes.</dd>
+      <dt>Basis</dt>
+      <dd><code>direct:</code> <code>CLAUDE.md</code> (seção 9) pede para o volume “nada de botão giratório que exija arrastar, e sim botões ‘−’ e ‘+’ com a imagem do botão do aparelho”; hoje a imagem é uma fileira de 10 retângulos (<code>.moa-barra</code>, <code>theme.py</code>:166-168; <code>radio_view.py</code>). <code>reasoned:</code> o botão giratório é o objeto mais reconhecível de um aparelho de som; mostrá-lo girando com cada clique cumpre a regra do projeto e dá a imagem que ela pede.</dd>
+      <dt>Rationale</dt>
+      <dd>Transforma o controle mais “digital” do rádio (barras e números) no mais “analógico”, sem quebrar a regra de nada arrastável, e junta os três canais (posição do traço, lâmpadas, texto).</dd>
+      <dt>Downsides</dt>
+      <dd><ul>
+        <li><strong>Risco real:</strong> um botão que parece girar convida a tentar arrastar; se nada acontece, o usuário acha que quebrou. Mitigação: sem efeito de “pegar”, os botões “Mais baixo/Mais alto” bem maiores e ao lado, e o texto. Opção em aberto: clicar no próprio botão sobe um degrau (“avança”) e, no máximo, não faz nada com um aviso em palavras. Recomendo <em>não</em> torná-lo clicável no início, para não criar um segundo caminho.</li>
+        <li>É um widget novo desenhado em Cairo (cabeça, traço, 10 pontos); exige o mesmo cuidado de contraste e de tamanho das lâmpadas (a lâmpada acesa tem de ser distinguível da apagada sem depender da cor: tamanho do miolo ou anel).</li>
+        <li>Mais altura no painel do rádio, que já é alto.</li>
+      </ul></dd>
+    </dl>
+    <figure>
+      <svg viewBox="0 0 560 190" role="img" aria-label="Botão de volume com traço indicador, coroa de dez lâmpadas e botões Mais baixo e Mais alto nos lados">
+        <rect x="0" y="0" width="560" height="190" fill="var(--svg-bg)"/>
+        <rect x="26" y="62" width="130" height="58" rx="12" fill="var(--svg-shadow)"/>
+        <rect x="26" y="50" width="130" height="58" rx="12" fill="var(--svg-key)" stroke="var(--svg-ink)" stroke-width="3"/>
+        <text x="91" y="84" text-anchor="middle" font-size="14" font-weight="700">Mais baixo</text>
+        <rect x="404" y="62" width="130" height="58" rx="12" fill="var(--svg-shadow)"/>
+        <rect x="404" y="50" width="130" height="58" rx="12" fill="var(--svg-key)" stroke="var(--svg-ink)" stroke-width="3"/>
+        <text x="469" y="84" text-anchor="middle" font-size="14" font-weight="700">Mais alto</text>
+        <g transform="translate(280 78)">
+          <circle r="42" fill="var(--svg-shadow)"/>
+          <circle r="38" fill="var(--svg-key)" stroke="var(--svg-ink)" stroke-width="3"/>
+          <line x1="0" y1="0" x2="26" y2="-18" stroke="var(--svg-ink)" stroke-width="6" stroke-linecap="round"/>
+          <g stroke="var(--svg-ink)" stroke-width="2">
+            <circle cx="-55" cy="30" r="7" fill="var(--svg-lamp)"/><circle cx="-62" cy="6" r="7" fill="var(--svg-lamp)"/>
+            <circle cx="-55" cy="-18" r="7" fill="var(--svg-lamp)"/><circle cx="-36" cy="-38" r="7" fill="var(--svg-lamp)"/>
+            <circle cx="-10" cy="-50" r="7" fill="var(--svg-lamp)"/><circle cx="18" cy="-50" r="7" fill="var(--svg-lamp)"/>
+            <circle cx="44" cy="-38" r="7" fill="var(--svg-key-dark)"/><circle cx="62" cy="-18" r="7" fill="var(--svg-key-dark)"/>
+            <circle cx="64" cy="6" r="7" fill="var(--svg-key-dark)"/><circle cx="55" cy="30" r="7" fill="var(--svg-key-dark)"/>
+          </g>
+        </g>
+        <text x="280" y="170" text-anchor="middle" font-size="15" font-weight="700">Volume: 6 de 10</text>
+        <text x="280" y="186" text-anchor="middle" font-size="12">o botão gira sozinho a cada clique; não é arrastável</text>
+      </svg>
+      <figcaption>Ilustração direcional. As seis lâmpadas acesas e o traço apontando para o sexto degrau dizem o mesmo que o texto.</figcaption>
+    </figure>
+  </article>
+
+  <!-- I6 -->
+  <article class="idea" id="i6">
+    <div class="chips"><span class="chip id">I6.</span><span class="chip">Eixo 3 e 2</span><span class="chip">Confiança 75%</span><span class="chip">Complexidade Medium</span></div>
+    <h3>I6. O rádio de gabinete: madeira, teclas em moldura e visor de vidro</h3>
+    <dl>
+      <dt>Description</dt>
+      <dd>A tela “Tocando agora” vira um <strong>aparelho</strong>: o gabinete em madeira com <strong>veios</strong> sutis e moldura de latão; o visor com <strong>vidro</strong> (fundo âmbar, fio de luz no topo, sombra interna e um reflexo diagonal só nas bordas); as três teclas <strong>Anterior, Tocar, Próxima numa moldura comum</strong>, como um teclado de gravador, com “Tocar” maior e abaulado; e, na base, uma <strong>grade de tecido</strong> do alto-falante em padrão sutil. Os textos ficam todos em <strong>zonas lisas</strong> (no visor, nas teclas, na placa), nunca sobre os veios.</dd>
+      <dt>Axis</dt><dd>Móveis e superfícies (e Mostradores e luzes).</dd>
+      <dt>Basis</dt>
+      <dd><code>direct:</code> o rádio é hoje <code>.moa-radio</code> em marrom liso com borda (<code>theme.py</code>:140-141) e o visor um retângulo amarelo (144); a medição aplicou veios, teclas com degradê e visor de vidro juntos e o custo ficou em 11,5 ms contra 11,5 ms do chapado, e a imagem da variante mostra que o visual funciona dentro do GTK 3 sem imagem nenhuma. <code>external:</code> o desenho de rádios de mesa e gravadores (teclas em fila, visor de vidro, grade de tecido) é o objeto que o autor já escolheu imitar; <code>CLAUDE.md</code>: “Tocando agora: um rádio antigo”.</dd>
+      <dt>Rationale</dt>
+      <dd>É a tela onde o usuário passa a maior parte do tempo e a que a metáfora promete. Junta I1 e I5 num objeto coerente, em vez de enfeites soltos.</dd>
+      <dt>Downsides</dt>
+      <dd><ul>
+        <li>É a maior mudança visual: o risco é excesso de enfeite. Regra de contenção: <strong>uma</strong> textura (veios), <strong>um</strong> metal (latão fino) e nada animado.</li>
+        <li>Os veios mexem no contraste do texto branco sobre a madeira (<code>white</code> sobre <code>wood</code>, 7:1); a intensidade dos veios (máx. ~10% de alfa) precisa de um teste do pior ponto.</li>
+        <li>A grade de tecido é puramente decorativa e ocupa altura; pode ficar de fora na primeira versão (opção em aberto).</li>
+        <li>Em preto e branco a madeira é preta lisa; o relevo vira só moldura de fio duplo.</li>
+      </ul></dd>
+    </dl>
+  </article>
+
+  <!-- I7 -->
+  <article class="idea" id="i7">
+    <div class="chips"><span class="chip id">I7.</span><span class="chip">Eixo 5</span><span class="chip">Confiança 55%</span><span class="chip">Complexidade Medium</span></div>
+    <h3>I7. Um interruptor “Simples ou Aparelho” para comparar</h3>
+    <dl>
+      <dt>Description</dt>
+      <dd>Uma escolha em Configurações, ao lado de letra e cores: <strong>Aparência: Simples ou Aparelho</strong>. “Simples” é o visual chapado de hoje; “Aparelho” é o conjunto I1 a I6. Os dois usam os mesmos tokens e as mesmas quatro paletas, e só mudam as camadas de relevo (a “altura” da tecla vira zero, os veios e o brilho desligam). Serve de <strong>rede de segurança</strong> (se o relevo pesar ou cansar a vista, volta ao simples) e de <strong>instrumento de pesquisa</strong>: o autor pode medir o mesmo roteiro de tarefas nas duas aparências.</dd>
+      <dt>Axis</dt><dd>Linguagem comum e custo.</dd>
+      <dt>Basis</dt>
+      <dd><code>direct:</code> <code>CLAUDE.md</code> (seção 11) manda “tratar o skeuomorfismo como <strong>hipótese com evidência mista</strong> (Urbano 2022 a favor, Ellis &amp; Marshall 2019 contra), a validar com o usuário”, e <code>docs/testes-usabilidade.md</code> já mede tempo, erros e SUS por tarefa. <code>reasoned:</code> com evidência mista na literatura, a resposta mais honesta é medir <em>este</em> usuário nas duas versões; um interruptor barato permite isso sem manter duas versões do app.</dd>
+      <dt>Rationale</dt>
+      <dd>Transforma uma aposta de design em um resultado do TCC: “com o seu pai, o aparelho foi X% mais rápido (ou não)”. E protege o projeto de investir tudo num visual que talvez não ajude.</dd>
+      <dt>Downsides</dt>
+      <dd><ul>
+        <li><strong>É decisão sua</strong>: o autor definiu que a manutenção não tem “modo escondido” e que Configurações tem letra e cores. Uma terceira escolha aumenta o que o idoso pode mexer e precisa de texto sem jargão (“Aparência: Simples / Aparelho”).</li>
+        <li>Dobra o que é preciso testar (contraste e 64 px nas duas aparências). Se a escolha for só do autor, dá para tirar do app final, como o atualizador de teste, e manter só durante a avaliação.</li>
+        <li>Se o relevo for pura camada de CSS, a versão “Simples” é praticamente de graça; se alguma peça virar desenho em Cairo (I3 e I5), cada uma precisa de um modo plano.</li>
+      </ul></dd>
+    </dl>
+  </article>
+</section>
+
+<section id="rejection-summary">
+  <h2>Rejection Summary</h2>
+  <p>A verificação das bases foi feita pelo orquestrador, sem um verificador de contexto novo: os trechos citados do código e do <code>CLAUDE.md</code> foram relidos, e o custo de relevo foi medido nesta sessão. O ganho é custo menor; a perda é que não houve um segundo olhar independente.</p>
+  <table>
+    <thead><tr><th>#</th><th>Ideia</th><th>Motivo do corte</th></tr></thead>
+    <tbody>
+      <tr><td>R5</td><td>Letras “gravadas” na placa (sombra de texto em relevo)</td><td>Sombra de texto reduz a legibilidade e pesa no 7:1; o projeto já exige texto em zona lisa.</td></tr>
+      <tr><td>R6</td><td>Parafusos e rebites decorativos</td><td>Cortada na primeira rodada por ser enfeite sem função. <strong>Reaberta no refinamento:</strong> entra só como detalhe opcional do nível 3 (barato, mas sem ganho de uso).</td></tr>
+      <tr><td>R9</td><td>Dial de sintonia com agulha para “faixa X de Y”</td><td>Depende da decisão em aberto sobre a barra de progresso (CLAUDE.md, seção 11); fica para quando o autor decidir.</td></tr>
+      <tr><td>R11</td><td>Medidor VU de agulha</td><td>Decorativo e animado; sem significado para o usuário e custo de redesenho constante.</td></tr>
+      <tr><td>R12</td><td>Lâmpada de válvula que pulsa</td><td>Animação contínua em CPU antiga, sem informação nova (a lâmpada acesa já diz “tocando”).</td></tr>
+      <tr><td>R13</td><td>Letras de segmentos (LED) no visor</td><td>Fonte de segmentos é difícil de ler para quem já vê pior; fere o espírito do 7:1 e do texto grande.</td></tr>
+      <tr><td>R16</td><td>Fundo da janela texturado</td><td>Ganho pequeno e risco de contraste do texto sobre o fundo; a prateleira e o gabinete já dão a ideia de móvel.</td></tr>
+      <tr><td>R17</td><td>Cartões como etiqueta de papel com cantos dobrados</td><td>Os cartões já parecem papel; a textura acrescenta risco de contraste sem ganho de reconhecimento.</td></tr>
+      <tr><td>R20</td><td>Discos em pé mostrando só a lombada</td><td>Texto vertical é difícil de ler e some com o que o usuário reconhece: a capa. Contraria o princípio da estante de capas.</td></tr>
+      <tr><td>R21</td><td>Animação do disco saindo da estante</td><td>Animação em CPU antiga e sem informação nova; a tela muda de qualquer jeito.</td></tr>
+      <tr><td>R22</td><td>Gaveta do CD que abre e fecha no Aparelho de CD</td><td>O app não sabe se a gaveta está aberta; desenhar um estado que pode mentir é pior do que não desenhar.</td></tr>
+      <tr><td>R23</td><td>Lixeira grande e ilustrada na tela da Lixeira</td><td>O ícone novo e o título já cobrem; uma ilustração grande só ocupa a altura da lista.</td></tr>
+      <tr><td>R25</td><td>Disco girando desenhado no visor do aparelho de CD</td><td>Decorativo; o visor já diz “COPIANDO: Faixa X de Y”.</td></tr>
+      <tr><td>R30</td><td>Texturas e molduras em imagens (PNG com <code>border-image</code>)</td><td>CSS já dá o relevo a custo medido de ~zero; imagens trazem arquivos, licença e custo de decodificar, sem ganho.</td></tr>
+      <tr><td>R31</td><td>Som de “tec” ao apertar</td><td>Disputa com a música, depende da saída de áudio e do GStreamer; adiável, não é aparência.</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Absorvidas, não cortadas:</strong> o botão-lente abaulado (R4), os tokens de relevo (R26), a regra das camadas translúcidas (R27) e o preto e branco por contorno duplo (R28) entraram em I1; a fileira de teclas de gravador (R3), o visor de vidro (R8) e o gabinete (R15) formam I6; as lâmpadas redondas (R10) formam a coroa de I5 com o botão giratório (R7); a quina da prateleira (R14), a plaquinha de latão (R18) e o vão côncavo (R24) formam I4.</p>
+  <p><strong>Nenhum eixo ficou sem sobrevivente.</strong> I1 e I7 cobrem Linguagem comum e custo, I2 e I1 as Teclas, I5 e I6 os Mostradores, I4 e I6 os Móveis, I3 e I4 os Discos.</p>
+</section>
+
+<footer class="composition-signal">
+  Composed <time datetime="2026-11-28T00:30">2026-11-28</time> by ce-ideate from the author's request (aparência analógica do Moa), <code>moa/ui/theme.py</code>, <code>moa/ui/widgets.py</code>, <code>CLAUDE.md</code> and <code>docs/ideation/2026-11-26-estante-ui-botoes-telas-ideation.html</code>, with a CSS cost measurement run in this session, and refined with <code>docs/preview/aparencia-analogica.html</code>. No sub-agents were used.
+</footer>
+
+</div>
+</body>
+</html>

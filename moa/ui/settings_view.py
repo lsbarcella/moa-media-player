@@ -18,7 +18,7 @@ from moa.core.config import LETRAS, PALETAS  # noqa: E402
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.ui.theme import ROTULOS_DAS_LETRAS, ROTULOS_DAS_PALETAS, amostra  # noqa: E402
 from moa.ui.cartao_de_atualizacao import cartao_de_atualizacao  # noqa: E402     # ATUALIZACAO_DE_TESTE
-from moa.ui.widgets import aviso, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
+from moa.ui.widgets import aviso, caixa_h, caixa_v, classe, limpar, rotulo  # noqa: E402
 
 
 def _quadradinho(cor: str) -> Gtk.DrawingArea:
@@ -92,6 +92,11 @@ class SettingsView:
     def _opcao(self, texto: str, escolhida: bool, ao_clicar, amostras=()) -> Gtk.Button:
         b = Gtk.Button()
         linha = caixa_h(12)
+        luz = Gtk.Box()                      # a lâmpada da tecla: acesa na opção escolhida
+        luz.get_style_context().add_class("moa-luz")
+        luz.set_valign(Gtk.Align.CENTER)
+        classe(luz, "moa-acesa", escolhida)
+        linha.pack_start(luz, False, False, 0)
         linha.pack_start(rotulo("✓" if escolhida else " ", "moa-forte", quebrar=False),
                          False, False, 0)
         linha.pack_start(rotulo(texto, "moa-forte"), True, True, 0)
