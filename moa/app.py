@@ -88,4 +88,6 @@ class MoaApp(Gtk.Application):
             carregador = Carregador(self.contexto, caminho_do_banco, dados / "miniaturas", atualizador)
             self.contexto.aparelho.ao_copiar(carregador.reler)     # CD copiado: a estante relê a pasta
             carregador.iniciar()
+            if esta_online():                                   # ATUALIZACAO_DE_TESTE
+                self.contexto.atualizacao.verificar(silenciosa=True)
         window.present()

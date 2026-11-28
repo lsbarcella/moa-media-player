@@ -57,6 +57,7 @@ def test_segunda_abertura_termina_e_a_primeira_continua(tmp_path):
     musica.mkdir()
     ambiente = dict(os.environ, MOA_PASTA_DE_MUSICA=str(musica),
                     XDG_DATA_HOME=str(tmp_path / "dados"), XDG_CONFIG_HOME=str(tmp_path / "config"),
+                    MOA_SEM_REDE="1",
                     PYTHONPATH=str(RAIZ))
     ambiente.pop("DBUS_SESSION_BUS_ADDRESS", None)
     r = subprocess.run(["dbus-run-session", "--", sys.executable, "-c", ROTEIRO],

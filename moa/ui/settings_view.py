@@ -17,6 +17,7 @@ from gi.repository import Gtk  # noqa: E402
 from moa.core.config import LETRAS, PALETAS  # noqa: E402
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.ui.theme import ROTULOS_DAS_LETRAS, ROTULOS_DAS_PALETAS, amostra  # noqa: E402
+from moa.ui.cartao_de_atualizacao import cartao_de_atualizacao  # noqa: E402     # ATUALIZACAO_DE_TESTE
 from moa.ui.widgets import aviso, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
 
 
@@ -78,6 +79,8 @@ class SettingsView:
                                 "texto e formas.", "moa-nota"), False, False, 0)
         colunas.pack_start(cores, True, True, 0)
         self.raiz.pack_start(colunas, False, False, 0)
+        if self.ctx.atualizacao.habilitada:                                # ATUALIZACAO_DE_TESTE
+            self.raiz.pack_start(cartao_de_atualizacao(self.ctx), False, False, 0)
         self.raiz.show_all()
 
     def _cartao(self, titulo: str) -> Gtk.Box:

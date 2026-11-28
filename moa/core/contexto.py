@@ -16,6 +16,7 @@ from gi.repository import GLib
 
 from moa.core import box, custom_albums, musicbrainz
 from moa.core.aparelho import AparelhoDeCD
+from moa.core.atualizacao_de_teste import AtualizacaoDeTeste     # ATUALIZACAO_DE_TESTE
 from moa.core.custom_albums import RascunhoDePlaylist
 from moa.core.config import Preferencias
 from moa.core.covers import refresh_covers
@@ -47,6 +48,7 @@ class Contexto:
         self.pasta_miniaturas = pasta_miniaturas
         # A cópia de CD roda numa thread; `idle_add` leva os avisos dela à thread principal.
         self.aparelho = AparelhoDeCD(self.pasta_musica, despachar=_na_thread_principal)
+        self.atualizacao = AtualizacaoDeTeste(despachar=_na_thread_principal)     # ATUALIZACAO_DE_TESTE
         # O que o MusicBrainz trouxe numa abertura ANTERIOR. É lido uma vez, aqui, e não muda até
         # o app abrir de novo: a estante não se altera enquanto o idoso olha para ela (ADR-0003).
         self._camada_mb = banco.load_mb()
