@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moa — tipografia (preview)</title>
+<style>
+/* Preview em HTML (não é o app). Compara fontes, pesos, caixa-alta e números nos textos de verdade
+   do Moa. Só mostra as fontes instaladas NESTA máquina; as que faltam aparecem marcadas. */
+:root{--fs:16px;--pb:800;--tn:normal}
+body{margin:0;background:#E9E9E5;color:#16181A;font:600 16px/1.4 system-ui,sans-serif}
+.topo{padding:16px 24px;background:#fff;border-bottom:3px solid #44484d}
+.topo h1{margin:0 0 4px;font-size:24px}.topo p{margin:0;max-width:95ch;color:#3c4146}
+.controles{display:flex;flex-wrap:wrap;gap:18px;padding:10px 24px;background:#fff;border-bottom:1px solid #bbb;position:sticky;top:0;z-index:9}
+.controles b{margin-right:4px}
+.controles button{font:700 15px system-ui;padding:6px 12px;margin:2px;border:2px solid #333;border-radius:8px;background:#fff;cursor:pointer}
+.controles button[aria-pressed=true]{background:#16181A;color:#fff}
+main{max-width:1300px;margin:auto;padding:20px;display:grid;gap:22px}
+.grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:18px}
+.fonte{background:#fff;border:2px solid #b9bbbd;border-radius:14px;overflow:hidden;box-shadow:0 4px 0 rgba(0,0,0,.15)}
+.fonte header{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#d9dadc;font:700 15px system-ui}
+.fonte header small{font:600 13px system-ui;color:#3c4146}
+.falta{opacity:.45}
+.falta header small{color:#8A1538;font-weight:800}
+.amostra{padding:14px;font-size:var(--fs);font-variant-numeric:var(--tn)}
+.visor{background:linear-gradient(#2B3136,#171A1D);color:#fff;border:4px solid #1E2023;border-radius:12px;padding:10px 14px;box-shadow:0 0 0 2px #7B7E82}
+.visor .estado{font-weight:var(--pb);display:flex;align-items:center;gap:8px}
+.visor .titulo{font-weight:800;font-size:calc(var(--fs)*1.3);margin:2px 0}
+.visor .nota{font-weight:400}
+.lampada{width:.9em;height:.9em;border-radius:50%;background:#B7E4A8;box-shadow:0 0 8px #B7E4A8;display:inline-block}
+.tempos{display:flex;justify-content:space-between;font-weight:var(--pb);margin-top:6px}
+.teclas{display:flex;gap:8px;margin:12px 0}
+.tecla{flex:1;min-height:56px;display:grid;place-items:center;border-radius:9px;border:2px solid #5b5b58;border-top-color:#f8f8f6;border-left-color:#f8f8f6;
+  background:linear-gradient(#f0f0ed,#c6c6c2);font-weight:var(--pb);box-shadow:0 2px 0 rgba(0,0,0,.45)}
+.tecla.on{background:#4c4c48;color:#fff;box-shadow:inset 0 3px 6px rgba(0,0,0,.6)}
+.faixas{border:2px solid #b9bbbd;border-radius:12px;overflow:hidden}
+.faixas div{display:flex;gap:10px;padding:8px 10px;border-bottom:1px solid #d5d6d8;align-items:baseline}
+.faixas div:last-child{border:0}.faixas b{font-weight:var(--pb);min-width:1.6em}
+.faixas .atual{background:#EAF5E4}.faixas small{margin-left:auto;font-weight:400;opacity:.8}
+.rotulo{font-weight:var(--pb)}
+.acentos{margin-top:10px;font-weight:600;letter-spacing:.02em}
+.lista-r{margin:0;padding:10px 14px 14px;font-size:13px;color:#3c4146;font-family:system-ui;font-weight:500}
+.bloco{background:#fff;border-radius:14px;padding:14px 18px;border:2px solid #b9bbbd}
+.bloco h2{margin:0 0 6px;font-size:19px}.bloco p,.bloco li{margin:4px 0;max-width:110ch}
+</style>
+</head>
+<body>
+<header class="topo"><h1>Tipografia do Moa: fonte, peso, caixa-alta e números</h1>
+<p>Preview em HTML (não é o app). Os textos são os de verdade do rádio e da lista. Troque o <b>tamanho</b> (os do app: 14, 16, 18, 21 px), o <b>peso</b> dos botões e rótulos, a <b>caixa</b> do estado e os <b>números</b>, e compare as fontes lado a lado. Hoje o app usa 800 em quase tudo e não define fonte (usa a do sistema).</p></header>
+
+<div class="controles">
+ <div><b>Tamanho:</b><button data-t="14px">Pequeno 14</button><button data-t="16px" aria-pressed="true">Normal 16</button><button data-t="18px">Grande 18</button><button data-t="21px">Maior 21</button></div>
+ <div><b>Peso dos botões e rótulos:</b><button data-p="500">500</button><button data-p="600">600</button><button data-p="700">700</button><button data-p="800" aria-pressed="true">800 (hoje)</button></div>
+ <div><b>Estado:</b><button data-c="up" aria-pressed="true">PAUSADO (hoje)</button><button data-c="nor">Pausado</button></div>
+ <div><b>Números:</b><button data-n="normal" aria-pressed="true">Normais (hoje)</button><button data-n="tabular-nums">De largura igual</button></div>
+</div>
+
+<main>
+ <div class="grade" id="grade"></div>
+
+ <div class="bloco">
+  <h2>O que olhar</h2>
+  <ul>
+   <li><b>Letras parecidas:</b> "1", "l" e "I"; "0" e "O"; "rn" e "m". Para o idoso, confundir "Faixa 1" com "Faixa l" é erro de verdade.</li>
+   <li><b>Acentos em caixa-alta</b> (ÀÉÍÕÇ): cabem sem encostar na linha de cima? Em 14 px, ficam legíveis?</li>
+   <li><b>Peso 800 contra 600:</b> o 800 enche os buracos das letras em tamanho pequeno; o 600 respira mais. Veja o "Pausar" e o título da música em 14 e 16 px.</li>
+   <li><b>Números de largura igual:</b> o tempo "0:00 ... 1:24" não deve balançar a cada segundo (compare os dois modos olhando "1:11").</li>
+   <li><b>Caixa-alta corrida</b> (PAUSADO. APERTE...) cansa mais que "Pausado". O estado curto pode ficar em caixa-alta; a frase, não.</li>
+  </ul>
+ </div>
+</main>
+
+<script>
+// fontes candidatas, na ordem do preview. "system-ui" é a fonte do sistema (a que o app usa hoje).
+const FONTES=[
+ ["Fonte do sistema (hoje)","system-ui","vem do tema do sistema; muda de máquina para máquina"],
+ ["Noto Sans","'Noto Sans'","já vem no Linux Mint; cobre acentos; recomendada"],
+ ["Ubuntu","Ubuntu","vem com o Mint; formas humanas e abertas"],
+ ["DejaVu Sans","'DejaVu Sans'","vem em todo Linux; larga e muito legível; menos elegante"],
+ ["Roboto","Roboto","comum em Linux; neutra"],
+ ["Atkinson Hyperlegible","'Atkinson Hyperlegible'","desenhada para baixa visão; precisa instalar (pacote extra + ADR)"],
+];
+// Uma fonte está instalada se o texto medido com ela muda de largura em relação às duas fontes de
+// reserva (serifa e monoespaçada). `document.fonts.check` não serve: devolve true para fonte inexistente.
+function fonteInstalada(css){
+  const c=document.createElement('canvas').getContext('2d');
+  const t="mmmmmmmmmmlliWÃÕÇ0123";
+  const largura=f=>{c.font="40px "+f;return c.measureText(t).width};
+  return ["monospace","serif"].some(reserva=>largura(css+","+reserva)!==largura(reserva));
+}
+const grade=document.getElementById('grade');
+for(const [nome,css,nota] of FONTES){
+  const instalada = css==="system-ui" || fonteInstalada(css);
+  const d=document.createElement('div'); d.className='fonte'+(instalada?'':' falta');
+  d.innerHTML=`<header><span>${nome}</span><small>${instalada?nota:'NÃO instalada nesta máquina'}</small></header>
+  <div class="amostra" style="font-family:${css},sans-serif">
+   <div class="visor">
+     <div class="estado"><span class="lampada"></span><span class="est">PAUSADO</span><span class="frase" style="font-weight:600"> Aperte Tocar para continuar</span></div>
+     <div class="titulo">Coração de Estudante</div>
+     <div class="nota">Milton Nascimento · Ao Vivo · 1985</div>
+     <div class="nota">Faixa 11 de 18</div>
+     <div class="tempos"><span>0:11</span><span>1:11</span><span>3:42</span></div>
+   </div>
+   <div class="teclas"><span class="tecla">Anterior</span><span class="tecla on">Pausar</span><span class="tecla">Próxima</span></div>
+   <div class="rotulo">Volume: 6 de 10 · Voz mais clara: desligada</div>
+   <div class="faixas">
+     <div class="atual"><b>1</b>Maria, Maria<small>Parado aqui</small></div>
+     <div><b>2</b>Travessia – Ão, Çà, É, Õ<small>3:42</small></div>
+     <div><b>3</b>Faixa 10 · Il Grande 1l0 · O0<small>4:05</small></div>
+   </div>
+   <div class="acentos">ÀÉÍÓÚ ÂÊÔ ÃÕ Ç — àéíóú âêô ãõ ç · 0123456789 · Illlí1 O0 rn m</div>
+  </div>`;
+  grade.appendChild(d);
+}
+const R=document.documentElement;
+const marca=(g,el)=>document.querySelectorAll('['+g+']').forEach(x=>x.setAttribute('aria-pressed',x===el));
+document.querySelectorAll('[data-t]').forEach(x=>x.onclick=()=>{R.style.setProperty('--fs',x.dataset.t);marca('data-t',x)});
+document.querySelectorAll('[data-p]').forEach(x=>x.onclick=()=>{R.style.setProperty('--pb',x.dataset.p);marca('data-p',x)});
+document.querySelectorAll('[data-n]').forEach(x=>x.onclick=()=>{R.style.setProperty('--tn',x.dataset.n);marca('data-n',x)});
+document.querySelectorAll('[data-c]').forEach(x=>x.onclick=()=>{
+  document.querySelectorAll('.est').forEach(e=>e.textContent=x.dataset.c==='up'?'PAUSADO':'Pausado');marca('data-c',x)});
+</script>
+</body>
+</html>
