@@ -208,19 +208,19 @@ def _css_do_aparelho(c: dict[str, str], modo: str) -> str:
     background-image: repeating-linear-gradient(to right, {estria} 0px, {estria} 1px,
                           {sem_estria} 2px, {sem_estria} 4px),
                       linear-gradient(to bottom, {_rgba(c['case_hi'], 1)} 0%, {_rgba(c['case_lo'], 1)} 100%);
-    border: 4px solid {c['plate_lo']}; border-radius: 18px; padding: 14px 18px;
+    border: 4px solid {c['plate_lo']}; border-radius: 18px; padding: 10px 14px;
     box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 0 0 2px {c['dark']},
                 0 0 0 2px {c['dark']}, 0 6px 0 rgba(0,0,0,0.45); }}
 .moa-radio label {{ color: {c['white']}; }}
 .moa-radio .moa-dica {{ color: {c['hint']}; }}
 .moa-visor {{ background-color: {c['visor']};
     background-image: linear-gradient(to bottom, {_rgba(c['visor_hi'], 1)} 0%, {_rgba(c['visor_lo'], 1)} 100%);
-    border: 4px solid {c['dark']}; border-radius: 12px; padding: 12px;
+    border: 4px solid {c['dark']}; border-radius: 12px; padding: 8px 12px;
     box-shadow: 0 0 0 2px {c['plate_lo']}, inset 0 0 14px rgba(0,0,0,0.30),
                 inset 0 2px 0 rgba(255,255,255,0.22), inset 2px 0 0 rgba(255,255,255,0.10); }}
 .moa-visor label {{ color: {c['visor_texto']}; }}
 .moa-bandeja, .moa-volume {{ background-color: {c['tray']}; border: 2px solid {c['tray_edge']}; border-radius: 14px;
-    padding: 7px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.9), 0 1px 0 rgba(255,255,255,0.35); }}
+    padding: 5px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.9), 0 1px 0 rgba(255,255,255,0.35); }}
 .moa-grade {{ background-color: {c['dark']};
     background-image: repeating-linear-gradient(to right, rgba(255,255,255,0.14) 0px, rgba(255,255,255,0.14) 2px,
                           rgba(0,0,0,0) 3px, rgba(0,0,0,0) 6px),
@@ -390,14 +390,15 @@ button.moa-btn.moa-escolhida label {{ color: {c['white']}; }}
 
 # --- Escalas de letra -----------------------------------------------------------------
 
-LETRA_BASE_PX = 20           # a letra de referência; cada escala é uma fração dela (ADR-0028)
-LETRA_MINIMA_PX = 16         # nenhum texto do CSS fica abaixo disto
+LETRA_BASE_PX = 20           # a letra de referência; cada escala é uma fração dela (ADR-0029)
+LETRA_MINIMA_PX = 14         # nenhum texto do CSS fica abaixo disto
 ALVO_MINIMO_PX = 64
-# Normal 17 px, Grande 20 px, Maior 24 px. Eram 20, 24 e 28: no teste no notebook (1366x768) o
-# "Maior" quebrava todas as telas e o "Normal" estava no limite. É decisão do autor (28/11/2026) e
-# fica num lugar só: para voltar atrás basta trocar estes três números.
-ESCALAS = {"normal": 0.85, "grande": 1.02, "maior": 1.19}
-ROTULOS_DAS_LETRAS = {"normal": "Normal", "grande": "Grande", "maior": "Maior"}
+# Pequeno 14 px (o tamanho comum dos programas, para quem enxerga bem), Normal 16 px (o padrão do
+# app), Grande 18 px e Maior 21 px. Eram 17, 20 e 24 (e antes 20, 24 e 28): no notebook de
+# 1366x768 o tamanho maior quebrava as telas. Decisão do autor (28/11/2026), num lugar só: para
+# mudar basta trocar estes números.
+ESCALAS = {"pequeno": 0.70, "normal": 0.80, "grande": 0.90, "maior": 1.05}
+ROTULOS_DAS_LETRAS = {"pequeno": "Pequeno", "normal": "Normal", "grande": "Grande", "maior": "Maior"}
 
 
 def gerar_css(paleta: str = "normal", letra: str = "normal") -> str:

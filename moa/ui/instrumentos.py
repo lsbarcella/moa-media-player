@@ -24,7 +24,7 @@ from moa.ui import cairo_pecas, theme  # noqa: E402
 from moa.ui.widgets import caixa_h, rotulo, texto_de  # noqa: E402
 
 VARREDURA_GRAUS = 270            # o botão vai de -135 graus (mínimo) a +135 (máximo)
-LADO_DO_BOTAO_PX = 132
+LADO_DO_BOTAO_PX = 104
 
 
 def angulo_do_botao(degrau: int, maximo: int) -> float:

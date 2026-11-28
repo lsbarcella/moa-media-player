@@ -28,10 +28,10 @@ class RadioView:
     def __init__(self, contexto: Contexto):
         self.ctx = contexto
         self.raiz = caixa_v(0)
-        self.raiz.set_border_width(24)
+        self.raiz.set_border_width(12)             # pouca margem: o espaço é do painel e dos nomes das músicas
         # Peças fixas: o aviso em cima e, embaixo, o painel do rádio e o lugar da lista.
         self.topo = caixa_v(0)
-        self.quadro = Gtk.Box(spacing=24)
+        self.quadro = Gtk.Box(spacing=12)
         self.painel = caixa_v(0)
         self.lugar_da_lista = caixa_v(0)
         # Cada coluna tem a SUA rolagem (ADR-0028): lado a lado, o painel do rádio fica parado e só a
@@ -44,6 +44,8 @@ class RadioView:
         self.lista_rolagem.set_overlay_scrolling(False)
         self.lista_rolagem.add(self.lugar_da_lista)
         self._rolagem_externa: Gtk.ScrolledWindow | None = None     # a da janela; entregue por `registrar`
+        self.painel_rolagem.set_hexpand(False)      # sem isto o painel herda "expandir" e fica longe do canto
+        self.painel_rolagem.set_halign(Gtk.Align.START)
         self.quadro.pack_start(self.painel_rolagem, False, False, 0)
         self.quadro.pack_start(self.lista_rolagem, True, True, 0)
         self.raiz.pack_start(self.topo, False, False, 0)
@@ -224,7 +226,7 @@ class RadioView:
         corpo.pack_start(metal, False, False, 0)
 
         # volume em degraus
-        volume = caixa_v(8)
+        volume = caixa_v(4)
         volume.get_style_context().add_class("moa-volume")
         linha = caixa_h(8)
         p.menos = botao_so_com_icone("volume_menos", "Mais baixo", ao_clicar=self._volume_menos)
@@ -252,8 +254,6 @@ class RadioView:
                                  ao_clicar=self._alternar_voz)
         corpo.pack_start(p.clara, False, False, 0)
 
-        corpo.pack_start(botao("Guardar o disco na estante e parar", ao_clicar=self._guardar, icone_nome="disco"),
-                         False, False, 0)
         pe = caixa_h(12)                        # no pé do aparelho: a grade do alto-falante e a plaquinha MOA
         grade = Gtk.Box()
         grade.get_style_context().add_class("moa-grade")
@@ -453,12 +453,6 @@ class RadioView:
 
     def _tocar_faixa(self, indice: int) -> None:
         self._acao(lambda: self.ctx.radio.tocar_faixa(indice))
-
-    def _guardar(self) -> None:
-        from moa.core.session import Tela
-        self.ctx.session.acao()
-        self.ctx.radio.guardar_o_disco_e_parar()
-        self.ctx.session.ir_para(Tela.ESTANTE)
 
     def ao_entrar(self) -> None:
         self._foco_pendente = True          # ao chegar nesta tela, o foco vai para Tocar/Pausar

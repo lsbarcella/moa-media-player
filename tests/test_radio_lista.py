@@ -377,3 +377,25 @@ def test_em_letra_maior_e_tela_de_notebook_o_volume_cabe_na_primeira_tela(app):
     janela.remove(conteudo.raiz)
     janela.destroy()
     assert fim <= 768, fim
+
+
+def test_a_tela_do_radio_nao_tem_o_botao_de_guardar_o_disco_e_parar(app):
+    ctx, conteudo = app
+    ctx.radio.abrir_disco(ctx.discos[0], tocar=False)
+    ctx.session.ir_para(Tela.RADIO)
+    assert not any("Guardar o disco" in t for t in textos(conteudo.telas[Tela.RADIO]._p.corpo))
+
+
+def test_o_painel_do_radio_fica_colado_no_canto_esquerdo(app):
+    ctx, conteudo = app
+    ctx.radio.abrir_disco(ctx.discos[0], tocar=False)
+    ctx.session.ir_para(Tela.RADIO)
+    janela = Gtk.OffscreenWindow()
+    janela.set_size_request(1366, 768)
+    janela.add(conteudo.raiz)
+    janela.show_all()
+    girar(0.6)
+    x = conteudo.telas[Tela.RADIO]._p.corpo.translate_coordinates(janela, 0, 0)[0]
+    janela.remove(conteudo.raiz)
+    janela.destroy()
+    assert x <= 14, x

@@ -21,7 +21,7 @@ def test_todo_par_de_texto_e_fundo_tem_contraste_de_7_para_1(paleta):
 
 def test_as_quatro_paletas_e_as_tres_letras_existem():
     assert list(theme.PALETAS) == ["normal", "vermelho-verde", "azul-amarelo", "preto-e-branco"]
-    assert list(theme.ESCALAS) == ["normal", "grande", "maior"]
+    assert list(theme.ESCALAS) == ["pequeno", "normal", "grande", "maior"]
 
 
 def _tamanhos(css, propriedade):
@@ -29,19 +29,19 @@ def _tamanhos(css, propriedade):
 
 
 @pytest.mark.parametrize("paleta", list(theme.PALETAS))
-def test_na_escala_normal_nenhum_texto_tem_menos_do_minimo_e_nenhum_botao_menos_de_64px(paleta):
-    css = theme.gerar_css(paleta, "normal")
+def test_em_nenhuma_escala_um_texto_tem_menos_do_minimo_e_nenhum_botao_menos_de_64px(paleta):
+    css = "".join(theme.gerar_css(paleta, escala) for escala in theme.ESCALAS)
     assert min(_tamanhos(css, "font-size")) >= theme.LETRA_MINIMA_PX
     botoes = re.findall(r"button\.moa-\w+ \{[^}]*?min-height:\s*(\d+)px", css)
     assert botoes and min(int(b) for b in botoes) >= 64
 
 
 def test_nas_escalas_grande_e_maior_a_letra_so_cresce():
-    normal, grande, maior = (max(_tamanhos(theme.gerar_css("normal", e), "font-size"))
-                             for e in ("normal", "grande", "maior"))
-    assert normal < grande < maior
+    pequeno, normal, grande, maior = (max(_tamanhos(theme.gerar_css("normal", e), "font-size"))
+                                      for e in ("pequeno", "normal", "grande", "maior"))
+    assert pequeno < normal < grande < maior
     base = lambda e: _tamanhos(theme.gerar_css("normal", e), "font-size")[0]
-    assert (base("normal"), base("grande"), base("maior")) == (17, 20, 24)      # ADR-0028
+    assert (base("pequeno"), base("normal"), base("grande"), base("maior")) == (14, 16, 18, 21)      # ADR-0029
 
 
 def test_o_css_trocou_de_cor_ao_trocar_de_paleta():
