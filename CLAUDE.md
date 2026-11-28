@@ -67,6 +67,7 @@ Mapa de metáforas (ponto de partida, a refinar com o autor; ver ADR-0002):
 | --- | --- | --- |
 | Python 3 | Linguagem | `python3` |
 | GTK 3 via PyGObject | Interface, detecção de disco e de rede (`Gio`) | `python3-gi`, `gir1.2-gtk-3.0` |
+| Cairo (ponte do PyGObject) | Peças do aparelho desenhadas por código: botão de volume, caixa de CD, parafusos (ADR-0024) | `python3-gi-cairo` |
 | GStreamer 1.x | Reprodução de áudio, ReplayGain (`rgvolume`) e leitura de CD | `gir1.2-gstreamer-1.0`, `gstreamer1.0-plugins-base`, `gstreamer1.0-plugins-good` |
 | mutagen | Tags e capas (MP3, FLAC, OGG) | `python3-mutagen` |
 | pytest | Testes (só no ambiente de desenvolvimento) | `python3-pytest` |
@@ -110,6 +111,9 @@ moa/
 │       ├── shelf_view.py   # Tela "estante": grade de capas
 │       ├── player_view.py  # Tela "tocando agora" (aparelho de som)
 │       ├── cd_view.py      # Tela "Aparelho de CD": colocar um disco (ADR-0018)
+│       ├── cairo_pecas.py  # Peças em Cairo (parafuso, serrilha, lente, caixa de CD) + cache de desenho (ADR-0024)
+│       ├── instrumentos.py # Botão de volume e régua do visor, desenhados em Cairo (ADR-0024)
+│       ├── ornamentos.py   # Parafusos nos cantos dos painéis (ADR-0024)
 │       ├── (telas de manutenção e de montar disco: desenho em aberto)
 │       ├── icons/          # Ícones de aparelhos antigos (SVG)
 │       └── style.css       # Tamanhos, cores e contraste
@@ -275,7 +279,7 @@ Siga em ordem. Termine cada marco com algo executável, uma explicação ao auto
 
 ```bash
 # Dependências no Linux Mint
-sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-gstreamer-1.0 \
+sudo apt install python3-gi python3-gi-cairo gir1.2-gtk-3.0 gir1.2-gstreamer-1.0 \
   gstreamer1.0-plugins-base gstreamer1.0-plugins-good python3-mutagen python3-pytest
 
 # Executar

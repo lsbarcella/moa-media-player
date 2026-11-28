@@ -235,3 +235,20 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Achados do preview:** o brilho da tecla verde só pode ficar na faixa de cima (senão o branco cai para 4,3:1); o latão que leva texto precisa ser claro (o escuro dá 5,9:1); o preto e branco funciona com relevo por contorno e sombra; o nível 3 exige peças desenhadas em Cairo (botão de volume, escala do visor, dobradiça), com cache.
 - **Decisão pendente do autor:** qual nível implementar e se entra o interruptor "Simples/Aparelho" (I7). Recomendação: nível 2 inteiro primeiro; depois, do nível 3, o botão de volume e a capa com dobradiça.
 - **NÃO testado:** nada disto foi implementado no app; o preview é HTML (navegador), não GTK. O custo de desenho foi medido só para CSS, não para as peças em Cairo.
+
+## 28/11/2026 — Aparência analógica, nível 3: implementação
+
+- **Pedido:** "Vamos direto pro nível 3. Pode dar seguimento com /lfg." O autor escolheu o nível 3 do preview, sem passar pelo nível 2 isolado; o interruptor "Simples ou Aparelho" (I7) ficou de fora por não ter sido decidido.
+- **Feito** (plano em `docs/plans/2026-11-28-0136-feat-aparencia-analogica-nivel-3-plan.md`, decisão no ADR-0024), em unidades pequenas:
+  - tokens de material e checagem de contraste no pior ponto do degradê (`theme.MATERIAIS`, `contraste_no_pior_ponto`);
+  - teclas com curso e teclas travadas com lâmpada (Voz mais clara, banco de teclas de Configurações, marcação da playlist);
+  - peças em Cairo com cache (`cairo_pecas.py`): parafuso, dobradiça, serrilha, lente, caixa de CD;
+  - rádio de madeira com latão, visor de vidro, moldura de metal, grade e parafusos (`ornamentos.py`);
+  - botão de volume e régua do visor (`instrumentos.py`);
+  - capa em caixa de CD (o miolo transparente impede que o reflexo cubra a arte);
+  - estante com profundidade e a mesma luz nas outras telas;
+  - `tools/telas.py` (72 imagens das telas) e `python3-gi-cairo` no `.deb` e no `check_deps.sh`.
+- **Verificação:** a suíte passou de 489 para mais de 600 testes (tokens, contraste no pior ponto nas quatro paletas, estados das teclas, pixels das peças em Cairo, cache, miolo transparente da caixa). Imagens das seis telas conferidas nas quatro paletas e nas escalas de letra. `measure.sh` antes e depois: ações iguais, RAM +1 MB.
+- **Achados no caminho:** (1) o `btnradio` (fundo das teclas do rádio) era bege também no preto e branco, corrigido no token; (2) a regra da nota do visor foi apagada sem querer num corte de CSS e restaurada com teste; (3) a guarda de tamanho dos parafusos escondia os da placa pequena da estante e foi ajustada; (4) o `check_deps.sh` precisa de `gi.require_foreign('cairo')`, pois importar `cairo` funciona mesmo sem `python3-gi-cairo`.
+- **Decisões que seguem do autor:** I7 (interruptor), clicar no botão de volume, barra de progresso, cor da lombada, sombra rígida.
+- **NÃO testado:** no notebook do pai (Pentium T4300). O custo das peças em Cairo só foi medido na máquina de desenvolvimento.

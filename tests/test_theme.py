@@ -254,3 +254,10 @@ def test_o_preto_e_branco_da_estante_nao_tem_tons():
     css = theme.gerar_css("preto-e-branco", "normal")
     for seletor in (".moa-tabua", ".moa-placa", ".moa-cartao"):
         assert "gradient" not in _bloco(css, seletor), seletor
+
+
+def test_no_preto_e_branco_nenhum_token_de_fundo_de_tecla_tem_tom():
+    for token in ("btnradio", "key_hi", "key_lo", "card", "disabled"):
+        cor = theme.PALETAS["preto-e-branco"][token].lstrip("#")
+        canais = [int(cor[i:i + 2], 16) for i in (0, 2, 4)]
+        assert max(canais) - min(canais) <= 8, (token, cor)

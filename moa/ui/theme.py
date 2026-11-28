@@ -43,7 +43,7 @@ PALETAS: dict[str, dict[str, str]] = {
                        "lampon": "#FFFFFF", "selbg": "#FFFFFF", "warn": "#FFFFFF",
                        "warnb": "#000000", "visor": "#FFFFFF", "wood": "#000000",
                        "wood2": "#000000", "line": "#000000", "blue": "#000000",
-                       "disabled": "#FFFFFF",
+                       "disabled": "#FFFFFF", "btnradio": "#FFFFFF",
                        # no preto e branco os materiais são só preto ou branco (relevo por contorno)
                        "wood_hi": "#000000", "wood_lo": "#000000",
                        "brass_hi": "#FFFFFF", "brass": "#FFFFFF", "brass_lo": "#000000",

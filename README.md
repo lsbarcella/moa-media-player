@@ -43,7 +43,7 @@ Outros comportamentos, sempre sem mensagem técnica para o idoso:
 
 ```bash
 sudo apt update
-sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-gstreamer-1.0 \
+sudo apt install python3-gi python3-gi-cairo gir1.2-gtk-3.0 gir1.2-gstreamer-1.0 \
   gstreamer1.0-plugins-base gstreamer1.0-plugins-good python3-mutagen libcdparanoia0
 bash tools/check_deps.sh     # confere o que falta e diz o comando para instalar
 ```
@@ -110,6 +110,7 @@ local: **nenhum teste acessa a internet**.
 ```bash
 bash tools/measure.sh              # medição completa (alguns minutos); feche o Moa antes
 bash tools/measure.sh --rapido     # coleções pequenas, só para ver se funciona
+python3 tools/telas.py /tmp/telas   # imagens das 6 telas nas 4 paletas e 3 tamanhos de letra (ADR-0024)
 ```
 
 Mede a abertura, a RAM, a CPU e o tempo de 11 ações, com um disco de 371 faixas e outra coleção de
@@ -135,7 +136,7 @@ moa/
 ├── ui/          Telas em GTK 3 (estante, rádio, playlist, Lixeira, editar, aparelho de CD,
 │                configurações), tema e ícones SVG
 tests/           pytest, com áudio de teste gerado na hora
-tools/           check_deps.sh, build_deb.sh, measure.sh, gerador de coleção sintética
+tools/           check_deps.sh, build_deb.sh, measure.sh, telas.py (imagens das telas), gerador de coleção sintética
 packaging/       comando moa, atalho .desktop e ícone do pacote
 docs/            ADRs, registro de uso de IA, previews em HTML
 ```

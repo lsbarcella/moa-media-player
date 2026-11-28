@@ -21,6 +21,9 @@ python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)' \
 checa "GTK 3 (PyGObject)" \
     "import gi; gi.require_version('Gtk','3.0'); from gi.repository import Gtk" \
     "python3-gi gir1.2-gtk-3.0"
+checa "Desenho em Cairo (peças do aparelho)" \
+    "import gi, cairo; gi.require_foreign('cairo')" \
+    "python3-gi-cairo"
 checa "GStreamer" \
     "import gi; gi.require_version('Gst','1.0'); from gi.repository import Gst; Gst.init(None); assert Gst.ElementFactory.find('playbin')" \
     "gir1.2-gstreamer-1.0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good"

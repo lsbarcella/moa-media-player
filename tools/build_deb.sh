@@ -37,7 +37,7 @@ Section: sound
 Priority: optional
 Architecture: all
 Installed-Size: $tamanho
-Depends: python3 (>= 3.10), python3-gi, gir1.2-gtk-3.0, gir1.2-gstreamer-1.0, gstreamer1.0-plugins-base, gstreamer1.0-plugins-good, python3-mutagen, libcdparanoia0
+Depends: python3 (>= 3.10), python3-gi, python3-gi-cairo, gir1.2-gtk-3.0, gir1.2-gstreamer-1.0, gstreamer1.0-plugins-base, gstreamer1.0-plugins-good, python3-mutagen, libcdparanoia0
 Maintainer: Leonardo dos Santos Barcella <lsbarcella@users.noreply.github.com>
 Homepage: https://github.com/lsbarcella/moa-media-player
 Description: Reprodutor de música offline e acessível para idosos
