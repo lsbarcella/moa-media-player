@@ -17,16 +17,22 @@ SHA_A = "a" * 40
 SHA_B = "b" * 40
 
 
-def _montar_pasta(raiz: Path, versao: str) -> None:
+def _montar_pasta(raiz: Path, versao: str, com_tools: bool = True) -> None:
     (raiz / "moa").mkdir(parents=True)
+    if com_tools:
+        (raiz / "tools").mkdir()
+        (raiz / "tools" / "check_deps.sh").write_text("antigo\n")
     (raiz / "moa" / "__main__.py").write_text(f"VERSAO = {versao!r}\n")
     (raiz / "moa" / "app.py").write_text("")
 
 
 def _zip(destino: Path, versao: str, *, com_app=True, extra: dict | None = None,
-         pasta="moa-media-player-dev") -> Path:
+         pasta="moa-media-player-dev", com_tools=True) -> Path:
     with zipfile.ZipFile(destino, "w") as z:
         z.writestr(f"{pasta}/moa/__main__.py", f"VERSAO = {versao!r}\n")
+        if com_tools:
+            z.writestr(f"{pasta}/tools/measure.sh", "novo\n")
+            z.writestr(f"{pasta}/tools/check_deps.sh", "novo\n")
         if com_app:
             z.writestr(f"{pasta}/moa/app.py", "")
         for nome, texto in (extra or {}).items():
@@ -159,3 +165,48 @@ def test_desligada_fora_de_pasta_de_codigo(tmp_path):
     assert a.habilitada is False
     a.verificar()
     assert a.momento == Momento.INATIVO and a.thread is None
+
+
+def test_atualiza_tambem_a_pasta_tools_e_guarda_a_anterior(raiz, tmp_path):
+    instalar_zip(_zip(tmp_path / "a.zip", "nova"), raiz, SHA_A)
+    assert (raiz / "tools" / "measure.sh").read_text() == "novo\n"
+    assert (raiz / "tools" / "check_deps.sh").read_text() == "novo\n"
+    assert (raiz / "tools.anterior" / "check_deps.sh").read_text() == "antigo\n"
+    assert not (raiz / "tools.anterior" / "measure.sh").exists()
+
+
+def test_voltar_devolve_tambem_a_pasta_tools(raiz, tmp_path):
+    instalar_zip(_zip(tmp_path / "a.zip", "nova"), raiz, SHA_A)
+    voltar_a_versao_anterior(raiz)
+    assert (raiz / "tools" / "check_deps.sh").read_text() == "antigo\n"
+    assert not (raiz / "tools" / "measure.sh").exists()
+    assert (raiz / "tools.anterior" / "measure.sh").exists()
+    assert not (raiz / ".tools-troca").exists()
+
+
+def test_instala_mesmo_sem_pasta_tools_antiga(tmp_path):
+    pasta = tmp_path / "app"
+    _montar_pasta(pasta, "velha", com_tools=False)
+    instalar_zip(_zip(tmp_path / "a.zip", "nova"), pasta, SHA_A)
+    assert "nova" in _versao(pasta) and (pasta / "tools" / "measure.sh").exists()
+    assert not (pasta / "tools.anterior").exists()
+
+
+def test_zip_sem_tools_atualiza_so_o_app(raiz, tmp_path):
+    instalar_zip(_zip(tmp_path / "a.zip", "nova", com_tools=False), raiz, SHA_A)
+    assert "nova" in _versao(raiz)
+    assert (raiz / "tools" / "check_deps.sh").read_text() == "antigo\n"
+
+
+def test_falha_na_troca_de_tools_nao_impede_a_atualizacao(raiz, tmp_path, monkeypatch):
+    from moa.core import atualizacao_de_teste as modulo
+    original = modulo._trocar_pasta
+
+    def quebra_so_tools(nova, atual, anterior):
+        if atual.name == "tools":
+            raise OSError("sem permissão")
+        original(nova, atual, anterior)
+    monkeypatch.setattr(modulo, "_trocar_pasta", quebra_so_tools)
+    instalar_zip(_zip(tmp_path / "a.zip", "nova"), raiz, SHA_A)
+    assert "nova" in _versao(raiz) and commit_instalado(raiz) == SHA_A
+    assert (raiz / "tools" / "check_deps.sh").read_text() == "antigo\n"

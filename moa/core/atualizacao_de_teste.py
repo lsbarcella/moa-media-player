@@ -126,8 +126,26 @@ def baixar_zip_remoto(destino: Path) -> None:
 
 # -- a troca da pasta --------------------------------------------------------------------------
 
+def _trocar_pasta(nova: Path, atual: Path, anterior: Path) -> None:
+    """`atual` vira `anterior` e `nova` vira `atual`. Se a segunda troca falhar, desfaz a primeira."""
+    shutil.rmtree(anterior, ignore_errors=True)
+    tinha = atual.exists()
+    if tinha:
+        os.rename(atual, anterior)
+    try:
+        os.rename(nova, atual)
+    except OSError:
+        if tinha:
+            os.rename(anterior, atual)
+        raise
+
+
 def instalar_zip(arquivo_zip: Path, raiz: Path, commit: str) -> None:
-    """Confere o zip e troca `moa/` pela versão nova. Se algo falhar, nada muda."""
+    """Confere o zip e troca `moa/` (e `tools/`) pela versão nova. Se algo falhar, nada muda.
+
+    `moa/` é o app e é obrigatório. `tools/` (medição, scripts) acompanha a `dev`, mas se a troca
+    dele falhar a atualização vale mesmo assim.
+    """
     novo = raiz / ".moa-novo"
     shutil.rmtree(novo, ignore_errors=True)
     novo.mkdir()
@@ -140,19 +158,18 @@ def instalar_zip(arquivo_zip: Path, raiz: Path, commit: str) -> None:
             if len(pastas) != 1:
                 raise ErroDeAtualizacao("o zip não tem o formato esperado")
             z.extractall(novo)
-        pacote = novo / pastas.pop() / "moa"
+        base = novo / pastas.pop()
+        pacote = base / "moa"
         if not (pacote / "__main__.py").is_file() or not (pacote / "app.py").is_file():
             raise ErroDeAtualizacao("o zip não tem o aplicativo")
         if not compileall.compile_dir(str(pacote), quiet=2, force=True):
             raise ErroDeAtualizacao("a versão nova tem erro de sintaxe")
-        atual, anterior = raiz / "moa", raiz / "moa.anterior"
-        shutil.rmtree(anterior, ignore_errors=True)
-        os.rename(atual, anterior)
-        try:
-            os.rename(pacote, atual)
-        except OSError:
-            os.rename(anterior, atual)          # não deu: volta a pasta como estava
-            raise
+        _trocar_pasta(pacote, raiz / "moa", raiz / "moa.anterior")
+        if (base / "tools").is_dir():
+            try:
+                _trocar_pasta(base / "tools", raiz / "tools", raiz / "tools.anterior")
+            except OSError:
+                log.exception("não consegui atualizar a pasta tools; o app foi atualizado mesmo assim")
         (raiz / ARQUIVO_DO_COMMIT).write_text(commit + "\n", encoding="utf-8")
     finally:
         shutil.rmtree(novo, ignore_errors=True)
@@ -167,6 +184,12 @@ def voltar_a_versao_anterior(raiz: Path) -> None:
     os.rename(atual, temporaria)
     os.rename(anterior, atual)
     os.rename(temporaria, anterior)
+    if (raiz / "tools.anterior").is_dir():
+        try:
+            _trocar_pasta(raiz / "tools.anterior", raiz / "tools", raiz / ".tools-troca")
+            os.rename(raiz / ".tools-troca", raiz / "tools.anterior")
+        except OSError:
+            log.exception("não consegui voltar a pasta tools")
     (raiz / ARQUIVO_DO_COMMIT).unlink(missing_ok=True)       # a versão de antes não tem commit conhecido
 
 
