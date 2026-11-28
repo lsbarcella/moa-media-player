@@ -34,8 +34,18 @@ class RadioView:
         self.quadro = Gtk.Box(spacing=24)
         self.painel = caixa_v(0)
         self.lugar_da_lista = caixa_v(0)
-        self.quadro.pack_start(self.painel, False, False, 0)
-        self.quadro.pack_start(self.lugar_da_lista, True, True, 0)
+        # Cada coluna tem a SUA rolagem (ADR-0028): lado a lado, o painel do rádio fica parado e só a
+        # lista de músicas rola. Empilhadas, a tela inteira rola (rolagem externa, da janela) e as
+        # colunas não rolam sozinhas. Nenhum widget troca de pai ao mudar de modo: só mudam as políticas.
+        self.painel_rolagem = Gtk.ScrolledWindow()
+        self.painel_rolagem.set_overlay_scrolling(False)
+        self.painel_rolagem.add(self.painel)
+        self.lista_rolagem = Gtk.ScrolledWindow()
+        self.lista_rolagem.set_overlay_scrolling(False)
+        self.lista_rolagem.add(self.lugar_da_lista)
+        self._rolagem_externa: Gtk.ScrolledWindow | None = None     # a da janela; entregue por `registrar`
+        self.quadro.pack_start(self.painel_rolagem, False, False, 0)
+        self.quadro.pack_start(self.lista_rolagem, True, True, 0)
         self.raiz.pack_start(self.topo, False, False, 0)
         self.raiz.pack_start(self.quadro, True, True, 0)
         self._p: SimpleNamespace | None = None          # os widgets do painel do rádio
@@ -58,9 +68,31 @@ class RadioView:
         self.raiz.connect("size-allocate", self._ao_mudar_de_tamanho)
         self.atualizar()
 
+    @property
+    def rolagem_externa(self) -> Gtk.ScrolledWindow | None:
+        return self._rolagem_externa
+
+    @rolagem_externa.setter
+    def rolagem_externa(self, rolagem: Gtk.ScrolledWindow) -> None:
+        self._rolagem_externa = rolagem
+        if self._empilhado is not None:
+            self._aplicar_o_modo(self._empilhado)
+
     def _deve_empilhar(self) -> bool:
-        grande = self.ctx.preferencias.config.letra != "normal"
-        return grande or self.raiz.get_allocated_width() < LARGURA_PARA_EMPILHAR
+        so_a_maior = self.ctx.preferencias.config.letra == "maior"
+        return so_a_maior or self.raiz.get_allocated_width() < LARGURA_PARA_EMPILHAR
+
+    def _aplicar_o_modo(self, empilhado: bool) -> None:
+        """Lado a lado: a janela não rola e cada coluna rola sozinha. Empilhado: o contrário."""
+        self.quadro.set_orientation(Gtk.Orientation.VERTICAL if empilhado else Gtk.Orientation.HORIZONTAL)
+        nunca, automatica = Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC
+        if self._rolagem_externa is not None:
+            self._rolagem_externa.set_policy(automatica if empilhado else nunca,
+                                             automatica if empilhado else nunca)
+        for coluna in (self.painel_rolagem, self.lista_rolagem):
+            coluna.set_policy(nunca, nunca if empilhado else automatica)
+            coluna.set_propagate_natural_height(empilhado)
+        self.painel_rolagem.set_propagate_natural_width(True)
 
     def _ao_mudar_de_tamanho(self, *_args) -> None:
         if self._deve_empilhar() != self._empilhado:
@@ -117,9 +149,10 @@ class RadioView:
 
         chave = self._chave_da_lista_atual()
         reaproveitar = self._lista is not None and chave == self._chave_da_lista
-        self._empilhado = self._deve_empilhar()
-        self.quadro.set_orientation(Gtk.Orientation.VERTICAL if self._empilhado
-                                    else Gtk.Orientation.HORIZONTAL)
+        empilhado = self._deve_empilhar()
+        if empilhado != self._empilhado:
+            self._empilhado = empilhado
+            self._aplicar_o_modo(empilhado)
         if self._p is None:
             self._construir_painel(visor)
             self.painel.pack_start(self._p.corpo, False, False, 0)
