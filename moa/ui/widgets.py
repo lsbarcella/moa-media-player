@@ -10,6 +10,7 @@ Regras do projeto que estes blocos garantem em um lugar só:
 - As cores e os tamanhos vêm do tema (`theme.py`), por classes de estilo.
 """
 
+import time
 from pathlib import Path
 
 import gi
@@ -104,6 +105,74 @@ def botao(texto: str, *classes: str, ao_clicar=None, icone_nome: str | None = No
         b.connect("clicked", lambda _b: ao_clicar())
     b.set_focus_on_click(True)
     return b
+
+
+class EmPedacos:
+    """Faz uma lista longa de tarefas pequenas aos poucos, sem travar a tela.
+
+    Montar centenas de linhas de uma vez deixa o notebook antigo parado por meio segundo ou mais.
+    Aqui a primeira fatia (pelo menos `minimo` itens) é feita na hora, então as primeiras linhas
+    já aparecem; o resto vem em fatias de ~`orcamento_ms` ms, devolvendo o controle ao GTK entre
+    elas (cliques e teclas continuam sendo atendidos). Listas curtas terminam na própria chamada.
+
+    Para o autor (vem de TypeScript): é como processar um array em lotes com `requestIdleCallback`.
+    """
+
+    def __init__(self, itens, fazer, minimo: int = 30, orcamento_ms: float = 10.0,
+                 ao_terminar=None) -> None:
+        self._itens = list(itens)
+        self._fazer = fazer
+        self._minimo = minimo
+        self._orcamento = orcamento_ms / 1000
+        self._ao_terminar = ao_terminar
+        self._posicao = 0
+        self._fonte: int | None = None
+        self._cancelado = False
+
+    @property
+    def pendente(self) -> bool:
+        return not self._cancelado and self._posicao < len(self._itens)
+
+    def iniciar(self) -> "EmPedacos":
+        self._fatia(garantir=self._minimo)
+        if self.pendente:
+            self._fonte = GLib.idle_add(self._continuar)
+        return self
+
+    def cancelar(self) -> None:
+        self._cancelado = True
+        if self._fonte is not None:
+            GLib.source_remove(self._fonte)
+            self._fonte = None
+
+    def terminar_agora(self) -> None:
+        """Faz o que falta de uma vez (usado quando o resto precisa existir já)."""
+        if self._fonte is not None:
+            GLib.source_remove(self._fonte)
+            self._fonte = None
+        self._fatia(garantir=len(self._itens))
+
+    def _continuar(self) -> bool:
+        self._fatia(garantir=1)
+        if self.pendente:
+            return True
+        self._fonte = None
+        return False
+
+    def _fatia(self, garantir: int) -> None:
+        if self._cancelado:
+            return
+        inicio = time.perf_counter()
+        feitos = 0
+        while self._posicao < len(self._itens):
+            if feitos >= garantir and time.perf_counter() - inicio >= self._orcamento:
+                break
+            self._fazer(self._itens[self._posicao])
+            self._posicao += 1
+            feitos += 1
+        if self._posicao >= len(self._itens) and self._ao_terminar is not None:
+            terminar, self._ao_terminar = self._ao_terminar, None
+            terminar()
 
 
 def texto_de(etiqueta: Gtk.Label, texto: str) -> None:
