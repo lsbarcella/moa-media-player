@@ -18,6 +18,7 @@ from gi.repository import Gtk  # noqa: E402
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.player import DEGRAU_MAXIMO  # noqa: E402
 from moa.ui import ornamentos  # noqa: E402
+from moa.ui.instrumentos import BotaoDeVolume, EscalaDoVisor  # noqa: E402
 from moa.ui.widgets import EmPedacos, classe, definir_estado_da_tecla, definir_texto_do_botao, tecla_travavel, texto_de, aviso, capa_do_disco, botao, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
 
 LARGURA_PARA_EMPILHAR = 900
@@ -186,7 +187,8 @@ class RadioView:
         p.tempo = rotulo("")
         p.nota = rotulo("", "moa-nota-visor")
         p.nota.set_no_show_all(True)            # só aparece quando há o que dizer
-        for etiqueta in (p.linha_de_estado, p.titulo, p.disco, p.faixa, p.tempo, p.nota):
+        p.escala = EscalaDoVisor()               # régua gravada no vidro, com o marcador da faixa
+        for etiqueta in (p.linha_de_estado, p.titulo, p.disco, p.faixa, p.escala, p.tempo, p.nota):
             texto.pack_start(etiqueta, False, False, 0)
         p.moldura.pack_start(texto, True, True, 0)
         corpo.pack_start(p.moldura, False, False, 0)
@@ -205,17 +207,11 @@ class RadioView:
         linha = caixa_h(8)
         p.menos = botao("Mais baixo", ao_clicar=self._volume_menos)
         p.mais = botao("Mais alto", ao_clicar=self._volume_mais)
-        barras = caixa_h(4)
-        barras.set_halign(Gtk.Align.CENTER)
-        barras.set_valign(Gtk.Align.CENTER)
-        p.barras = []
-        for _ in range(DEGRAU_MAXIMO):
-            barra = Gtk.Box()
-            barra.get_style_context().add_class("moa-barra")
-            barras.pack_start(barra, False, False, 0)
-            p.barras.append(barra)
+        p.botao_volume = BotaoDeVolume(DEGRAU_MAXIMO)     # só mostra; quem gira é "Mais baixo/Mais alto"
+        p.botao_volume.set_halign(Gtk.Align.CENTER)
+        p.botao_volume.set_valign(Gtk.Align.CENTER)
         linha.pack_start(p.menos, True, True, 0)
-        linha.pack_start(barras, False, False, 0)
+        linha.pack_start(p.botao_volume, False, False, 0)
         linha.pack_start(p.mais, True, True, 0)
         volume.pack_start(linha, False, False, 0)
         legenda = caixa_h(8)
@@ -255,6 +251,7 @@ class RadioView:
         texto_de(p.titulo, visor.titulo)
         texto_de(p.disco, f"Disco: {visor.disco}")
         texto_de(p.faixa, visor.faixa)
+        p.escala.definir(self.ctx.player.indice + 1, len(radio.disco.tracks))
         texto_de(p.tempo, visor.tempo)
         texto_de(p.nota, visor.nota or "")
         p.nota.set_visible(bool(visor.nota))
@@ -266,8 +263,7 @@ class RadioView:
         definir_texto_do_botao(p.mais, "No máximo" if degrau >= DEGRAU_MAXIMO else "Mais alto")
         classe(p.menos, "moa-inativo", degrau <= 0)
         classe(p.mais, "moa-inativo", degrau >= DEGRAU_MAXIMO)
-        for k, barra in enumerate(p.barras):
-            classe(barra, "moa-acesa", k < degrau)
+        p.botao_volume.definir_degrau(degrau)
         texto_de(p.legenda, f"Volume: {degrau} de {DEGRAU_MAXIMO}")
 
         ligada = self.ctx.player.voz_mais_clara
