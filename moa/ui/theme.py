@@ -390,9 +390,13 @@ button.moa-btn.moa-escolhida label {{ color: {c['white']}; }}
 
 # --- Escalas de letra -----------------------------------------------------------------
 
-LETRA_BASE_PX = 20           # mínimo da restrição de acessibilidade
+LETRA_BASE_PX = 20           # a letra de referência; cada escala é uma fração dela (ADR-0028)
+LETRA_MINIMA_PX = 16         # nenhum texto do CSS fica abaixo disto
 ALVO_MINIMO_PX = 64
-ESCALAS = {"normal": 1.0, "grande": 1.2, "maior": 1.4}
+# Normal 17 px, Grande 20 px, Maior 24 px. Eram 20, 24 e 28: no teste no notebook (1366x768) o
+# "Maior" quebrava todas as telas e o "Normal" estava no limite. É decisão do autor (28/11/2026) e
+# fica num lugar só: para voltar atrás basta trocar estes três números.
+ESCALAS = {"normal": 0.85, "grande": 1.02, "maior": 1.19}
 ROTULOS_DAS_LETRAS = {"normal": "Normal", "grande": "Grande", "maior": "Maior"}
 
 
@@ -403,7 +407,7 @@ def gerar_css(paleta: str = "normal", letra: str = "normal") -> str:
     base = round(LETRA_BASE_PX * e)
     titulo = round(30 * e)
     grande = round(26 * e)
-    capada = round(LETRA_BASE_PX * min(e, 1.2))      # letra da barra do pé: no máximo "Grande"
+    capada = round(LETRA_BASE_PX * min(e, ESCALAS["grande"]))      # letra da barra do pé: no máximo "Grande"
     modo = relevo(paleta)
     return f"""
 * {{ font-size: {base}px; }}
@@ -416,14 +420,19 @@ label {{ color: {c['ink']}; }}
 
 .moa-cabecalho {{ background-color: {c['card']}; border-bottom: 3px solid {c['case2']};
                   padding: 10px 20px; }}
-.moa-mini {{ background-color: {c['case']}; border-top: 5px solid {c['plate_lo']}; padding: 8px 18px 4px 18px; }}
+.moa-mini {{ background-color: {c['case']}; border-top: 5px solid {c['plate_lo']}; padding: 4px 18px 8px 18px; }}
 /* a barra do pé nunca passa da letra "Grande": o básico do rádio tem de caber mesmo em letra "Maior" */
 .moa-mini label, .moa-mini button.moa-btn {{ font-size: {capada}px; }}
-.moa-mini .moa-grande {{ font-size: {round(26 * min(e, 1.2))}px; }}
+.moa-mini .moa-grande {{ font-size: {round(26 * min(e, ESCALAS["grande"]))}px; }}
 .moa-mini label {{ color: {c['white']}; }}
-.moa-mini .moa-dica {{ color: {c['hint']}; font-weight: 700; }}
 .moa-mini .moa-barra trough {{ min-height: 30px; border-radius: 15px; }}
 .moa-mini .moa-barra progress {{ min-height: 30px; border-radius: 12px; }}
+/* o fio fino de andamento, sempre à vista na borda de cima da barra do pé */
+.moa-fio trough {{ min-height: 6px; background-color: {c['tray']}; border: 0 solid {c['tray']}; border-radius: 3px; }}
+.moa-fio progress {{ min-height: 6px; background-color: {c['lampon']}; background-image: none; border: 0 solid {c['lampon']}; border-radius: 3px; }}
+/* o progresso clicável que flutua por cima da tela quando o mouse está na barra */
+.moa-flutuante {{ background-color: {c['case']}; border-top: 3px solid {c['plate_lo']}; padding: 4px 18px; }}
+.moa-flutuante label {{ color: {c['white']}; }}
 
 {_css_das_teclas(c, modo)}
 
