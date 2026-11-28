@@ -71,3 +71,27 @@ def test_terminar_agora_faz_o_que_falta():
                         minimo=5, orcamento_ms=1).iniciar()
     pedacos.terminar_agora()
     assert feitos == list(range(300)) and not pedacos.pendente
+
+
+def test_um_item_que_falha_nao_impede_os_outros():
+    feitos = []
+
+    def fazer(i):
+        if i == 3:
+            raise ValueError("capa quebrada")
+        feitos.append(i)
+    EmPedacos(range(8), fazer, minimo=30).iniciar()
+    assert feitos == [0, 1, 2, 4, 5, 6, 7]
+
+
+def test_item_que_falha_em_uma_fatia_tardia_tambem_segue():
+    feitos = []
+
+    def fazer(i):
+        time.sleep(0.001)
+        if i == 70:
+            raise ValueError("quebrou")
+        feitos.append(i)
+    pedacos = EmPedacos(range(100), fazer, minimo=5, orcamento_ms=3).iniciar()
+    pedacos.terminar_agora()
+    assert feitos == [i for i in range(100) if i != 70] and not pedacos.pendente
