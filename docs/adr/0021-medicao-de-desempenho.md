@@ -19,6 +19,15 @@ O CLAUDE.md (seção 10) fixa metas de abertura, RAM e CPU, e o primeiro teste n
 5. O CSV leva em cada linha a configuração da máquina (CPU, núcleos, RAM, tipo de disco, sistema, desktop, Python, GTK, versão do app). **Sem nome da máquina nem do usuário.**
 6. A ferramenta compara com as metas do CLAUDE.md (abertura fria ≤ 3 s, quente ≤ 1 s, CPU tocando < 5%). A comparação da RAM com o Rhythmbox e o VLC continua manual.
 
+## Acompanhamento durante a medição
+
+A medição leva alguns minutos e tem esperas de propósito (a RAM e a CPU em repouso). Para ninguém achar que travou:
+- cada passo tem número e hora desde o começo (`(4/6) ...`) e as esperas dizem o motivo;
+- se passam 5 s sem nenhuma linha nova, aparece "ainda trabalhando (passo ou ação atual)";
+- um passo que falha é anotado e o resto da medição continua; a falha vai para o resumo, e o detalhe técnico para o `.log`.
+
+Cada rodada grava três arquivos em `medicoes/`: `.txt` (resumo curto, para colar numa conversa), `.csv` (todos os números) e `.log` (tudo o que apareceu na tela, mais os detalhes das falhas). O resumo também é impresso entre "copie daqui" e "até aqui". **Nada é enviado pela rede**: quem mede decide o que compartilhar.
+
 ## Limites e escolhas
 
 - **Não isola o D-Bus.** Numa sessão nova (`dbus-run-session`) o app demorou ~25 s para começar, o que não acontece de verdade. Por isso a medição usa a sessão real, e o script se recusa a rodar se já houver um Moa aberto (ele atenderia o pedido, por ser instância única).

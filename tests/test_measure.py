@@ -82,3 +82,55 @@ def test_colecao_longa_nao_acaba_sozinha_e_a_biblioteca_le(tmp_path):
     discos = scan(tmp_path / "musica")
     assert len(discos) == 2 and all(len(d.tracks) == 5 for d in discos)
     assert [t.title for t in discos[0].tracks] == [f"Faixa {n}" for n in range(1, 6)]
+
+
+def test_console_avisa_que_ainda_esta_trabalhando(capsys, monkeypatch):
+    monkeypatch.setattr(medir, "SEGUNDOS_ENTRE_BATIMENTOS", 0.3)
+    console = medir.Console()
+    console.novo_passo(2, 6, "Abertura do app")
+    console.iniciar_batimento()
+    import time
+    time.sleep(1.0)
+    console.parar()
+    saida = capsys.readouterr().out
+    assert "(2/6) Abertura do app" in saida
+    assert "ainda trabalhando (Abertura do app)" in saida
+
+
+def test_console_grava_no_log_o_que_mostra(tmp_path, capsys):
+    console = medir.Console()
+    console.abrir_log(tmp_path / "x.log")
+    console.dizer("olá")
+    console.parar()
+    assert "olá" in (tmp_path / "x.log").read_text(encoding="utf-8")
+    assert "olá" in capsys.readouterr().out
+
+
+def test_relatorio_junta_cenarios_e_falhas():
+    maquina = {"cpu": "X", "nucleos": "2", "ram_mb": "4096", "disco": "HDD", "so": "Mint",
+               "desktop": "XFCE", "python": "3.10", "gtk": "3.24", "commit": "abc1234"}
+    medidas = [("mix", "abertura_1a_ms", 2900.0, "ms"), ("estante", "abertura_1a_ms", 800.0, "ms"),
+               ("mix", "acao_volume_mediana_ms", 40.0, "ms"), ("mix", "acao_volume_maximo_ms", 60.0, "ms"),
+               ("estante", "acao_volume_mediana_ms", 30.0, "ms"), ("estante", "acao_volume_maximo_ms", 35.0, "ms"),
+               ("tocando", "cpu_tocando_pct", 2.5, "%")]
+    texto = medir.relatorio(maquina, medidas, ["Abertura: boom"], 125)
+    assert "duração 2 min 5 s" in texto and "4096 MB de RAM" in texto
+    assert "volume" in texto and "40 /   60" in texto and "30 /   35" in texto
+    assert "CPU tocando: 2.5 %" in texto
+    assert "FALHAS" in texto and "Abertura: boom" in texto
+
+
+def test_falha_num_passo_nao_derruba_a_medicao_e_vai_para_o_relatorio(tmp_path, monkeypatch):
+    monkeypatch.setattr(medir, "moa_ja_aberto", lambda: False)
+    monkeypatch.setattr(medir, "console", medir.Console())
+
+    def quebra(*_a, **_k):
+        raise RuntimeError("boom")
+    monkeypatch.setattr(medir, "montar_cenarios", quebra)
+    codigo = medir.main(["--saida", str(tmp_path), "--sem-audio", "--rapido"])
+    assert codigo == 1
+    resumo = next(tmp_path.glob("medicao_*.txt")).read_text(encoding="utf-8")
+    assert "FALHAS" in resumo and "RuntimeError: boom" in resumo
+    log = next(tmp_path.glob("medicao_*.log")).read_text(encoding="utf-8")
+    assert "Traceback" in log and "boom" in log
+    assert next(tmp_path.glob("medicao_*.csv")).exists()

@@ -34,7 +34,9 @@ import statistics
 import subprocess
 import sys
 import tempfile
+import threading
 import time
+import traceback
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -52,7 +54,73 @@ ESPERA_DO_REPOUSO = 3.0
 SEGUNDOS_TOCANDO = 10.0
 TEMPO_MAXIMO_DE_ABERTURA = 120.0
 MARCADOR = "estante pronta"
+SEGUNDOS_ENTRE_BATIMENTOS = 5.0
 LIMITE_DA_TELA_PRONTA = 5.0
+
+
+# ---------------------------------------------------------------------------
+# O que aparece na tela
+# ---------------------------------------------------------------------------
+
+class Console:
+    """Escreve na tela e no arquivo de log, com a hora desde o começo, e avisa que está vivo.
+
+    Quando um passo demora e nada novo aparece por 5 s, uma linha "ainda trabalhando" mostra que
+    o script não travou. Tudo o que aparece na tela também vai para o `.log` (para me mandar).
+    """
+
+    def __init__(self) -> None:
+        self.inicio = time.monotonic()
+        self._ultimo = self.inicio
+        self.passo = ""          # o que o aviso "ainda trabalhando" diz que está rodando
+        self.base = ""
+        self.arquivo = None
+        self._trava = threading.Lock()
+        self._parar = threading.Event()
+
+    def abrir_log(self, caminho: Path) -> None:
+        self.arquivo = open(caminho, "a", encoding="utf-8")
+
+    def tempo(self) -> str:
+        total = int(time.monotonic() - self.inicio)
+        return f"{total // 60:02d}:{total % 60:02d}"
+
+    def dizer(self, texto: str = "", *, erro: bool = False) -> None:
+        with self._trava:
+            linha = f"[{self.tempo()}] {texto}" if texto else ""
+            print(linha, file=sys.stderr if erro else sys.stdout, flush=True)
+            if self.arquivo:
+                self.arquivo.write(linha + "\n")
+                self.arquivo.flush()
+            self._ultimo = time.monotonic()
+
+    def novo_passo(self, numero: int, total: int, texto: str) -> None:
+        self.passo = self.base = texto
+        self.dizer(f"({numero}/{total}) {texto}")
+
+    def batimento(self) -> None:
+        """Roda numa thread: de tempos em tempos diz que ainda está trabalhando."""
+        while not self._parar.wait(0.2):
+            parado = time.monotonic() - self._ultimo
+            if parado >= SEGUNDOS_ENTRE_BATIMENTOS:
+                self.dizer(f"   ... ainda trabalhando ({self.passo}); sem novidade há {parado:.0f} s")
+
+    def iniciar_batimento(self) -> None:
+        threading.Thread(target=self.batimento, daemon=True).start()
+
+    def parar(self) -> None:
+        self._parar.set()
+        if self.arquivo:
+            self.arquivo.close()
+
+
+console = Console()
+
+
+def esperar(segundos: float, motivo: str) -> None:
+    """Dorme `segundos` dizendo por quê (um sleep mudo parece travamento)."""
+    console.dizer(f"   aguardando {segundos:.0f} s ({motivo})")
+    time.sleep(segundos)
 
 
 # ---------------------------------------------------------------------------
@@ -178,12 +246,15 @@ def gerar_colecao_longa(destino: Path, longa: Path, discos: int, faixas: int) ->
 
 def montar_cenarios(pasta: Path, rapido: bool) -> tuple[dict[str, Path], dict[str, Path]]:
     """Devolve (coleções para abrir o app, coleções para cronometrar as ações)."""
+    console.dizer("   gerando o áudio de teste curto...")
     base = gerar_audio_base(pasta, buffers=8, nome="base")
+    console.dizer("   gerando o áudio de teste de 5 minutos...")
     longa = gerar_audio_base(pasta, buffers=int(300 * 44100 / 1024), nome="longa")     # 5 minutos
     mix = (1, 20) if rapido else (1, 371)
     estante = (6, 3) if rapido else (80, 10)
     abertura, acoes = {}, {}
     for nome, (discos, faixas) in (("mix", mix), ("estante", estante)):
+        console.dizer(f"   montando a coleção '{nome}': {discos} disco(s) x {faixas} faixas...")
         raiz = pasta / nome / "musica"
         raiz.mkdir(parents=True)
         gerar_colecao(raiz, base, discos, faixas, "Artista")
@@ -246,7 +317,7 @@ def _hora_do_log(linha: str) -> float:
     return datetime.strptime(linha[:23], "%Y-%m-%d %H:%M:%S,%f").timestamp()
 
 
-def abrir_o_app(musica: Path, dados: Path) -> tuple[float, float, float]:
+def abrir_o_app(musica: Path, dados: Path, rotulo: str = "") -> tuple[float, float, float]:
     """Abre o app, espera a estante e devolve (ms até a estante, RAM em MB, CPU % em repouso)."""
     marca = uuid.uuid4().hex
     ambiente = dict(os.environ, MOA_PASTA_DE_MUSICA=str(musica), MOA_SEM_REDE="1",
@@ -255,6 +326,7 @@ def abrir_o_app(musica: Path, dados: Path) -> tuple[float, float, float]:
     comando = [sys.executable, "-m", "moa"]
     log = dados / "dados" / "moa" / "moa.log"
     log.unlink(missing_ok=True)                      # só vale o que esta abertura escrever
+    console.dizer(f"   abrindo o app ({rotulo}); aguardando a estante aparecer...")
     inicio = time.time()
     processo = subprocess.Popen(comando, cwd=RAIZ, env=ambiente, stdout=subprocess.DEVNULL,
                                 stderr=subprocess.DEVNULL, start_new_session=True)
@@ -270,12 +342,13 @@ def abrir_o_app(musica: Path, dados: Path) -> tuple[float, float, float]:
                 raise RuntimeError("o app fechou antes de mostrar a estante")
         if pronta is None:
             raise RuntimeError("a estante não apareceu a tempo")
-        time.sleep(ESPERA_DO_REPOUSO)
+        console.dizer(f"   a estante apareceu em {(pronta - inicio) * 1000:.0f} ms")
+        esperar(ESPERA_DO_REPOUSO, "app em repouso, antes de medir a RAM")
         pid = _achar_o_processo(marca)
         if pid is None:
             raise RuntimeError("não achei o processo do app")
         antes, t0 = _ticks(pid), time.time()
-        time.sleep(ESPERA_DO_REPOUSO)
+        esperar(ESPERA_DO_REPOUSO, "medindo a CPU em repouso")
         cpu = (_ticks(pid) - antes) / os.sysconf("SC_CLK_TCK") / (time.time() - t0) * 100
         return (pronta - inicio) * 1000, _rss_mb(pid), cpu
     finally:
@@ -291,8 +364,8 @@ def medir_abertura(nome: str, musica: Path, pasta: Path, frio: bool) -> list[tup
     if frio:
         subprocess.run(["sudo", "-n", "sh", "-c", "sync; echo 3 > /proc/sys/vm/drop_caches"],
                        capture_output=True)
-    primeira, _, _ = abrir_o_app(musica, dados)               # sem o cache do app
-    seguinte, ram, cpu = abrir_o_app(musica, dados)           # com o cache do app
+    primeira, _, _ = abrir_o_app(musica, dados, "1ª vez, sem o cache do app")
+    seguinte, ram, cpu = abrir_o_app(musica, dados, "2ª vez, com o cache do app")
     return [(nome, "abertura_1a_ms", primeira, "ms"), (nome, "abertura_seguinte_ms", seguinte, "ms"),
             (nome, "ram_repouso_mb", ram, "MB"), (nome, "cpu_repouso_pct", cpu, "%")]
 
@@ -342,12 +415,13 @@ def medir_acoes(nome: str, musica: Path, pasta: Path, repeticoes: int) -> list[t
         limite = time.perf_counter() + LIMITE_DA_TELA_PRONTA
         while laco.iteration(False):
             if time.perf_counter() > limite:
-                print("   (a tela não ficou parada em 5 s)", flush=True)
+                console.dizer("   (a tela não ficou parada em 5 s)")
                 break
         janela.get_pixbuf()
 
     def cronometrar(rotulo: str, acao, preparo=None) -> tuple:
         tempos = []
+        console.passo = f"{console.base}: {rotulo}"
         for _ in range(repeticoes):
             if preparo is not None:
                 preparo()
@@ -357,7 +431,7 @@ def medir_acoes(nome: str, musica: Path, pasta: Path, repeticoes: int) -> list[t
             pronto()
             tempos.append((time.perf_counter() - t) * 1000)
         mediana = statistics.median(tempos)
-        print(f"   {rotulo:24s} {mediana:7.0f} ms", flush=True)
+        console.dizer(f"   {rotulo:24s} {mediana:7.0f} ms  (máx {max(tempos):.0f})")
         return (nome, f"acao_{rotulo}_mediana_ms", mediana, "ms"), \
                (nome, f"acao_{rotulo}_maximo_ms", max(tempos), "ms")
 
@@ -375,6 +449,7 @@ def medir_acoes(nome: str, musica: Path, pasta: Path, repeticoes: int) -> list[t
         sessao.ir_para(Tela.RADIO)
 
     resultados: list[tuple] = []
+    console.dizer("   carregando a coleção e a janela...")
     for rotulo, acao, preparo in (
         ("abrir_disco", abrir_radio, estante),
         ("tocar_pausar", radio.alternar, None),
@@ -427,10 +502,11 @@ def medir_cpu_tocando(pasta: Path, segundos: float) -> list[tuple]:
             laco.iteration(False)
             time.sleep(0.01)
         if ctx.player.estado != Estado.TOCANDO:
-            print("   (sem som: placa de som indisponível; pulei a CPU tocando)")
+            console.dizer("   (sem som: placa de som indisponível; pulei a CPU tocando)")
             return []
         # Um laço de eventos de verdade (como o do app), não uma espera ocupada: esta medindo o
         # app tocando, não o nosso cronômetro.
+        console.dizer(f"   tocando por {segundos:.0f} s e medindo a CPU...")
         principal = GLib.MainLoop()
         GLib.timeout_add(int(segundos * 1000), principal.quit)
         cpu0, t0 = time.process_time(), time.time()
@@ -465,6 +541,44 @@ def gravar(arquivo: Path, maquina: dict[str, str], medidas: list[tuple]) -> None
             escritor.writerow([data, *maquina.values(), cenario, metrica, f"{valor:.2f}", unidade])
 
 
+def relatorio(maquina: dict[str, str], medidas: list[tuple], falhas: list[str], duracao_s: float) -> str:
+    """O texto curto para colar numa conversa: máquina, abertura, ações lado a lado e falhas."""
+    linhas = [f"Medição do Moa em {datetime.now():%d/%m/%Y %H:%M}, duração {int(duracao_s) // 60} min {int(duracao_s) % 60} s",
+              f"Máquina: {maquina['cpu']} ({maquina['nucleos']} núcleos), {maquina['ram_mb']} MB de RAM, disco {maquina['disco']}",
+              f"Sistema: {maquina['so']} | {maquina['desktop']} | Python {maquina['python']} | GTK {maquina['gtk']} | app {maquina['commit']}",
+              ""]
+    por_cenario: dict[str, dict[str, float]] = {}
+    for cenario, metrica, valor, _unidade in medidas:
+        por_cenario.setdefault(cenario, {})[metrica] = valor
+    cenarios = [c for c in ("mix", "estante") if c in por_cenario]
+
+    linhas.append("ABERTURA E REPOUSO")
+    linhas.append(f"{'':26s}" + "".join(f"{c:>10s}" for c in cenarios) + "   meta")
+    for metrica, rotulo in (("abertura_1a_ms", "1ª abertura (ms)"), ("abertura_seguinte_ms", "abertura seguinte (ms)"),
+                            ("ram_repouso_mb", "RAM em repouso (MB)"), ("cpu_repouso_pct", "CPU em repouso (%)")):
+        celulas = "".join(f"{por_cenario[c][metrica]:10.0f}" if metrica in por_cenario[c] else f"{'-':>10s}"
+                          for c in cenarios)
+        meta = METAS.get(metrica)
+        linhas.append(f"{rotulo:26s}{celulas}" + (f"   {meta[0]} {meta[1]}" if meta else ""))
+
+    nomes = [m[:-len("_mediana_ms")] for _c, m, _v, _u in medidas if m.endswith("_mediana_ms")]
+    acoes = list(dict.fromkeys(n.removeprefix("acao_") for n in nomes))
+    if acoes:
+        linhas += ["", "AÇÕES (ms, mediana / máximo)", f"{'':26s}" + "".join(f"{c:>16s}" for c in cenarios)]
+        for acao in acoes:
+            celulas = ""
+            for c in cenarios:
+                med = por_cenario[c].get(f"acao_{acao}_mediana_ms")
+                mx = por_cenario[c].get(f"acao_{acao}_maximo_ms")
+                celulas += f"{med:8.0f} /{mx:5.0f}  " if med is not None else f"{'-':>16s}"
+            linhas.append(f"{acao:26s}{celulas}")
+    if "tocando" in por_cenario and "cpu_tocando_pct" in por_cenario["tocando"]:
+        linhas += ["", f"CPU tocando: {por_cenario['tocando']['cpu_tocando_pct']:.1f} % (meta < 5)"]
+    if falhas:
+        linhas += ["", "FALHAS (o resto da medição continuou):"] + [f"  - {f}" for f in falhas]
+    return "\n".join(linhas)
+
+
 def main(argumentos: list[str] | None = None) -> int:
     analisador = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     analisador.add_argument("--saida", type=Path, default=RAIZ / "medicoes")
@@ -478,32 +592,69 @@ def main(argumentos: list[str] | None = None) -> int:
         print("O Moa está aberto. Feche-o (pelo X) e rode de novo: ele atenderia o pedido da "
               "medição e estragaria os números.", file=sys.stderr)
         return 1
+    args.saida.mkdir(parents=True, exist_ok=True)
+    nome_base = f"medicao_{datetime.now():%Y%m%d-%H%M%S}"
+    console.abrir_log(args.saida / f"{nome_base}.log")
+    console.iniciar_batimento()
+
     maquina = descrever_a_maquina()
-    print("Máquina:", " | ".join(f"{k}={v}" for k, v in maquina.items()))
+    console.dizer("Máquina: " + " | ".join(f"{k}={v}" for k, v in maquina.items()))
+    console.dizer("Não use o computador até terminar: isso mudaria os números. "
+                  "Janelas do app vão abrir e fechar sozinhas.")
     repeticoes = 2 if args.rapido else REPETICOES
     medidas: list[tuple] = []
+    falhas: list[str] = []
+    passos_finais = 0 if args.sem_audio else 1
+    total = 1 + 2 * 2 + passos_finais                     # coleções + (abertura e ações) x 2 + CPU
+    numero = 0
+
+    def executar(texto: str, funcao) -> list[tuple]:
+        """Roda um passo. Se der erro, anota (com o detalhe no .log) e deixa o resto seguir."""
+        nonlocal numero
+        numero += 1
+        console.novo_passo(numero, total, texto)
+        try:
+            return funcao() or []
+        except Exception as erro:
+            falhas.append(f"{texto}: {type(erro).__name__}: {erro}")
+            console.dizer(f"   FALHOU: {type(erro).__name__}: {erro}  (detalhes no arquivo .log)", erro=True)
+            if console.arquivo:
+                console.arquivo.write(traceback.format_exc())
+                console.arquivo.flush()
+            return []
+
     with tempfile.TemporaryDirectory(prefix="moa-medicao-") as temporaria:
         pasta = Path(temporaria)
-        print("Gerando as coleções de teste...")
-        para_abrir, para_acoes = montar_cenarios(pasta, args.rapido)
-        for nome, musica in para_abrir.items():
-            print(f"[{nome}] abrindo o app (2 vezes)...", flush=True)
-            medidas += medir_abertura(nome, musica, pasta, args.frio)
-        for nome, musica in para_acoes.items():
-            print(f"[{nome}] cronometrando as ações...", flush=True)
-            medidas += medir_acoes(nome, musica, pasta, repeticoes)
-        if not args.sem_audio:
-            print("[tocando] medindo a CPU com som de verdade...")
-            medidas += medir_cpu_tocando(pasta, 3.0 if args.rapido else SEGUNDOS_TOCANDO)
+        colecoes: list = []
+        executar("Gerando as coleções de teste", lambda: colecoes.append(montar_cenarios(pasta, args.rapido)))
+        if colecoes:
+            para_abrir, para_acoes = colecoes[0]
+            for nome, musica in para_abrir.items():
+                medidas += executar(f"Abertura do app, coleção '{nome}' (2 aberturas)",
+                                    lambda n=nome, m=musica: medir_abertura(n, m, pasta, args.frio))
+            for nome, musica in para_acoes.items():
+                medidas += executar(f"Tempo das ações, coleção '{nome}' ({repeticoes} repetições cada)",
+                                    lambda n=nome, m=musica: medir_acoes(n, m, pasta, repeticoes))
+            if not args.sem_audio:
+                medidas += executar("CPU tocando de verdade",
+                                    lambda: medir_cpu_tocando(pasta, 3.0 if args.rapido else SEGUNDOS_TOCANDO))
 
-    args.saida.mkdir(parents=True, exist_ok=True)
-    arquivo = args.saida / f"medicao_{datetime.now():%Y%m%d-%H%M%S}.csv"
+    duracao = time.monotonic() - console.inicio
+    arquivo = args.saida / f"{nome_base}.csv"
     gravar(arquivo, maquina, medidas)
-    print(f"\n{'cenário':9s} {'medida':36s} {'valor':>10s}  meta")
-    for cenario, metrica, valor, unidade in medidas:
-        print(f"{cenario:9s} {metrica:36s} {valor:10.1f}  {unidade:4s} {avaliar(metrica, valor)}")
-    print(f"\nCSV gravado em: {arquivo}")
-    return 0
+    texto = relatorio(maquina, medidas, falhas, duracao)
+    (args.saida / f"{nome_base}.txt").write_text(texto + "\n", encoding="utf-8")
+    console.dizer()
+    console.dizer(f"Pronto em {console.tempo()}. Arquivos em {args.saida}/:")
+    console.dizer(f"   {nome_base}.txt  <- o resumo (é este que você me manda)")
+    console.dizer(f"   {nome_base}.csv  <- todos os números; {nome_base}.log <- tudo o que apareceu aqui")
+    console.dizer()
+    console.dizer("=== copie daqui ===")
+    console.arquivo and console.arquivo.write(texto + "\n")
+    print(texto)
+    print("=== até aqui ===")
+    console.parar()
+    return 1 if falhas else 0
 
 
 if __name__ == "__main__":
