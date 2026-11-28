@@ -195,3 +195,9 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Achado importante:** com a janela montada, o volume ainda custava ~440 ms com 371 faixas (e 49 ms com 20). Dois culpados, os dois por linha: (1) a lista trocava de pai a cada clique, o que desfaz e refaz por dentro as 371 linhas; (2) toda preferência (inclusive o volume) reaplicava o tema, e o GTK recalcula o estilo de todos os widgets. Corrigido: a lista agora fica sempre no mesmo lugar (só o painel do rádio é refeito) e o tema só é reaplicado quando a letra ou a cor mudam. Volume: ~35 ms com qualquer número de faixas; tocar/pausar e próxima: ~40 a 50 ms.
 - **Lição:** minha medida anterior (14 ms) usava uma janela não montada e por isso não via o custo do GTK. Medir sempre com a janela desenhada.
 - **NÃO testado:** no notebook do pai (HD mecânico, CPU antiga).
+
+## 27/11/2026 — Log da medição mais claro
+
+- **Pedido:** o `measure.sh` parecia travado nas esperas, mas estava rodando normal; e uma forma fácil de mandar os resultados.
+- **Feito:** passos numerados com hora, esperas que dizem o motivo, aviso "ainda trabalhando" a cada 5 s sem novidade (com a ação atual), falhas isoladas por passo (a medição segue e a falha vai para o resumo), e três arquivos por rodada (`.txt` curto para colar, `.csv`, `.log`). Nada é enviado pela rede.
+- **Verificação:** 5 testes novos (aviso de vida, log, relatório, falha num passo); rodada `--rapido` completa.
