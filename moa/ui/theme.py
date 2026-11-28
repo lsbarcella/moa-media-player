@@ -415,8 +415,12 @@ label {{ color: {c['ink']}; }}
 
 .moa-cabecalho {{ background-color: {c['card']}; border-bottom: 3px solid {c['case2']};
                   padding: 10px 20px; }}
-.moa-mini {{ background-color: {c['case']}; padding: 8px 20px; }}
+.moa-mini {{ background-color: {c['case']}; border-top: 5px solid {c['plate_lo']}; padding: 12px 22px 8px 22px; }}
 .moa-mini label {{ color: {c['white']}; }}
+.moa-mini .moa-visor label {{ color: {c['ink']}; }}
+.moa-mini .moa-dica {{ color: {c['hint']}; font-weight: 700; }}
+.moa-mini .moa-barra trough {{ min-height: 30px; border-radius: 15px; }}
+.moa-mini .moa-barra progress {{ min-height: 30px; border-radius: 12px; }}
 
 {_css_das_teclas(c, modo)}
 

@@ -85,7 +85,7 @@ def _converter_icone(nome: str, cor: str, fundo: str, lado: int) -> GdkPixbuf.Pi
 
 
 # Botões de fundo escuro (verde, preto) levam o ícone branco.
-_CLASSES_DE_FUNDO_ESCURO = {"moa-pri", "moa-tocar"}
+_CLASSES_DE_FUNDO_ESCURO = {"moa-pri", "moa-tocar", "moa-pausar"}
 
 
 def botao(texto: str, *classes: str, ao_clicar=None, icone_nome: str | None = None) -> Gtk.Button:

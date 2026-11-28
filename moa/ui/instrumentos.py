@@ -16,7 +16,8 @@ import math
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk  # noqa: E402
+gi.require_version("Gdk", "3.0")
+from gi.repository import Gdk, Gtk  # noqa: E402
 
 from moa.ui import cairo_pecas, theme  # noqa: E402
 
@@ -149,3 +150,54 @@ class EscalaDoVisor(Gtk.DrawingArea):
         cr.set_line_width(1.5)
         cr.stroke()
         return False
+
+
+class BarraDeProgresso(Gtk.EventBox):
+    """A barra de progresso comum de qualquer aplicativo: um clique vai ao ponto clicado.
+
+    É um `Gtk.ProgressBar` dentro de uma `EventBox` (que recebe o clique). A área clicável tem
+    64 px de altura, bem mais alta que o desenho da barra. Só um clique: nada de arrastar. Não
+    recebe o foco do teclado, porque as setas esquerda e direita já são Anterior e Próxima.
+    `ao_escolher(fracao)` é chamado com um número de 0.0 (início) a 1.0 (fim).
+    """
+
+    ALTURA_DO_ALVO_PX = 64
+
+    def __init__(self, ao_escolher) -> None:
+        super().__init__()
+        self._ao_escolher = ao_escolher
+        self._fracao = 0.0
+        self._barra = Gtk.ProgressBar()
+        self._barra.get_style_context().add_class("moa-barra")
+        self._barra.set_valign(Gtk.Align.CENTER)
+        self.add(self._barra)
+        self.set_size_request(-1, self.ALTURA_DO_ALVO_PX)
+        self.set_can_focus(False)
+        self.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
+        self.connect("button-press-event", self._ao_clicar)
+
+    @property
+    def fracao(self) -> float:
+        return self._fracao
+
+    def definir_fracao(self, fracao: float) -> bool:
+        """Mostra o ponto `fracao` (0 a 1). Devolve se mudou (e portanto se redesenhou)."""
+        fracao = max(0.0, min(1.0, fracao))
+        if round(fracao, 3) == round(self._fracao, 3):
+            return False
+        self._fracao = fracao
+        self._barra.set_fraction(fracao)
+        return True
+
+    def escolher_em(self, x: float) -> None:
+        """O clique caiu em `x` pixels da ponta esquerda: vira uma fração e avisa quem escuta."""
+        largura = max(1, self._barra.get_allocated_width())
+        fracao = max(0.0, min(1.0, (x - self._barra.get_allocation().x) / largura))
+        self.definir_fracao(fracao)             # a barra responde na hora, antes do som alcançar
+        self._ao_escolher(fracao)
+
+    def _ao_clicar(self, _widget, evento) -> bool:
+        if evento.button != 1:
+            return False
+        self.escolher_em(evento.x)
+        return True
