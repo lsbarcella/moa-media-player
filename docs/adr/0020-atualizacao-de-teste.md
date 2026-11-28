@@ -14,7 +14,7 @@ A) script `tools/atualizar_teste.sh`; B) A com atalho na Área de Trabalho; C) *
 
 ## Decisão
 
-1. `core/atualizacao_de_teste.py` procura o commit mais novo da `dev` (API do GitHub), baixa o zip da `dev`, confere (formato, caminhos, sintaxe de todo o `moa/`), troca a pasta `moa/` e guarda a anterior em `moa.anterior/`. Se algo falhar, nada muda. Há "Voltar à versão anterior".
+1. `core/atualizacao_de_teste.py` procura o commit mais novo da `dev` (API do GitHub), baixa o zip da `dev`, confere (formato, caminhos, sintaxe de todo o `moa/`), troca a pasta `moa/` e guarda a anterior em `moa.anterior/`. Se algo falhar, nada muda. **A pasta `tools/` também é trocada** (anterior em `tools.anterior/`), para os scripts de medição e de verificação acompanharem a `dev`; se só a troca de `tools/` falhar, a atualização vale mesmo assim, e "Voltar à versão anterior" devolve as duas. Há "Voltar à versão anterior".
 2. `ui/cartao_de_atualizacao.py` mostra o estado e os botões em **Configurações** (sempre) e na **Estante** (só quando há versão nova, instalando ou pronto). Depois de instalar, "Abrir de novo agora" agenda uma nova abertura e fecha a janela.
 3. Ao abrir, se houver internet (`Gio.NetworkMonitor`), procura em segundo plano, **em silêncio** (falha só vai para o log).
 4. **Só funciona numa pasta de código-fonte que o usuário pode escrever.** Instalado pelo `.deb` (`/usr/lib/moa`), fica desligado sozinho.

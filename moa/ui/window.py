@@ -43,6 +43,8 @@ class Conteudo:
 
     def __init__(self, contexto: Contexto):
         self.ctx = contexto
+        config = contexto.preferencias.config
+        self._tema_aplicado = (config.paleta, config.letra)
         self.raiz = caixa_v(0)
         self.raiz.get_style_context().add_class("moa-fundo")
 
@@ -95,7 +97,11 @@ class Conteudo:
 
     def _ao_mudar_preferencia(self) -> None:
         config = self.ctx.preferencias.config
-        theme.aplicar(config.paleta, config.letra)
+        # Volume e "Voz mais clara" também são preferências. Reaplicar o tema faz o GTK recalcular
+        # o estilo de TODOS os widgets (centenas, numa lista grande), então só se a aparência mudou.
+        if (config.paleta, config.letra) != self._tema_aplicado:
+            theme.aplicar(config.paleta, config.letra)
+            self._tema_aplicado = (config.paleta, config.letra)
         self.redesenhar()
 
     # -- desenho ---------------------------------------------------------------------------

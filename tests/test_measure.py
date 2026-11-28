@@ -71,6 +71,14 @@ def test_csv_tem_a_maquina_em_cada_linha(tmp_path):
 def test_abre_o_app_de_verdade_e_mede(tmp_path):
     if medir.moa_ja_aberto():
         pytest.skip("há um Moa aberto")
-    cenarios = medir.montar_cenarios(tmp_path, rapido=True)
-    ms, ram, cpu = medir.abrir_o_app(cenarios["mix"], tmp_path / "app")
+    para_abrir, _acoes = medir.montar_cenarios(tmp_path, rapido=True)
+    ms, ram, cpu = medir.abrir_o_app(para_abrir["mix"], tmp_path / "app")
     assert 0 < ms < 60_000 and 20 < ram < 1000 and 0 <= cpu < 100
+
+
+def test_colecao_longa_nao_acaba_sozinha_e_a_biblioteca_le(tmp_path):
+    longa = medir.gerar_audio_base(tmp_path, buffers=200, nome="longa")
+    medir.gerar_colecao_longa(tmp_path / "musica", longa, discos=2, faixas=5)
+    discos = scan(tmp_path / "musica")
+    assert len(discos) == 2 and all(len(d.tracks) == 5 for d in discos)
+    assert [t.title for t in discos[0].tracks] == [f"Faixa {n}" for n in range(1, 6)]

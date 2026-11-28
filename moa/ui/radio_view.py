@@ -25,6 +25,15 @@ class RadioView:
         self.ctx = contexto
         self.raiz = caixa_v(0)
         self.raiz.set_border_width(24)
+        # Peças fixas: o aviso em cima e, embaixo, o painel do rádio e o lugar da lista.
+        self.topo = caixa_v(0)
+        self.quadro = Gtk.Box(spacing=24)
+        self.painel = caixa_v(0)
+        self.lugar_da_lista = caixa_v(0)
+        self.quadro.pack_start(self.painel, False, False, 0)
+        self.quadro.pack_start(self.lugar_da_lista, True, True, 0)
+        self.raiz.pack_start(self.topo, False, False, 0)
+        self.raiz.pack_start(self.quadro, True, True, 0)
         self.botao_principal: Gtk.Widget | None = None
         self.rotulo_do_tempo: Gtk.Label | None = None
         # O botão "+" de cada música abre o painel "Em qual disco?".
@@ -64,42 +73,49 @@ class RadioView:
         return (self.ctx.player.indice, self.ctx.radio.tocando)
 
     def atualizar(self) -> None:
+        """Refaz só o que mudou. A lista de músicas NUNCA troca de pai: mudar um widget de pai
+        desfaz e refaz por dentro todas as linhas (centenas), e isso era a travada."""
         ctx = self.ctx
-        chave = self._chave_da_lista_atual()
-        reaproveitar = (self._lista is not None and chave is not None
-                        and chave == self._chave_da_lista)
-        if self._lista is not None and self._lista.get_parent() is not None:
-            self._lista.get_parent().remove(self._lista)     # tira sem destruir, para reaproveitar
-        limpar(self.raiz)
         self.botao_principal = None
         self.rotulo_do_tempo = None
+        limpar(self.topo)
         visor = ctx.radio.visor()
         a = ctx.session.aviso
         if a is not None and a.ancora is None:           # aviso com âncora aparece na linha da música
-            self.raiz.pack_start(aviso(a.texto, ctx.session.desfazer if a.desfazer else None, a.rotulo_do_desfazer),
+            self.topo.pack_start(aviso(a.texto, ctx.session.desfazer if a.desfazer else None, a.rotulo_do_desfazer),
                                  False, False, 0)
         if visor is None:
-            self.raiz.pack_start(rotulo("Nenhum disco no rádio. Pegue um disco na estante."),
+            self.topo.pack_start(rotulo("Nenhum disco no rádio. Pegue um disco na estante."),
                                  False, False, 0)
-            self.raiz.show_all()
+            self._lista = None
+            self._chave_da_lista = None
+            limpar(self.lugar_da_lista)
+            limpar(self.painel)
+            self.topo.show_all()
             return
+
+        chave = self._chave_da_lista_atual()
+        reaproveitar = self._lista is not None and chave == self._chave_da_lista
         self._empilhado = self._deve_empilhar()
-        quadro = Gtk.Box(orientation=Gtk.Orientation.VERTICAL if self._empilhado
-                         else Gtk.Orientation.HORIZONTAL, spacing=24)
-        quadro.pack_start(self._radio(visor), False, False, 0)
+        self.quadro.set_orientation(Gtk.Orientation.VERTICAL if self._empilhado
+                                    else Gtk.Orientation.HORIZONTAL)
+        limpar(self.painel)
+        self.painel.pack_start(self._radio(visor), False, False, 0)
+        self.painel.show_all()
         if reaproveitar:
             self._mover_a_marca()           # trocar de faixa ou pausar mexe em duas linhas só
         else:
+            limpar(self.lugar_da_lista)
             self._lista = self._lista_de_musicas()
             self._chave_da_lista = chave
             self._marca = self._marca_atual()
-            # Mostra as linhas uma vez e depois o `show_all` da janela passa a pular a lista
-            # (percorrer centenas de linhas a cada clique pesa em notebook antigo).
+            self.lugar_da_lista.pack_start(self._lista, True, True, 0)
+            # Mostra as linhas uma vez e depois o `show_all` da janela passa a pular a lista.
             self._lista.show_all()
             self._lista.set_no_show_all(True)
-        quadro.pack_start(self._lista, True, True, 0)
-        self.raiz.pack_start(quadro, True, True, 0)
-        self.raiz.show_all()
+        self.topo.show_all()
+        self.quadro.show()
+        self.lugar_da_lista.show()
 
     def _radio(self, visor) -> Gtk.Widget:
         radio = self.ctx.radio
