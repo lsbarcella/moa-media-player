@@ -2,7 +2,7 @@
 # Copyright (C) 2026 Leonardo dos Santos Barcella
 # Este arquivo faz parte do Moa Media Player. Veja o arquivo LICENSE na raiz do projeto.
 
-"""Tela "A Caixa": onde ficam os discos que o usuário tirou da estante.
+"""Tela "A Lixeira": onde ficam os discos que o usuário tirou da estante.
 
 "Apagar de vez" SÓ existe aqui (ADR-0007), com texto claro e dois botões grandes,
 com "Manter o disco" em destaque. Tirar da estante nunca apaga arquivos.
@@ -22,7 +22,7 @@ from moa.ui.widgets import aviso, botao, capa_do_disco, caixa_h, caixa_v, limpar
 
 log = logging.getLogger(__name__)
 
-MSG_FALHA_AO_APAGAR = "Não consegui apagar tudo. O que sobrou continua na Caixa."
+MSG_FALHA_AO_APAGAR = "Não consegui apagar tudo. O que sobrou continua na Lixeira."
 
 
 class BoxView:
@@ -54,7 +54,7 @@ class BoxView:
         if not ctx.caixa:
             cartao = caixa_v(0)
             cartao.get_style_context().add_class("moa-cartao")
-            cartao.pack_start(rotulo("A Caixa está vazia."), False, False, 0)
+            cartao.pack_start(rotulo("A Lixeira está vazia."), False, False, 0)
             self.raiz.pack_start(cartao, False, False, 0)
         for disco in ctx.caixa:
             self._desenhar_disco(disco)

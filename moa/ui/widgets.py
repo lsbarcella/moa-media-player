@@ -44,7 +44,7 @@ def rotulo(texto: str, *classes: str, quebrar: bool = True, centro: bool = False
 
 PASTA_DOS_ICONES = Path(__file__).parent / "icons"
 NOMES_DOS_ICONES = ("tocar", "pausar", "anterior", "proxima", "volume", "voltar",
-                    "engrenagem", "mais", "caixa", "disco")
+                    "engrenagem", "mais", "lixeira", "disco")
 LADO_DO_ICONE = 32
 
 

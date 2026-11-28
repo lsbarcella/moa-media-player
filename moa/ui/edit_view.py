@@ -6,7 +6,7 @@
 
 Mostra uma prévia ao vivo de como o disco vai ficar. "Guardar" × "Deixar como
 estava" são dois botões grandes; depois de guardar, o aviso oferece "Como era antes".
-"Apagar de vez" NÃO existe aqui (só na Caixa, ADR-0007).
+"Apagar de vez" NÃO existe aqui (só na Lixeira, ADR-0007).
 """
 
 import logging
@@ -111,9 +111,9 @@ class EditView:
         direita.pack_start(botoes, False, False, 0)
 
         saida = caixa_v(10)
-        saida.pack_start(rotulo("Tirar da estante: o disco sai da estante e vai para a Caixa. "
+        saida.pack_start(rotulo("Tirar da estante: o disco sai da estante e vai para a Lixeira. "
                                 "As músicas continuam no computador."), False, False, 0)
-        saida.pack_start(botao("Tirar da estante", icone_nome="caixa", ao_clicar=self._tirar),
+        saida.pack_start(botao("Tirar da estante", icone_nome="lixeira", ao_clicar=self._tirar),
                          False, False, 0)
         direita.pack_start(saida, False, False, 12)
         quadro.pack_start(direita, True, True, 0)
@@ -250,5 +250,5 @@ class EditView:
             ctx.recarregar()
 
         ctx.session.mostrar_aviso(
-            f"Tirei “{disco.title}” da estante. Ele está na Caixa; as músicas continuam no computador.",
+            f"Tirei “{disco.title}” da estante. Ele está na Lixeira; as músicas continuam no computador.",
             desfazer)

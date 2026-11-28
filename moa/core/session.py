@@ -31,7 +31,7 @@ TITULOS = {
     Tela.ESTANTE: "Minha estante",
     Tela.RADIO: "Tocando agora",
     Tela.PLAYLIST: "Montando um disco novo",
-    Tela.CAIXA: "A Caixa",
+    Tela.CAIXA: "A Lixeira",
     Tela.EDITAR: "Mexendo no disco",
     Tela.APARELHO_DE_CD: "Aparelho de CD",
     Tela.CONFIGURACOES: "Configurações",

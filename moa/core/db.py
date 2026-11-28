@@ -5,7 +5,7 @@
 """Banco de dados SQLite do Moa (ADR-0008). Sem GTK.
 
 Hoje guarda só o cache da biblioteca (faixas e capas). Nos próximos marcos
-entram os discos montados, a Caixa, os recentes e onde o idoso parou, como
+entram os discos montados, a Lixeira, os recentes e onde o idoso parou, como
 novas migrações.
 
 Princípios:
@@ -78,7 +78,7 @@ def _migracao_2(conexao: sqlite3.Connection) -> None:
 
 
 def _migracao_3(conexao: sqlite3.Connection) -> None:
-    """Discos montados, Caixa e edições de nome e capa (M4). Aditiva."""
+    """Discos montados, Lixeira e edições de nome e capa (M4). Aditiva."""
     conexao.execute("""
         CREATE TABLE mix_discs (
             id         TEXT PRIMARY KEY,
@@ -94,7 +94,7 @@ def _migracao_3(conexao: sqlite3.Connection) -> None:
         )""")
     conexao.execute("""
         CREATE TABLE box (
-            album_id TEXT PRIMARY KEY,        -- disco tirado da estante (a Caixa)
+            album_id TEXT PRIMARY KEY,        -- disco tirado da estante (a Lixeira)
             put_at   REAL NOT NULL
         )""")
     conexao.execute("""
@@ -333,7 +333,7 @@ class Database:
             resultado.append((mix_id, nome, caminhos))
         return resultado
 
-    # -- Caixa e edições (M4) -----------------------------------------------------
+    # -- Lixeira e edições (M4) -----------------------------------------------------
 
     def put_in_box(self, album_id: str) -> None:
         with self._transacao():

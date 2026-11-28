@@ -2,10 +2,10 @@
 # Copyright (C) 2026 Leonardo dos Santos Barcella
 # Este arquivo faz parte do Moa Media Player. Veja o arquivo LICENSE na raiz do projeto.
 
-"""A Caixa e as edições de nome e capa (M4). Sem GTK.
+"""A Lixeira e as edições de nome e capa (M4). Sem GTK.
 
 Tudo aqui é uma CAMADA sobre a biblioteca (KTD10): a varredura continua lendo as
-pastas, e depois `aplicar_camadas` esconde os discos da Caixa e troca nomes. Assim
+pastas, e depois `aplicar_camadas` esconde os discos da Lixeira e troca nomes. Assim
 um disco tirado não volta na abertura seguinte e nenhuma tag nem arquivo de música
 é reescrito.
 
@@ -31,11 +31,11 @@ log = logging.getLogger(__name__)
 class Camadas:
     estante: list          # discos (Album) que aparecem na estante, com os nomes editados
     montados: list         # discos montados (MixDisc) que aparecem na estante
-    caixa: list            # discos e discos montados que estão na Caixa
+    caixa: list            # discos e discos montados que estão na Lixeira
 
 
 def aplicar_camadas(albuns: list[Album], montados: list[MixDisc], db: Database) -> Camadas:
-    """Esconde os discos da Caixa e aplica os nomes escolhidos. Sem nada guardado, devolve o mesmo."""
+    """Esconde os discos da Lixeira e aplica os nomes escolhidos. Sem nada guardado, devolve o mesmo."""
     na_caixa = set(db.load_box())
     nomes = {i: o.name for i, o in db.load_overrides().items() if o.name}
 
@@ -57,10 +57,10 @@ def escolhas_de_capa(db: Database) -> dict[str, CoverChoice]:
             for i, o in db.load_overrides().items() if o.cover_kind}
 
 
-# -- Caixa -----------------------------------------------------------------------------------
+# -- Lixeira -----------------------------------------------------------------------------------
 
 def tirar_da_estante(db: Database, disco_id: str) -> None:
-    """O disco vai para a Caixa. Nenhum arquivo muda."""
+    """O disco vai para a Lixeira. Nenhum arquivo muda."""
     db.put_in_box(disco_id)
 
 
@@ -129,14 +129,14 @@ def _arquivos_de_capa(pasta: Path) -> list[Path]:
 
 
 def apagar_de_vez(db: Database, disco, raiz_da_musica: Path) -> ResultadoDoApagar:
-    """Apaga o disco da Caixa. É a ÚNICA função que apaga arquivos de música do usuário.
+    """Apaga o disco da Lixeira. É a ÚNICA função que apaga arquivos de música do usuário.
 
     Regras (KTD11):
     - disco montado: só o registro é apagado; nenhum arquivo é tocado;
     - disco de verdade: só os arquivos de áudio das faixas dele e as imagens de capa
       da PRÓPRIA pasta; nunca a pasta pai, nunca nada fora da pasta de música,
       nunca um link simbólico; a pasta só some se ficar vazia;
-    - se alguma remoção falhar, o disco continua na Caixa com o que sobrou.
+    - se alguma remoção falhar, o disco continua na Lixeira com o que sobrou.
     """
     if eh_disco_montado(disco.id):
         apagar_montado(db, disco.id)

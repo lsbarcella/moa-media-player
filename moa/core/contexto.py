@@ -54,9 +54,9 @@ class Contexto:
         # o app abrir de novo: a estante não se altera enquanto o idoso olha para ela (ADR-0003).
         self._camada_mb = banco.load_mb()
         self._brutos: list[Album] = []              # o que a varredura achou, sem as camadas
-        self.discos: list[Album] = []               # na estante (sem a Caixa, com nomes editados)
+        self.discos: list[Album] = []               # na estante (sem a Lixeira, com nomes editados)
         self.montados: list[MixDisc] = []           # discos montados que estão na estante
-        self.caixa: list = []                       # discos e discos montados na Caixa
+        self.caixa: list = []                       # discos e discos montados na Lixeira
         self.faixas_por_caminho: dict = {}
         self.rascunho: RascunhoDePlaylist | None = None   # a playlist que está sendo montada
         self.miniaturas: dict[str, Path | None] = {}
@@ -127,7 +127,7 @@ class Contexto:
         return self.rascunho
 
     def disco(self, album_id: str | None):
-        """Acha um disco (da estante, montado ou da Caixa) pelo id."""
+        """Acha um disco (da estante, montado ou da Lixeira) pelo id."""
         return next((d for d in self.discos + self.montados + self.caixa if d.id == album_id), None)
 
     def disco_de_origem(self, faixa) -> Album | None:

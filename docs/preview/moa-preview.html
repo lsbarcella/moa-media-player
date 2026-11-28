@@ -184,7 +184,7 @@ input[type=text]{font:inherit;width:100%;min-height:64px;padding:8px 14px;border
 <div class="author">
   <h1>Preview interativo do Moa Media Player (maquete)</h1>
   <p>Maquete para você avaliar o <strong>desenho</strong>. Não toca som e não é o código final. Tudo vale a regra de um clique, alvos de 64 px ou mais, letra base de 20 px, contraste de 7:1 ou mais (conferido) e tema claro. Use os controles abaixo para comparar as variantes que ainda estão em aberto.</p>
-  <p><strong>Já decidido:</strong> o “+” mostra as capas dos discos; “Apagar de vez” só existe dentro da Caixa; tamanho da letra e cores para daltonismo ficam em “Configurações”. <strong>Ainda em aberto</strong> (a primeira opção de cada grupo é o padrão):</p>
+  <p><strong>Já decidido:</strong> o “+” mostra as capas dos discos; “Apagar de vez” só existe dentro da Lixeira; tamanho da letra e cores para daltonismo ficam em “Configurações”. <strong>Ainda em aberto</strong> (a primeira opção de cada grupo é o padrão):</p>
   <p><strong>Atenção:</strong> a barra de título escura (–, □, ✕) <em>não é desenho nosso</em>: é a do sistema, e o X dela é pequeno (bem abaixo de 64 px; tamanho exato a confirmar no Cinnamon). Isso é uma decisão a tomar: aceitar o X do sistema ou desenhar um cabeçalho próprio com um X grande.</p>
   <div class="variants" id="variants"></div>
   <div class="toolbar">
@@ -281,7 +281,7 @@ function shelfSection(title, list){
 function shelfScreen(){
   const mem = V.memoria==='sim';
   let h = msgHTML();
-  h += `<div class="actions"><button class="btn pri big" data-act="new-mix">＋ Criar uma playlist</button><button class="btn big" data-act="go-box">A Caixa (${S.box.length} ${S.box.length===1?'disco':'discos'})</button></div>`;
+  h += `<div class="actions"><button class="btn pri big" data-act="new-mix">＋ Criar uma playlist</button><button class="btn big" data-act="go-box">A Lixeira (${S.box.length} ${S.box.length===1?'disco':'discos'})</button></div>`;
   if (mem && S.last && !S.current){
     h += `<div class="continue card"><p>Você parou em <strong>${esc(disc(S.last.id).name)}</strong>, faixa ${S.last.track+1}.</p><button class="btn pri big" data-act="continue">▶ Continuar a ouvir</button></div>`;
   }
@@ -380,7 +380,7 @@ function refreshPlaylist(){
 
 function boxScreen(){
   let h = msgHTML() + `<p class="lead">Aqui ficam os discos que você tirou da estante. <strong>As músicas continuam guardadas no computador.</strong></p>`;
-  if (!S.box.length) h += `<p class="card">A Caixa está vazia.</p>`;
+  if (!S.box.length) h += `<p class="card">A Lixeira está vazia.</p>`;
   S.box.map(disc).forEach(d => {
     h += `<div class="boxrow card">${coverHTML(d,'small')}<span class="boxname">${esc(d.name)}</span><button class="btn pri" data-act="box-back" data-id="${d.id}">Colocar de volta na estante</button>${V.apagar==='caixa'?`<button class="btn" data-act="box-del" data-id="${d.id}">Apagar de vez…</button>`:''}</div>`;
     if (S.boxDel===d.id) h += `<div class="warnbox" role="alertdialog"><p style="margin:0">Apagar “${esc(d.name)}” de vez? <strong>${d.mix?'O disco montado será desfeito. As músicas dos outros discos não são apagadas.':'Os arquivos de música deste disco também serão apagados do computador e não voltam.'}</strong></p><div class="btnrow"><button class="btn pri" data-act="box-del-no">Manter o disco</button><button class="btn" data-act="box-del-yes" data-id="${d.id}">Sim, apagar de vez</button></div></div>`;
@@ -402,12 +402,12 @@ function editScreen(){
       <p class="lbl" style="margin-top:18px">Trocar a capa</p>
       <div class="gallery" role="group" aria-label="Capas disponíveis">${opt('arquivo','Capa do arquivo')}${opt('pasta','Imagem da pasta')}${opt('desenhada','Capa desenhada')}</div>
       <div class="btnrow"><button class="btn pri big" data-act="edit-save">Guardar</button><button class="btn big" data-act="edit-cancel">Deixar como estava</button></div>
-      <div class="sep"><p style="margin:0 0 10px">Tirar da estante: o disco sai da estante e vai para a Caixa. <strong>As músicas continuam no computador.</strong></p><button class="btn" data-act="to-box">Tirar da estante</button></div>
+      <div class="sep"><p style="margin:0 0 10px">Tirar da estante: o disco sai da estante e vai para a Lixeira. <strong>As músicas continuam no computador.</strong></p><button class="btn" data-act="to-box">Tirar da estante</button></div>
     </section></div>`;
 }
 
 /* ---------- cabeçalho, mini-rádio, painel + ---------- */
-const TITLES_SCR = {shelf:'Minha estante', radio:'Tocando agora', playlist:'Montando um disco novo', box:'A Caixa', edit:'Mexendo no disco', settings:'Configurações'};
+const TITLES_SCR = {shelf:'Minha estante', radio:'Tocando agora', playlist:'Montando um disco novo', box:'A Lixeira', edit:'Mexendo no disco', settings:'Configurações'};
 function headerHTML(){
   const back = S.screen==='shelf' ? '' : (S.screen==='settings' ? `<button class="btn" data-act="go-back">← Voltar para onde eu estava</button>` : `<button class="btn" data-act="go-shelf">← Voltar para a estante</button>`);
   const lt = S.screen==='settings' ? '' : `<button class="btn sm" data-act="go-settings">⚙ Configurações</button>`;
@@ -458,8 +458,8 @@ const NOTES = {
     'O visor tem uma segunda linha que descreve a última ação (ex.: “Volume mais alto (7 de 10)”). Mensagens ficam até a próxima ação, ou somem em 10 s conforme a variante.'],
   playlist: ['<strong>Criar uma playlist (forma a).</strong> Mostra <strong>I2</strong>: caixas grandes de marcar, busca que recebe a digitação sem clicar nela (experimente digitar uma letra), marcadas que continuam marcadas ao filtrar, “Disco novo” que vai se enchendo e nome sugerido.',
     'O caminho só com mouse (escolher um disco e marcar) existe porque a literatura aponta digitar como difícil para parte dos idosos.'],
-  box: ['<strong>A Caixa.</strong> Mostra <strong>I4</strong>: “Tirar da estante” nunca apaga, e a Caixa diz em texto que as músicas continuam no computador.',
-    '“Apagar de vez” só existe aqui, dentro da Caixa, com texto claro e dois botões grandes (decidido; ADR-0007).'],
+  box: ['<strong>A Lixeira.</strong> Mostra <strong>I4</strong>: “Tirar da estante” nunca apaga, e a Lixeira diz em texto que as músicas continuam no computador.',
+    '“Apagar de vez” só existe aqui, dentro da Lixeira, com texto claro e dois botões grandes (decidido; ADR-0007).'],
   edit: ['<strong>Mexer no disco.</strong> Mostra <strong>I6</strong>: prévia ao vivo de como o disco fica na estante, galeria de capas já encontradas, “Guardar” × “Deixar como estava” e “Como era antes” (aparece depois de guardar, na mensagem).',
     'Renomear exige digitar; é o ponto fraco desta ideia e precisa de teste com o usuário.'],
   settings: ['<strong>Configurações (ADR-0006).</strong> Tamanho da letra e cores para daltonismo ficam aqui, atrás de um botão com texto sempre visível no cabeçalho. A escolha vale para todas as telas; experimente mudar e voltar.',
@@ -569,7 +569,7 @@ function handle(act, d){
       dd.name = (S.edit.name||'').trim() || dd.name; dd.cover = S.edit.cover; S.edit=null; S.screen='shelf';
       setMsg(`Guardei o disco “${esc(dd.name)}”.`, {type:'edit', id:dd.id, prev}); break;
     }
-    case 'to-box': { const id=S.edit.id; S.box.push(id); if (S.current && S.current.id===id){ S.current=null; S.playing=false; } S.edit=null; S.screen='shelf'; setMsg(`O disco “${esc(disc(id).name)}” foi para a Caixa. As músicas continuam no computador.`, {type:'box', id}); break; }
+    case 'to-box': { const id=S.edit.id; S.box.push(id); if (S.current && S.current.id===id){ S.current=null; S.playing=false; } S.edit=null; S.screen='shelf'; setMsg(`O disco “${esc(disc(id).name)}” foi para a Lixeira. As músicas continuam no computador.`, {type:'box', id}); break; }
     case 'undo-msg': {
       const u = S.msg && S.msg.undo; if (!u) break;
       if (u.type==='box') S.box = S.box.filter(x=>x!==u.id);

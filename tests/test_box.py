@@ -2,7 +2,7 @@
 # Copyright (C) 2026 Leonardo dos Santos Barcella
 # Este arquivo faz parte do Moa Media Player. Veja o arquivo LICENSE na raiz do projeto.
 
-"""Testes da Caixa, das edições e do "Apagar de vez" (M4). Só pastas temporárias."""
+"""Testes da Lixeira, das edições e do "Apagar de vez" (M4). Só pastas temporárias."""
 
 import os
 import stat
@@ -200,7 +200,7 @@ def test_falha_no_meio_deixa_o_disco_na_caixa_com_o_que_sobrou(db, colecao):
     finally:
         pasta.chmod(stat.S_IRWXU)
     assert not resultado.apagou_tudo and resultado.restantes == 2
-    assert disco.id in db.load_box()                           # continua na Caixa
+    assert disco.id in db.load_box()                           # continua na Lixeira
     assert (colecao / "Valsas" / "01.mp3").exists()            # nada fora da pasta foi tocado
 
 

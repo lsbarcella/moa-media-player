@@ -43,7 +43,7 @@ class ShelfView:
     # -- desenho ---------------------------------------------------------------------
 
     def _esquecer_o_desenho(self) -> None:
-        """A coleção mudou (disco novo, nome, capa, Caixa): na próxima vez a estante é refeita."""
+        """A coleção mudou (disco novo, nome, capa, Lixeira): na próxima vez a estante é refeita."""
         self._chave_desenhada = None
 
     def _chave(self) -> tuple:
@@ -151,8 +151,8 @@ class ShelfView:
         linha.pack_start(criar, False, False, 0)
         linha.pack_start(self._botao_colocar_disco(), False, False, 0)
         n = len(self.ctx.caixa)
-        linha.pack_start(botao(f"A Caixa ({n} {'disco' if n == 1 else 'discos'})", "moa-grande",
-                               icone_nome="caixa", ao_clicar=self._abrir_a_caixa), False, False, 0)
+        linha.pack_start(botao(f"A Lixeira ({n} {'disco' if n == 1 else 'discos'})", "moa-grande",
+                               icone_nome="lixeira", ao_clicar=self._abrir_a_caixa), False, False, 0)
         self.botao_principal = criar
         self.raiz.pack_start(linha, False, False, 0)
 
