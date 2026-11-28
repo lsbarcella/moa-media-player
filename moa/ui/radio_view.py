@@ -30,6 +30,11 @@ class RadioView:
         # O botão "+" de cada música abre o painel "Em qual disco?".
         self.ao_pedir_outro_disco = self._pedir_outro_disco
         self._empilhado: bool | None = None
+        # A lista de músicas pode ter centenas de linhas. Ela só é refeita quando algo que
+        # aparece nela muda; mexer no volume, por exemplo, não a toca.
+        self._lista: Gtk.Widget | None = None
+        self._chave_da_lista: tuple | None = None
+        contexto.ao_mudar_a_colecao(self._esquecer_a_lista)
         self.raiz.connect("size-allocate", self._ao_mudar_de_tamanho)
         self.atualizar()
 
@@ -43,8 +48,23 @@ class RadioView:
 
     # -- desenho -----------------------------------------------------------------------
 
+    def _esquecer_a_lista(self) -> None:
+        self._chave_da_lista = None
+
+    def _chave_da_lista_atual(self) -> tuple | None:
+        radio = self.ctx.radio
+        if not radio.tem_disco:
+            return None
+        return (radio.disco.id, radio.disco.tracks, self.ctx.player.indice, radio.tocando,
+                self.ctx.session.aviso)
+
     def atualizar(self) -> None:
         ctx = self.ctx
+        chave = self._chave_da_lista_atual()
+        reaproveitar = (self._lista is not None and chave is not None
+                        and chave == self._chave_da_lista)
+        if self._lista is not None and self._lista.get_parent() is not None:
+            self._lista.get_parent().remove(self._lista)     # tira sem destruir, para reaproveitar
         limpar(self.raiz)
         self.botao_principal = None
         self.rotulo_do_tempo = None
@@ -62,7 +82,10 @@ class RadioView:
         quadro = Gtk.Box(orientation=Gtk.Orientation.VERTICAL if self._empilhado
                          else Gtk.Orientation.HORIZONTAL, spacing=24)
         quadro.pack_start(self._radio(visor), False, False, 0)
-        quadro.pack_start(self._lista_de_musicas(), True, True, 0)
+        if not reaproveitar:
+            self._lista = self._lista_de_musicas()
+            self._chave_da_lista = chave
+        quadro.pack_start(self._lista, True, True, 0)
         self.raiz.pack_start(quadro, True, True, 0)
         self.raiz.show_all()
 
