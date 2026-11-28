@@ -33,7 +33,10 @@ class RadioView:
         # A lista de músicas pode ter centenas de linhas. Ela só é refeita quando algo que
         # aparece nela muda; mexer no volume, por exemplo, não a toca.
         self._lista: Gtk.Widget | None = None
-        self._chave_da_lista: tuple | None = None
+        self._chave_da_lista: tuple | None = None      # o que, se mudar, exige refazer tudo
+        self._marca: tuple[int, bool] | None = None     # (faixa atual, tocando): muda em lugar só
+        self._linhas: list[tuple[Gtk.Widget, Gtk.Box]] = []     # (moldura, caixa dos nomes) de cada música
+        self._nota: Gtk.Label | None = None             # "Tocando agora" / "Parado aqui"
         contexto.ao_mudar_a_colecao(self._esquecer_a_lista)
         self.raiz.connect("size-allocate", self._ao_mudar_de_tamanho)
         self.atualizar()
@@ -55,8 +58,10 @@ class RadioView:
         radio = self.ctx.radio
         if not radio.tem_disco:
             return None
-        return (radio.disco.id, radio.disco.tracks, self.ctx.player.indice, radio.tocando,
-                self.ctx.session.aviso)
+        return (radio.disco.id, radio.disco.tracks, self.ctx.session.aviso)
+
+    def _marca_atual(self) -> tuple[int, bool]:
+        return (self.ctx.player.indice, self.ctx.radio.tocando)
 
     def atualizar(self) -> None:
         ctx = self.ctx
@@ -82,9 +87,16 @@ class RadioView:
         quadro = Gtk.Box(orientation=Gtk.Orientation.VERTICAL if self._empilhado
                          else Gtk.Orientation.HORIZONTAL, spacing=24)
         quadro.pack_start(self._radio(visor), False, False, 0)
-        if not reaproveitar:
+        if reaproveitar:
+            self._mover_a_marca()           # trocar de faixa ou pausar mexe em duas linhas só
+        else:
             self._lista = self._lista_de_musicas()
             self._chave_da_lista = chave
+            self._marca = self._marca_atual()
+            # Mostra as linhas uma vez e depois o `show_all` da janela passa a pular a lista
+            # (percorrer centenas de linhas a cada clique pesa em notebook antigo).
+            self._lista.show_all()
+            self._lista.set_no_show_all(True)
         quadro.pack_start(self._lista, True, True, 0)
         self.raiz.pack_start(quadro, True, True, 0)
         self.raiz.show_all()
@@ -188,6 +200,8 @@ class RadioView:
         atual = self.ctx.player.indice
         coluna = caixa_v(8)
         coluna.pack_start(rotulo("Músicas deste disco", "moa-grande"), False, False, 0)
+        self._linhas = []
+        self._nota = None
         for i, musica in enumerate(disco.tracks):
             moldura = caixa_v(6)
             moldura.get_style_context().add_class("moa-linha")
@@ -204,9 +218,9 @@ class RadioView:
                 if origem is not None:
                     nomes.pack_start(rotulo(f"do disco {origem.title}", "moa-nota"), False, False, 0)
             if i == atual:
-                nomes.pack_start(
-                    rotulo("Tocando agora" if radio.tocando else "Parado aqui", "moa-nota"),
-                    False, False, 0)
+                self._nota = rotulo(self._texto_da_nota(radio.tocando), "moa-nota")
+                nomes.pack_start(self._nota, False, False, 0)
+            self._linhas.append((moldura, nomes))
             conteudo.pack_start(nomes, True, True, 0)
             b = Gtk.Button()
             b.add(conteudo)
@@ -227,6 +241,33 @@ class RadioView:
         coluna.pack_start(botao("Mexer neste disco", ao_clicar=self._mexer_no_disco),
                           False, False, 8)
         return coluna
+
+    @staticmethod
+    def _texto_da_nota(tocando: bool) -> str:
+        return "Tocando agora" if tocando else "Parado aqui"
+
+    def _mover_a_marca(self) -> None:
+        """Passa o "Tocando agora" para a faixa certa, sem refazer a lista (podem ser centenas)."""
+        marca = self._marca_atual()
+        if marca == self._marca:
+            return
+        antes, _ = self._marca or (None, None)
+        indice, tocando = marca
+        if indice != antes and self._linhas:
+            if self._nota is not None:
+                self._nota.get_parent().remove(self._nota)
+                self._nota = None
+            if antes is not None and antes < len(self._linhas):
+                self._linhas[antes][0].get_style_context().remove_class("moa-agora")
+            if indice < len(self._linhas):
+                moldura, nomes = self._linhas[indice]
+                moldura.get_style_context().add_class("moa-agora")
+                self._nota = rotulo(self._texto_da_nota(tocando), "moa-nota")
+                nomes.pack_start(self._nota, False, False, 0)
+                self._nota.show()
+        elif self._nota is not None:
+            self._nota.set_text(self._texto_da_nota(tocando))
+        self._marca = marca
 
     def _mexer_no_disco(self) -> None:
         from moa.core.session import Tela
