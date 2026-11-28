@@ -8,6 +8,8 @@ Estado em três canais ao mesmo tempo (lâmpada, palavra e forma/cor do botão),
 para ninguém depender só da cor. Desenho aprovado em `docs/preview/moa-preview.html`.
 """
 
+from types import SimpleNamespace
+
 import gi
 
 gi.require_version("Gtk", "3.0")
@@ -15,7 +17,7 @@ from gi.repository import Gtk  # noqa: E402
 
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.player import DEGRAU_MAXIMO  # noqa: E402
-from moa.ui.widgets import aviso, capa_do_disco, botao, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
+from moa.ui.widgets import classe, definir_texto_do_botao, texto_de, aviso, capa_do_disco, botao, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
 
 LARGURA_PARA_EMPILHAR = 900
 
@@ -34,6 +36,9 @@ class RadioView:
         self.quadro.pack_start(self.lugar_da_lista, True, True, 0)
         self.raiz.pack_start(self.topo, False, False, 0)
         self.raiz.pack_start(self.quadro, True, True, 0)
+        self._p: SimpleNamespace | None = None          # os widgets do painel do rádio
+        self._chave_do_topo: tuple | None = None
+        self._foco_pendente = False
         self.botao_principal: Gtk.Widget | None = None
         self.rotulo_do_tempo: Gtk.Label | None = None
         # O botão "+" de cada música abre o painel "Em qual disco?".
@@ -76,22 +81,29 @@ class RadioView:
         """Refaz só o que mudou. A lista de músicas NUNCA troca de pai: mudar um widget de pai
         desfaz e refaz por dentro todas as linhas (centenas), e isso era a travada."""
         ctx = self.ctx
-        self.botao_principal = None
-        self.rotulo_do_tempo = None
-        limpar(self.topo)
         visor = ctx.radio.visor()
         a = ctx.session.aviso
-        if a is not None and a.ancora is None:           # aviso com âncora aparece na linha da música
-            self.topo.pack_start(aviso(a.texto, ctx.session.desfazer if a.desfazer else None, a.rotulo_do_desfazer),
-                                 False, False, 0)
+        aviso_do_topo = a if (a is not None and a.ancora is None) else None   # com âncora fica na linha da música
+        chave_do_topo = (aviso_do_topo, visor is None)
+        if chave_do_topo != self._chave_do_topo:
+            self._chave_do_topo = chave_do_topo
+            limpar(self.topo)
+            if aviso_do_topo is not None:
+                self.topo.pack_start(aviso(aviso_do_topo.texto,
+                                           ctx.session.desfazer if aviso_do_topo.desfazer else None,
+                                           aviso_do_topo.rotulo_do_desfazer), False, False, 0)
+            if visor is None:
+                self.topo.pack_start(rotulo("Nenhum disco no rádio. Pegue um disco na estante."),
+                                     False, False, 0)
+            self.topo.show_all()
         if visor is None:
-            self.topo.pack_start(rotulo("Nenhum disco no rádio. Pegue um disco na estante."),
-                                 False, False, 0)
             self._lista = None
             self._chave_da_lista = None
+            self._p = None
+            self.botao_principal = None
+            self.rotulo_do_tempo = None
             limpar(self.lugar_da_lista)
             limpar(self.painel)
-            self.topo.show_all()
             return
 
         chave = self._chave_da_lista_atual()
@@ -99,9 +111,13 @@ class RadioView:
         self._empilhado = self._deve_empilhar()
         self.quadro.set_orientation(Gtk.Orientation.VERTICAL if self._empilhado
                                     else Gtk.Orientation.HORIZONTAL)
-        limpar(self.painel)
-        self.painel.pack_start(self._radio(visor), False, False, 0)
-        self.painel.show_all()
+        if self._p is None:
+            self._construir_painel(visor)
+            self.painel.pack_start(self._p.corpo, False, False, 0)
+            self.painel.show_all()
+            self._foco_pendente = True
+        else:
+            self._atualizar_painel(visor)
         if reaproveitar:
             self._mover_a_marca()           # trocar de faixa ou pausar mexe em duas linhas só
         else:
@@ -113,102 +129,145 @@ class RadioView:
             # Mostra as linhas uma vez e depois o `show_all` da janela passa a pular a lista.
             self._lista.show_all()
             self._lista.set_no_show_all(True)
-        self.topo.show_all()
         self.quadro.show()
         self.lugar_da_lista.show()
 
-    def _radio(self, visor) -> Gtk.Widget:
-        radio = self.ctx.radio
+    # -- o painel do rádio: montado uma vez e atualizado no lugar ------------------------
+    # Recriar o painel a cada clique obrigava o GTK a recalcular estilo, tamanho e desenho de
+    # todos os botões (no notebook do usuário, ~190 ms só para mudar o volume). Agora só o que
+    # mudou é mexido, e o GTK redesenha só essas partes.
+
+    def _construir_painel(self, visor) -> None:
+        p = SimpleNamespace()
+        p.disco_id = self.ctx.radio.disco.id
+        p.luz = None
         corpo = caixa_v(14)
         corpo.get_style_context().add_class("moa-radio")
         corpo.set_size_request(420, -1)
+        p.corpo = corpo
 
         # lâmpada + palavra
         estado = caixa_h(10)
-        lampada = Gtk.Box()
-        lampada.get_style_context().add_class("moa-lampada")
-        if visor.luz_acesa:
-            lampada.get_style_context().add_class("moa-acesa")
-        lampada.set_valign(Gtk.Align.CENTER)
-        estado.pack_start(lampada, False, False, 0)
-        estado.pack_start(rotulo(visor.palavra, "moa-forte", quebrar=False), False, False, 0)
+        p.lampada = Gtk.Box()
+        p.lampada.get_style_context().add_class("moa-lampada")
+        p.lampada.set_valign(Gtk.Align.CENTER)
+        estado.pack_start(p.lampada, False, False, 0)
+        p.palavra = rotulo("", "moa-forte", quebrar=False)
+        estado.pack_start(p.palavra, False, False, 0)
         corpo.pack_start(estado, False, False, 0)
 
         # visor
-        moldura = caixa_h(14)
-        moldura.get_style_context().add_class("moa-visor")
-        disco = radio.disco
-        moldura.pack_start(capa_do_disco(self.ctx, disco, 120), False, False, 0)
+        p.moldura = caixa_h(14)
+        p.moldura.get_style_context().add_class("moa-visor")
+        p.capa = capa_do_disco(self.ctx, self.ctx.radio.disco, 120)
+        p.moldura.pack_start(p.capa, False, False, 0)
         texto = caixa_v(4)
-        texto.pack_start(rotulo(visor.linha_de_estado, "moa-forte"), False, False, 0)
-        texto.pack_start(rotulo(visor.titulo, "moa-grande"), False, False, 0)
-        texto.pack_start(rotulo(f"Disco: {visor.disco}"), False, False, 0)
-        texto.pack_start(rotulo(visor.faixa), False, False, 0)
-        self.rotulo_do_tempo = rotulo(visor.tempo)
-        texto.pack_start(self.rotulo_do_tempo, False, False, 0)
-        if visor.nota:
-            texto.pack_start(rotulo(visor.nota, "moa-nota-visor"), False, False, 0)
-        moldura.pack_start(texto, True, True, 0)
-        corpo.pack_start(moldura, False, False, 0)
+        p.linha_de_estado = rotulo("", "moa-forte")
+        p.titulo = rotulo("", "moa-grande")
+        p.disco = rotulo("")
+        p.faixa = rotulo("")
+        p.tempo = rotulo("")
+        p.nota = rotulo("", "moa-nota-visor")
+        p.nota.set_no_show_all(True)            # só aparece quando há o que dizer
+        for etiqueta in (p.linha_de_estado, p.titulo, p.disco, p.faixa, p.tempo, p.nota):
+            texto.pack_start(etiqueta, False, False, 0)
+        p.moldura.pack_start(texto, True, True, 0)
+        corpo.pack_start(p.moldura, False, False, 0)
+        self.rotulo_do_tempo = p.tempo
 
-        # botões: anterior / tocar-pausar / próxima
-        controles = Gtk.Grid(column_spacing=10, column_homogeneous=False)
+        # botões: anterior / tocar-pausar / próxima (o do meio troca quando muda o estado)
+        p.controles = Gtk.Grid(column_spacing=10, column_homogeneous=False)
+        corpo.pack_start(p.controles, False, False, 0)
+
+        # volume em degraus
+        volume = caixa_v(8)
+        volume.get_style_context().add_class("moa-volume")
+        linha = caixa_h(8)
+        p.menos = botao("Mais baixo", ao_clicar=self._volume_menos)
+        p.mais = botao("Mais alto", ao_clicar=self._volume_mais)
+        barras = caixa_h(4)
+        barras.set_halign(Gtk.Align.CENTER)
+        barras.set_valign(Gtk.Align.CENTER)
+        p.barras = []
+        for _ in range(DEGRAU_MAXIMO):
+            barra = Gtk.Box()
+            barra.get_style_context().add_class("moa-barra")
+            barras.pack_start(barra, False, False, 0)
+            p.barras.append(barra)
+        linha.pack_start(p.menos, True, True, 0)
+        linha.pack_start(barras, False, False, 0)
+        linha.pack_start(p.mais, True, True, 0)
+        volume.pack_start(linha, False, False, 0)
+        legenda = caixa_h(8)
+        legenda.set_halign(Gtk.Align.CENTER)
+        legenda.pack_start(icone("volume", "#FFFFFF", "#2B2118"), False, False, 0)
+        p.legenda = rotulo("", "moa-forte", centro=True)
+        legenda.pack_start(p.legenda, False, False, 0)
+        volume.pack_start(legenda, False, False, 0)
+        corpo.pack_start(volume, False, False, 0)
+
+        # "Voz mais clara"
+        p.clara = botao("Voz mais clara: desligada", "moa-clara-desligada", ao_clicar=self._alternar_voz)
+        corpo.pack_start(p.clara, False, False, 0)
+
+        corpo.pack_start(botao("Guardar o disco na estante e parar", ao_clicar=self._guardar, icone_nome="disco"),
+                         False, False, 0)
+        self._p = p
+        self._atualizar_painel(visor)
+
+    def _atualizar_painel(self, visor) -> None:
+        p = self._p
+        radio = self.ctx.radio
+        classe(p.lampada, "moa-acesa", visor.luz_acesa)
+        texto_de(p.palavra, visor.palavra)
+        if radio.disco.id != p.disco_id:                 # outro disco: troca só a capa
+            p.moldura.remove(p.capa)
+            p.capa = capa_do_disco(self.ctx, radio.disco, 120)
+            p.moldura.pack_start(p.capa, False, False, 0)
+            p.moldura.reorder_child(p.capa, 0)
+            p.capa.show_all()
+            p.disco_id = radio.disco.id
+        texto_de(p.linha_de_estado, visor.linha_de_estado)
+        texto_de(p.titulo, visor.titulo)
+        texto_de(p.disco, f"Disco: {visor.disco}")
+        texto_de(p.faixa, visor.faixa)
+        texto_de(p.tempo, visor.tempo)
+        texto_de(p.nota, visor.nota or "")
+        p.nota.set_visible(bool(visor.nota))
+        if p.luz != visor.luz_acesa:
+            self._montar_controles(visor.luz_acesa)
+
+        degrau = self.ctx.player.degrau_de_volume
+        definir_texto_do_botao(p.menos, "No mínimo" if degrau <= 0 else "Mais baixo")
+        definir_texto_do_botao(p.mais, "No máximo" if degrau >= DEGRAU_MAXIMO else "Mais alto")
+        classe(p.menos, "moa-inativo", degrau <= 0)
+        classe(p.mais, "moa-inativo", degrau >= DEGRAU_MAXIMO)
+        for k, barra in enumerate(p.barras):
+            classe(barra, "moa-acesa", k < degrau)
+        texto_de(p.legenda, f"Volume: {degrau} de {DEGRAU_MAXIMO}")
+
+        ligada = self.ctx.player.voz_mais_clara
+        definir_texto_do_botao(p.clara, f"Voz mais clara: {'ligada' if ligada else 'desligada'}")
+        classe(p.clara, "moa-clara-ligada", ligada)
+        classe(p.clara, "moa-clara-desligada", not ligada)
+
+    def _montar_controles(self, tocando: bool) -> None:
+        """Anterior / Tocar ou Pausar / Próxima. Só é refeito quando troca Tocar por Pausar."""
+        p = self._p
+        limpar(p.controles)
         anterior = botao("Anterior", ao_clicar=self._anterior, icone_nome="anterior")
-        if visor.luz_acesa:
+        if tocando:
             principal = botao("Pausar", "moa-pausar", ao_clicar=self._alternar, icone_nome="pausar")
         else:
             principal = botao("Tocar", "moa-tocar", ao_clicar=self._alternar, icone_nome="tocar")
         proxima = botao("Próxima", ao_clicar=self._proxima, icone_nome="proxima")
         for coluna, (widget, largura) in enumerate(((anterior, 1), (principal, 2), (proxima, 1))):
             widget.set_hexpand(True)
-            controles.attach(widget, coluna * 2, 0, largura, 1)
-        corpo.pack_start(controles, False, False, 0)
+            p.controles.attach(widget, coluna * 2, 0, largura, 1)
+        p.controles.show_all()
+        p.luz = tocando
         self.botao_principal = principal
-
-        # volume em degraus
-        degrau = self.ctx.player.degrau_de_volume
-        volume = caixa_v(8)
-        volume.get_style_context().add_class("moa-volume")
-        linha = caixa_h(8)
-        menos = botao("No mínimo" if degrau <= 0 else "Mais baixo",
-                      ao_clicar=self._volume_menos)
-        mais = botao("No máximo" if degrau >= DEGRAU_MAXIMO else "Mais alto",
-                     ao_clicar=self._volume_mais)
-        if degrau <= 0:
-            menos.get_style_context().add_class("moa-inativo")
-        if degrau >= DEGRAU_MAXIMO:
-            mais.get_style_context().add_class("moa-inativo")
-        barras = caixa_h(4)
-        barras.set_halign(Gtk.Align.CENTER)
-        barras.set_valign(Gtk.Align.CENTER)
-        for k in range(DEGRAU_MAXIMO):
-            barra = Gtk.Box()
-            barra.get_style_context().add_class("moa-barra")
-            if k < degrau:
-                barra.get_style_context().add_class("moa-acesa")
-            barras.pack_start(barra, False, False, 0)
-        linha.pack_start(menos, True, True, 0)
-        linha.pack_start(barras, False, False, 0)
-        linha.pack_start(mais, True, True, 0)
-        volume.pack_start(linha, False, False, 0)
-        legenda = caixa_h(8)
-        legenda.set_halign(Gtk.Align.CENTER)
-        legenda.pack_start(icone("volume", "#FFFFFF", "#2B2118"), False, False, 0)
-        legenda.pack_start(rotulo(f"Volume: {degrau} de {DEGRAU_MAXIMO}", "moa-forte", centro=True),
-                           False, False, 0)
-        volume.pack_start(legenda, False, False, 0)
-        corpo.pack_start(volume, False, False, 0)
-
-        # "Voz mais clara"
-        ligada = self.ctx.player.voz_mais_clara
-        clara = botao(f"Voz mais clara: {'ligada' if ligada else 'desligada'}",
-                      "moa-clara-ligada" if ligada else "moa-clara-desligada",
-                      ao_clicar=self._alternar_voz)
-        corpo.pack_start(clara, False, False, 0)
-
-        corpo.pack_start(botao("Guardar o disco na estante e parar", ao_clicar=self._guardar, icone_nome="disco"),
-                         False, False, 0)
-        return corpo
+        self._foco_pendente = True
 
     def _lista_de_musicas(self) -> Gtk.Widget:
         radio = self.ctx.radio
@@ -334,5 +393,11 @@ class RadioView:
         self.ctx.radio.guardar_o_disco_e_parar()
         self.ctx.session.ir_para(Tela.ESTANTE)
 
+    def ao_entrar(self) -> None:
+        self._foco_pendente = True          # ao chegar nesta tela, o foco vai para Tocar/Pausar
+
     def foco_inicial(self) -> Gtk.Widget | None:
+        if not self._foco_pendente:
+            return None                     # só um valor mudou: o foco fica onde o usuário o deixou
+        self._foco_pendente = False
         return self.botao_principal
