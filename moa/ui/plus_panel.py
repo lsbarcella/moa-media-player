@@ -19,6 +19,7 @@ from gi.repository import Gtk  # noqa: E402
 
 from moa.core import custom_albums  # noqa: E402
 from moa.core.contexto import Contexto  # noqa: E402
+from moa.ui import ornamentos  # noqa: E402
 from moa.ui.widgets import botao, capa_do_disco, caixa_v, limpar, rotulo  # noqa: E402
 
 log = logging.getLogger(__name__)
@@ -34,6 +35,7 @@ class PlusPanel:
         self.raiz.get_style_context().add_class("moa-veu")
         self.painel = caixa_v(12)
         self.painel.get_style_context().add_class("moa-painel")
+        ornamentos.instalar_parafusos(self.painel)
         self.painel.set_halign(Gtk.Align.CENTER)
         self.painel.set_valign(Gtk.Align.CENTER)
         self.raiz.pack_start(self.painel, True, True, 0)

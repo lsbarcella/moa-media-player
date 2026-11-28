@@ -28,7 +28,8 @@ def instalar_parafusos(painel: Gtk.Widget, diametro: int = DIAMETRO_PX, margem: 
 
 def _desenhar_parafusos(painel: Gtk.Widget, cr, diametro: int, margem: int) -> bool:
     largura, altura = painel.get_allocated_width(), painel.get_allocated_height()
-    if largura < 4 * diametro or altura < 4 * diametro:
+    minimo = 2 * (diametro + margem)               # cabem dois parafusos e as margens?
+    if largura < minimo or altura < minimo:
         return False
     paleta = theme.paleta_atual()
     cantos = ((margem, margem), (largura - margem - diametro, margem),

@@ -93,6 +93,7 @@ ALFA_BRILHO_DA_TECLA = 0.30     # brilho branco, só na faixa de cima da tecla (
 ALFA_REALCE_DA_TECLA = 0.90     # fio claro no topo da tecla
 ALFA_SOMBRA_DA_TECLA = 0.18     # sombreado no pé da tecla
 ALFA_TECLA_TRAVADA = 0.14       # a tecla baixada fica um pouco mais escura
+ALFA_REALCE_NA_ESTANTE = 0.12   # realce de um disco sob o mouse, sobre o fundo escuro da estante
 ALFA_VEIO_CLARO = 0.03          # veios claros da madeira (máx. 10%, KTD2)
 ALFA_VEIO_ESCURO = 0.10         # veios escuros da madeira
 
@@ -116,6 +117,9 @@ MATERIAIS = [
              (("black", ALFA_SOMBRA_DA_TECLA),)),
     Material("tecla âmbar Pausar com texto", "ink", ("amber",), (("black", ALFA_SOMBRA_DA_TECLA),)),
     Material("tecla escolhida com texto", "white", ("blue",), (("black", ALFA_SOMBRA_DA_TECLA),)),
+    Material("rótulo branco no fundo da estante (com o realce do mouse)", "white", ("wood_hi", "wood_lo"),
+             (("white", ALFA_REALCE_NA_ESTANTE),)),
+    Material("cabeçalho de metal com título", "ink", ("metal_hi", "metal_lo"), ()),
 ]
 
 
@@ -234,6 +238,50 @@ def _css_do_aparelho(c: dict[str, str], grande: int, modo: str) -> str:
 """
 
 
+def _css_do_movel(c: dict[str, str], modo: str) -> str:
+    """Estante com profundidade, vão côncavo, placas de latão, cartões e painel (mesma luz)."""
+    if modo == "contorno":
+        return f"""
+.moa-placa {{ background-color: {c['white']}; border: 3px solid {c['dark']}; border-radius: 8px; padding: 4px 24px;
+              box-shadow: inset 0 0 0 2px {c['white']}, inset 0 0 0 4px {c['dark']}; }}
+.moa-placa label {{ color: {c['ink']}; font-weight: 800; }}
+.moa-tabua {{ background-color: {c['wood']}; background-image: none; border-bottom: 16px solid {c['white']};
+              padding: 18px 18px 14px 18px; box-shadow: 0 6px 0 {c['dark']}, inset 0 0 0 3px {c['white']}; }}
+.moa-tabua button.moa-disco label {{ color: {c['white']}; font-weight: 800; }}
+.moa-tabua button.moa-disco:hover {{ background-color: transparent; border-color: {c['white']}; }}
+.moa-tabua button.moa-disco:focus {{ outline: 5px solid {c['white']}; outline-offset: 3px; }}
+.moa-vazio {{ background-color: {c['dark']}; border: 4px solid {c['white']}; border-radius: 6px;
+              box-shadow: inset 0 0 0 3px {c['dark']}; }}
+.moa-vazio label {{ color: {c['white']}; font-weight: 800; }}
+.moa-cartao {{ background-color: {c['card']}; border: 3px solid {c['ink']}; border-radius: 14px;
+               padding: 14px 18px; box-shadow: 0 4px 0 {c['ink']}; }}
+.moa-painel {{ background-color: {c['card']}; border: 4px solid {c['ink']}; border-radius: 16px; padding: 24px;
+               box-shadow: 0 4px 0 {c['ink']}; }}
+"""
+    return f"""
+.moa-placa {{ background-color: {c['brass']};
+    background-image: linear-gradient(to bottom, {_rgba(c['brass_hi'], 1)} 0%, {_rgba(c['brass'], 1)} 100%);
+    border: 2px solid {c['brass_lo']}; border-radius: 8px; padding: 4px 24px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 2px 0 rgba(0,0,0,0.35); }}
+.moa-placa label {{ color: {c['ink']}; font-weight: 800; }}
+.moa-tabua {{ background-color: {c['wood']};
+    background-image: linear-gradient(to bottom, rgba(0,0,0,0.45) 0px, rgba(0,0,0,0.15) 14px, rgba(0,0,0,0) 40px),
+                      linear-gradient(to bottom, {_rgba(c['wood_lo'], 1)} 0%, {_rgba(c['wood_hi'], 1)} 100%);
+    border-bottom: 16px solid {c['wood_hi']}; padding: 18px 18px 14px 18px;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.40), inset 0 12px 16px rgba(0,0,0,0.45), inset 0 -2px 0 rgba(255,255,255,0.18); }}
+.moa-tabua button.moa-disco label {{ color: {c['white']}; font-weight: 800; }}
+.moa-tabua button.moa-disco:hover {{ background-color: rgba(255,255,255,{ALFA_REALCE_NA_ESTANTE}); }}
+.moa-tabua button.moa-disco:focus {{ outline: 5px solid {c['white']}; outline-offset: 3px; }}
+.moa-vazio {{ background-color: {c['dark']}; border: 3px solid rgba(0,0,0,0.6); border-radius: 6px;
+    box-shadow: inset 0 8px 14px rgba(0,0,0,0.75), inset 0 -2px 0 rgba(255,255,255,0.14); }}
+.moa-vazio label {{ color: {c['white']}; font-weight: 800; }}
+.moa-cartao {{ background-color: {c['card']}; border: 2px solid {c['line']}; border-radius: 14px;
+    padding: 14px 18px; box-shadow: 0 4px 0 rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.7); }}
+.moa-painel {{ background-color: {c['card']}; border: 5px solid {c['brass_lo']}; border-radius: 16px; padding: 24px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.30), inset 0 2px 0 rgba(255,255,255,0.7), 0 0 0 2px {c['dark']}; }}
+"""
+
+
 def _css_das_teclas(c: dict[str, str], grande: int, modo: str) -> str:
     """CSS das teclas (botões de ação, escolhas e marcações), das lâmpadas e das variantes."""
     b, h, p = BORDA_PX, ALTURA_DA_TECLA_PX, PADDING_TOPO_PX
@@ -337,19 +385,13 @@ label {{ color: {c['ink']}; }}
 {_css_das_teclas(c, grande, modo)}
 
 /* estante */
-.moa-placa {{ background-color: {c['wood']}; border-radius: 8px; padding: 4px 16px; }}
-.moa-placa label {{ color: {c['white']}; font-weight: 800; }}
-.moa-tabua {{ border-bottom: 16px solid {c['wood2']}; padding-bottom: 14px; }}
+{_css_do_movel(c, modo)}
 button.moa-disco {{ min-height: {ALVO_MINIMO_PX}px; background-image: none; background-color: transparent;
                     border: 3px solid transparent; border-radius: 12px; padding: 6px; box-shadow: none; }}
 button.moa-disco:hover {{ background-color: {c['selbg']}; }}
 button.moa-disco:focus {{ outline: 5px solid {c['focus']}; outline-offset: 3px; }}
 button.moa-disco label {{ color: {c['ink']}; font-weight: 800; }}
 .moa-capa {{ border-radius: 6px; box-shadow: 0 3px 0 rgba(0,0,0,.35); }}
-.moa-vazio {{ background-color: {c['dark']}; border: 4px dashed {c['ink2']}; border-radius: 6px; }}
-.moa-vazio label {{ color: {c['white']}; font-weight: 800; }}
-.moa-cartao {{ background-color: {c['card']}; border: 2px solid {c['line']}; border-radius: 14px;
-               padding: 14px 18px; }}
 .moa-continuar {{ border: 3px solid {c['green']}; }}
 .moa-aviso {{ background-color: {c['warn']}; border: 3px solid {c['warnb']}; border-radius: 14px;
               padding: 12px 16px; }}
@@ -397,7 +439,6 @@ button.moa-marcada .moa-caixinha label {{ color: {c['white']}; }}
 
 /* painel do "+" */
 .moa-veu {{ background-color: rgba(30, 25, 19, 0.6); padding: 20px; }}
-.moa-painel {{ background-color: {c['card']}; border: 4px solid {c['ink']}; border-radius: 16px; padding: 20px; }}
 .moa-novo {{ background-color: {c['card']}; border: 4px dashed {c['ink']}; border-radius: 6px; }}
 .moa-mais-grande {{ font-size: {round(48 * e)}px; font-weight: 800; }}
 

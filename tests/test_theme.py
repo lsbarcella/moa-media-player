@@ -216,3 +216,41 @@ def test_existem_moldura_de_metal_grade_e_plaquinha_do_aparelho():
 
 def test_a_nota_do_visor_continua_numa_caixinha_branca():
     assert "background-color: #FFFFFF" in _bloco(theme.gerar_css("normal", "normal"), ".moa-visor .moa-nota-visor")
+
+
+# -- estante com profundidade e telas coerentes (U7, ADR-0024) -------------------------------------
+
+@pytest.mark.parametrize("paleta", [p for p in theme.PALETAS if p != "preto-e-branco"])
+def test_estante_tem_fundo_recuado_e_tampo_com_sombra(paleta):
+    css = theme.gerar_css(paleta, "normal")
+    fundo = _bloco(css, ".moa-tabua")
+    assert "inset" in fundo                                   # o fundo recuado tem sombra por dentro
+    assert "box-shadow" in fundo and "border-bottom" in fundo  # e o tampo tem quina e sombra por fora
+
+
+def test_o_nome_do_disco_na_estante_e_branco_sobre_a_madeira_escura():
+    css = theme.gerar_css("normal", "normal")
+    assert "#FFFFFF" in _bloco(css, ".moa-tabua button.moa-disco label")
+
+
+def test_o_vao_em_uso_no_radio_e_concavo():
+    assert "inset" in _bloco(theme.gerar_css("normal", "normal"), ".moa-vazio")
+
+
+def test_as_placas_dos_titulos_sao_de_latao_com_texto_escuro():
+    css = theme.gerar_css("normal", "normal")
+    assert theme.PALETAS["normal"]["brass"].lower() in _bloco(css, ".moa-placa").lower()
+    assert theme.PALETAS["normal"]["ink"].lower() in _bloco(css, ".moa-placa label").lower()
+
+
+def test_cartoes_e_painel_seguem_a_mesma_luz_do_aparelho():
+    css = theme.gerar_css("normal", "normal")
+    for seletor in (".moa-cartao", ".moa-painel"):
+        bloco = _bloco(css, seletor)
+        assert "inset 0 2px 0" in bloco and "0 4px 0" in bloco, seletor    # realce em cima, sombra rígida embaixo
+
+
+def test_o_preto_e_branco_da_estante_nao_tem_tons():
+    css = theme.gerar_css("preto-e-branco", "normal")
+    for seletor in (".moa-tabua", ".moa-placa", ".moa-cartao"):
+        assert "gradient" not in _bloco(css, seletor), seletor
