@@ -15,7 +15,7 @@ from moa.core.session import Tela  # noqa: E402
 from moa.ui import theme  # noqa: E402
 from moa.ui.widgets import NOMES_DOS_ICONES, PASTA_DOS_ICONES, icone  # noqa: E402
 from tests.test_ui_smoke import app, montar, musica  # noqa: E402,F401  (fixtures)
-from tests.ui_ajuda import botao_com_texto, botoes, desenhar, girar, textos, tem_display  # noqa: E402
+from tests.ui_ajuda import botao_com_texto, botoes, nome_do_botao, desenhar, girar, textos, tem_display  # noqa: E402
 
 pytestmark = pytest.mark.skipif(not tem_display(), reason="sem sessão gráfica (DISPLAY)")
 
@@ -38,7 +38,8 @@ def test_nenhum_botao_de_nenhuma_tela_fica_sem_texto(app):
         ctx.session.ir_para(tela)
         for b in botoes(conteudo.raiz):
             # Botões de disco e de faixa têm o nome como texto; todos precisam de algum.
-            assert [t for t in textos(b) if t.strip()], f"botão sem texto na tela {tela}"
+            # Teclas só com o símbolo de aparelho antigo (volume) têm nome acessível no lugar do texto (ADR-0025).
+            assert [t for t in textos(b) if t.strip()] or nome_do_botao(b), f"botão sem texto na tela {tela}"
 
 
 def test_botao_configuracoes_em_toda_tela_menos_na_propria(app):

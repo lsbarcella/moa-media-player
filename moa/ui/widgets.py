@@ -48,7 +48,7 @@ def rotulo(texto: str, *classes: str, quebrar: bool = True, centro: bool = False
 
 PASTA_DOS_ICONES = Path(__file__).parent / "icons"
 NOMES_DOS_ICONES = ("tocar", "pausar", "anterior", "proxima", "volume", "voltar",
-                    "engrenagem", "mais", "lixeira", "disco")
+                    "engrenagem", "mais", "lixeira", "disco", "volume_menos", "volume_mais")
 LADO_DO_ICONE = 32
 
 
@@ -59,7 +59,8 @@ def icone(nome: str, cor: str = "#1E1913", fundo: str = "#FFFFFF",
           lado: int = LADO_DO_ICONE) -> Gtk.Image:
     """Um ícone de aparelho antigo (SVG original do projeto), na cor pedida.
 
-    Ícone nunca vem sozinho: sempre acompanha um texto (restrição do projeto).
+    Ícone vem junto de um texto, exceto nos símbolos de aparelho antigo (transporte e volume), que
+    podem ficar sozinhos com nome acessível (`botao_so_com_icone`, ADR-0025).
     O SVG é lido e convertido uma vez só por combinação (nome, cores, tamanho): uma lista
     com centenas de músicas pede o mesmo ícone centenas de vezes.
     """
@@ -84,7 +85,7 @@ def _converter_icone(nome: str, cor: str, fundo: str, lado: int) -> GdkPixbuf.Pi
 
 
 # Botões de fundo escuro (verde, preto) levam o ícone branco.
-_CLASSES_DE_FUNDO_ESCURO = {"moa-pri", "moa-tocar"}
+_CLASSES_DE_FUNDO_ESCURO = {"moa-pri", "moa-tocar", "moa-pausar"}
 
 
 def botao(texto: str, *classes: str, ao_clicar=None, icone_nome: str | None = None) -> Gtk.Button:
@@ -199,6 +200,33 @@ def classe(widget: Gtk.Widget, nome: str, ligada: bool) -> None:
     contexto = widget.get_style_context()
     if contexto.has_class(nome) != ligada:
         (contexto.add_class if ligada else contexto.remove_class)(nome)
+
+
+def botao_so_com_icone(icone_nome: str, nome_acessivel: str, *classes: str, ao_clicar=None,
+                      lado: int = 44) -> Gtk.Button:
+    """Tecla só com o símbolo de aparelho antigo (ex.: volume com − ou +), sem texto visível (ADR-0025).
+
+    O texto continua existindo como NOME ACESSÍVEL (o que um leitor de tela lê), e a dica aparece
+    ao parar o mouse, mas nada depende disso: o símbolo é a informação. `definir_nome_da_tecla`
+    muda o nome (ex.: "Volume já no máximo").
+    """
+    b = Gtk.Button()
+    b.add(icone(icone_nome, "#16181A", "#FFFFFF", lado))
+    contexto = b.get_style_context()
+    contexto.add_class("moa-btn")
+    for classe_ in classes:
+        contexto.add_class(classe_)
+    definir_nome_da_tecla(b, nome_acessivel)
+    if ao_clicar is not None:
+        b.connect("clicked", lambda _b: ao_clicar())
+    return b
+
+
+def definir_nome_da_tecla(tecla: Gtk.Button, nome: str) -> None:
+    """Nome acessível da tecla (e dica), só se mudou."""
+    if tecla.get_accessible().get_name() != nome:
+        tecla.get_accessible().set_name(nome)
+        tecla.set_tooltip_text(nome)
 
 
 def tecla_travavel(texto: str, ligada: bool, *classes: str, ao_clicar=None,

@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moa — barra do rádio nas outras telas (preview)</title>
+<style>
+/* Preview em HTML (não é o app). As cores vêm de moa/ui/theme.py. */
+:root{
+  --bg:#FAF5E9; --ink:#1E1913; --card:#FFFFFF; --wood:#4A2A12; --wood-hi:#5E3518; --wood-lo:#3D220F;
+  --brass-hi:#E8CF8A; --brass:#D6B25C; --brass-lo:#9C7A2A; --metal-hi:#EDEAE2; --metal-lo:#B9B3A6;
+  --visor-hi:#FFF1C8; --visor-lo:#F2CF76; --green:#1F4D2B; --amber:#FFD27A; --lampon:#B7E4A8; --lampoff:#4A3B2C;
+  --dark:#2B2118; --white:#FFFFFF; --key-lo:#E4D4AE; --btn:#F6E9D2;
+  --fs:20px;
+}
+body.vermelho-verde{--green:#14407A;--lampon:#A8D4FF}
+body.azul-amarelo{--green:#8A1538;--amber:#FFC2B0;--lampon:#FFD0DC}
+body.pb{--bg:#FFFFFF;--wood:#000;--wood-hi:#000;--wood-lo:#000;--brass-hi:#fff;--brass:#fff;--brass-lo:#000;
+  --metal-hi:#fff;--metal-lo:#fff;--visor-hi:#fff;--visor-lo:#fff;--green:#000;--amber:#fff;--lampon:#fff;--key-lo:#fff;--btn:#fff}
+body.l-grande{--fs:24px} body.l-maior{--fs:28px}
+*{box-sizing:border-box}
+body{margin:0;background:#E9E2D2;color:var(--ink);font:600 16px/1.4 system-ui,sans-serif}
+header.topo{padding:18px 24px;background:#fff;border-bottom:3px solid #8B5A2B}
+header.topo h1{margin:0 0 4px;font-size:24px}
+header.topo p{margin:0;color:#4a4036;max-width:80ch}
+.controles{display:flex;flex-wrap:wrap;gap:18px;padding:12px 24px;background:#fff;border-bottom:1px solid #ccc;position:sticky;top:0;z-index:5}
+.controles b{margin-right:6px}
+.controles button{font:700 15px system-ui;padding:6px 12px;margin:2px;border:2px solid #333;border-radius:8px;background:#fff;cursor:pointer}
+.controles button[aria-pressed=true]{background:#1E1913;color:#fff}
+main{padding:24px;display:grid;gap:34px;max-width:1180px;margin:auto}
+section.op h2{margin:0 0 4px;font-size:21px}
+section.op .resumo{margin:0 0 10px;color:#4a4036;max-width:90ch}
+.prosecontras{display:flex;gap:22px;flex-wrap:wrap;font-size:15px;margin-top:10px}
+.prosecontras div{flex:1 1 280px;background:#fff;border-radius:10px;padding:8px 12px}
+.prosecontras .p b{color:#1F6B2B}.prosecontras .c b{color:#8A1538}
+
+/* a "janela": uma tela qualquer com a barra embaixo */
+.janela{width:100%;max-width:1100px;border:3px solid #2B2118;border-radius:10px;overflow:hidden;background:var(--bg);box-shadow:0 6px 0 rgba(0,0,0,.25)}
+.janela .tit{background:#d9d3c5;padding:6px 12px;font:700 14px system-ui;display:flex;justify-content:space-between}
+.tela{height:150px;padding:14px 22px;font-size:var(--fs);background:var(--bg)}
+.tela .h{font-weight:800;font-size:calc(var(--fs)*1.4)}
+.tela .l{display:flex;gap:14px;margin-top:10px}
+.cd{width:72px;height:72px;border-radius:6px;border:2px solid var(--dark);background:#7A1F2E;color:#fff;display:grid;place-items:center;font:800 15px system-ui;
+  box-shadow:inset 12px 0 0 var(--dark),inset 0 2px 0 rgba(255,255,255,.4)}
+
+/* peças comuns */
+.lamp{width:20px;height:20px;border-radius:50%;border:3px solid var(--metal-lo);background:var(--lampoff);box-shadow:0 0 0 2px var(--dark),inset 0 -2px 0 rgba(0,0,0,.35);flex:none;
+  background-image:radial-gradient(circle at 35% 30%,rgba(255,255,255,.55),rgba(255,255,255,0) 40%)}
+.lamp.on{background-color:var(--lampon);box-shadow:0 0 0 2px var(--dark),0 0 12px var(--lampon)}
+.tecla{font:800 var(--fs)/1.1 system-ui;color:var(--ink);padding:8px 18px 8px;min-height:64px;min-width:64px;
+  border:3px solid var(--dark);border-bottom-width:9px;border-radius:14px;background:var(--key-lo);cursor:default;
+  background-image:linear-gradient(rgba(255,255,255,.9),rgba(255,255,255,0) 60%),linear-gradient(rgba(0,0,0,0) 45%,rgba(0,0,0,.18));
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+body.pb .tecla{background-image:none;box-shadow:inset 0 0 0 2px #fff,inset 0 0 0 4px #000}
+.tecla.tocar{background-color:var(--green);color:#fff;border-radius:40px;min-height:76px;
+  background-image:linear-gradient(rgba(255,255,255,.3) 0,rgba(255,255,255,.3) 6px,rgba(255,255,255,0) 8px),linear-gradient(rgba(0,0,0,0) 45%,rgba(0,0,0,.18))}
+body.pb .tecla.tocar{background-image:none;box-shadow:inset 0 0 0 2px #fff,inset 0 0 0 4px #000}
+.tecla.ver{background:var(--btn)}
+.rotulo-aviso{font:700 13px system-ui;opacity:.85}
+.capa{width:64px;height:64px;flex:none;border-radius:5px;border:2px solid var(--metal-lo);background:#7A1F2E;color:#fff;display:grid;place-items:center;font:800 14px system-ui;
+  box-shadow:inset 11px 0 0 var(--dark),0 0 0 1px var(--dark);position:relative}
+.capa.g{width:84px;height:84px}
+.t{color:#fff}.t small{display:block;font:600 calc(var(--fs)*.85)/1.25 system-ui;opacity:.95}
+.t strong{font:800 var(--fs)/1.2 system-ui}
+
+/* madeira com latão */
+.madeira{background-color:var(--wood);
+  background-image:repeating-linear-gradient(to bottom,rgba(0,0,0,.10) 0 1px,rgba(0,0,0,0) 2px,rgba(255,255,255,.03) 5px,rgba(255,255,255,0) 7px,rgba(0,0,0,0) 11px),linear-gradient(var(--wood-hi),var(--wood-lo));}
+body.pb .madeira{background-image:none}
+.latao-topo{border-top:5px solid var(--brass);box-shadow:inset 0 2px 0 var(--brass-lo),0 -3px 0 rgba(0,0,0,.35)}
+body.pb .latao-topo{border-top:5px solid #fff;box-shadow:inset 0 3px 0 #000}
+.parafuso{position:absolute;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--brass-hi),var(--brass-lo));border:1px solid var(--dark)}
+body.pb .parafuso{background:#fff;border:2px solid #000}
+
+/* A+D */
+.barraAD{position:relative;display:flex;align-items:center;gap:16px;padding:12px 26px}
+.barraAD .estado{display:flex;align-items:center;gap:10px;color:#fff;font:800 var(--fs) system-ui;min-width:150px}
+.barraAD .texto{flex:1;min-width:0}
+.barraAD .texto strong{font-size:calc(var(--fs)*1.15)}
+.barraAD .acoes{display:flex;gap:10px;flex-wrap:wrap}
+.janela.maior .barraAD{flex-wrap:wrap}
+
+/* B */
+.barraB{position:relative;display:flex;align-items:center;gap:14px;padding:12px 22px;flex-wrap:wrap}
+.visorB{flex:1;min-width:260px;border:5px solid var(--brass);border-radius:12px;padding:8px 14px;color:var(--ink);
+  background:linear-gradient(var(--visor-hi),var(--visor-lo));box-shadow:inset 0 0 12px rgba(0,0,0,.3),inset 0 2px 0 rgba(255,255,255,.7),0 0 0 2px var(--brass-lo)}
+body.pb .visorB{background:#fff;border-color:#000;box-shadow:inset 0 0 0 3px #fff}
+.visorB .linha{display:flex;align-items:center;gap:10px;font:800 var(--fs) system-ui}
+.visorB small{display:block;font:600 calc(var(--fs)*.85) system-ui}
+.metal{display:flex;gap:8px;padding:8px;border-radius:14px;border:3px solid var(--dark);background-color:var(--metal-lo);
+  background-image:repeating-linear-gradient(to right,rgba(255,255,255,.22) 0 1px,rgba(255,255,255,0) 2px,rgba(0,0,0,.06) 3px,rgba(0,0,0,0) 4px),linear-gradient(var(--metal-hi),var(--metal-lo))}
+body.pb .metal{background:#fff;background-image:none;box-shadow:inset 0 0 0 2px #fff,inset 0 0 0 4px #000}
+
+.barraBE{position:relative;padding:12px 22px 10px}
+.barraBE .linha1{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.barraBE .prog{display:flex;align-items:center;gap:14px;margin-top:6px;min-height:64px;color:#fff;font:800 calc(var(--fs)*.9) system-ui;cursor:pointer}
+.barraBE .prog .trilho{flex:1;height:30px;border-radius:15px;background:#fff;border:3px solid var(--dark);overflow:hidden;box-shadow:inset 0 3px 5px rgba(0,0,0,.35)}
+.barraBE .prog .cheio{height:100%;width:38%;border-radius:12px;background:var(--green);box-shadow:inset 0 3px 0 rgba(255,255,255,.3)}
+.barraBE .prog:hover .trilho{border-color:var(--brass)}
+body.pb .barraBE .prog .cheio{background:#000;box-shadow:none}
+body.pb .barraBE .prog .trilho{border-color:#fff;box-shadow:inset 0 0 0 3px #000}
+.barraBE .dica{color:var(--brass-hi);font:700 calc(var(--fs)*.75) system-ui;text-align:center}
+body.pb .barraBE .dica{color:#fff}
+/* C */
+.barraC{position:relative;margin-top:-10px;border-radius:18px 18px 0 0;padding:18px 26px 12px;box-shadow:0 -8px 12px rgba(0,0,0,.25)}
+.barraC .alca{position:absolute;left:50%;top:6px;transform:translateX(-50%);width:90px;height:8px;border-radius:5px;background:var(--brass);border:1px solid var(--brass-lo)}
+.barraC .linha{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.barraC .dica{color:var(--brass-hi);font:700 calc(var(--fs)*.8) system-ui}
+body.pb .barraC .dica{color:#fff}
+
+/* D */
+.barraD{display:flex;align-items:center;gap:18px;padding:12px 26px;position:relative}
+.barraD .t strong{font-size:calc(var(--fs)*1.35)}
+.barraD .abrir{display:flex;gap:16px;align-items:center;flex:1;min-width:0}
+.barraD .abrir small.ir{display:inline-block;margin-top:2px;padding:1px 10px;border-radius:6px;background:var(--brass);color:var(--ink);font:800 14px system-ui}
+body.pb .barraD .abrir small.ir{border:2px solid #fff;background:#000;color:#fff}
+
+/* E */
+.progresso{display:flex;align-items:center;gap:14px;margin:0 26px;color:#fff;font:700 calc(var(--fs)*.85) system-ui}
+.progresso .trilho{flex:1;height:26px;border-radius:13px;background:#fff;border:3px solid var(--dark);overflow:hidden;box-shadow:inset 0 3px 5px rgba(0,0,0,.35)}
+.progresso .cheio{height:100%;width:38%;border-radius:10px;background:var(--green);box-shadow:inset 0 3px 0 rgba(255,255,255,.3)}
+body.pb .progresso .cheio{background:#000;box-shadow:none}
+body.pb .progresso .trilho{border-color:#fff;box-shadow:inset 0 0 0 3px #000}
+.vazio-nota{color:#fff;font-weight:700;padding:14px 26px}
+</style>
+</head>
+<body>
+<header class="topo">
+  <h1>Barra do rádio nas outras telas — escolhida: B + E</h1>
+  <p>É um <b>preview em HTML</b>, não o app: serve para escolher. Troque a paleta e o tamanho da letra abaixo para ver como cada ideia se comporta.
+     Cada desenho mostra a barra no pé de uma tela qualquer (aqui, a Estante). Hoje a barra é uma tira de madeira lisa com uma linha de texto e dois botões.</p>
+</header>
+
+<div class="controles">
+  <div><b>Paleta:</b>
+    <button data-p="" aria-pressed="true">Padrão</button><button data-p="vermelho-verde">Vermelho-verde</button>
+    <button data-p="azul-amarelo">Azul-amarelo</button><button data-p="pb">Preto e branco</button></div>
+  <div><b>Letra:</b>
+    <button data-l="" aria-pressed="true">Normal</button><button data-l="l-grande">Grande</button><button data-l="l-maior">Maior</button></div>
+  <div><b>Estado:</b>
+    <button data-e="tocando" aria-pressed="true">Tocando</button><button data-e="pausado">Pausado</button></div>
+</div>
+
+<main>
+
+<section class="op" id="BE">
+  <h2>B + E (sua escolha) — visor, teclas do rádio e barra de progresso clicável</h2>
+  <p class="resumo">Em cima: o visor âmbar com o estado, a música e "Faixa X de Y", a moldura de metal com <b>Anterior, Tocar/Pausar e Próxima</b>, e o botão "Abrir o rádio". Embaixo: a barra de progresso comum, com o tempo nas pontas. <b>Clique na barra</b> (neste preview funciona) para ir ao ponto da música.</p>
+  <div class="janela"><div class="tit"><span>Moa Media Player</span><span>—  □  ✕</span></div>
+    <div class="tela"><div class="h">Minha estante</div><div class="l"><div class="cd">Disco 1</div><div class="cd" style="background:#1F4D6B">Disco 2</div></div></div>
+    <div class="madeira latao-topo barraBE">
+      <span class="parafuso" style="left:8px;top:8px"></span><span class="parafuso" style="right:8px;top:8px"></span>
+      <div class="linha1">
+        <div class="visorB"><div class="linha"><span class="lamp on e-lamp"></span><span class="e-palavra">TOCANDO</span></div>
+          <strong>Música 3</strong><small>Faixa 3 de 12 · Disco 1</small></div>
+        <div class="metal"><span class="tecla">⏮ Anterior</span><span class="tecla tocar"><span class="e-icone">❚❚</span> <span class="e-tocar">Pausar</span></span><span class="tecla">Próxima ⏭</span></div>
+        <span class="tecla ver">Abrir o rádio</span>
+      </div>
+      <div class="prog" id="prog" title="Clique para ir a este ponto da música"><span id="t-atual">1:24</span><div class="trilho"><div class="cheio" id="cheio"></div></div><span>3:42</span></div>
+      <div class="dica">Clique na barra para ir a outro ponto da música</div>
+    </div>
+  </div>
+  <div class="prosecontras"><div class="p"><b>Prós</b><br>Tudo no pé da tela: pula faixa, pausa, vê o tempo e vai ao ponto que quiser. A barra comum é familiar. A área de clique tem 64 px de altura, mais alta que o desenho da barra.</div>
+  <div class="c"><b>Contras</b><br>É a barra mais alta de todas (duas linhas); em letra "Maior" as teclas passam para uma terceira linha. A barra anda a cada segundo (redesenho pequeno e contínuo, a medir no Pentium).</div></div>
+  <p class="resumo" style="margin-top:8px"><b>Regra do projeto:</b> um clique ativa; nada obriga a arrastar. Aqui, um clique pula para o ponto. Arrastar o marcador seria um extra, não obrigatório. As setas esquerda e direita continuam sendo Anterior e Próxima, então a barra não responde ao teclado (para ir ao ponto sem mouse, só pelo rádio).</p>
+</section>
+
+<section class="op" id="hoje">
+  <h2>Hoje (para comparar)</h2>
+  <p class="resumo">Tira de madeira lisa: uma linha de texto e dois botões. Não mostra capa, faixa X de Y nem diz de relance se está tocando.</p>
+  <div class="janela"><div class="tit"><span>Moa Media Player</span><span>—  □  ✕</span></div>
+    <div class="tela"><div class="h">Minha estante</div><div class="l"><div class="cd">Disco 1</div><div class="cd" style="background:#1F4D6B">Disco 2</div></div></div>
+    <div class="madeira" style="display:flex;align-items:center;gap:14px;padding:8px 20px;flex-wrap:wrap">
+      <span class="t" style="flex:1;font:800 var(--fs) system-ui">Tocando agora: Música 3 (Disco 1)</span>
+      <span class="tecla" style="min-height:64px;background:var(--btn)"><span class="e-icone">❚❚</span> <span class="e-tocar">Pausar</span></span>
+      <span class="tecla" style="min-height:64px;background:var(--btn)">Abrir o rádio</span>
+    </div>
+  </div>
+</section>
+
+<section class="op" id="A">
+  <h2>A + D (recomendada) — mini-rádio com capa, estado em palavra e um botão grande</h2>
+  <p class="resumo">Madeira com moldura de latão e parafusos, lâmpada-piloto com o estado em palavra, capinha em caixa de CD, nome da música em destaque e <b>um</b> botão grande Tocar/Pausar. "Abrir o rádio" é um botão com texto.</p>
+  <div class="janela"><div class="tit"><span>Moa Media Player</span><span>—  □  ✕</span></div>
+    <div class="tela"><div class="h">Minha estante</div><div class="l"><div class="cd">Disco 1</div><div class="cd" style="background:#1F4D6B">Disco 2</div></div></div>
+    <div class="madeira latao-topo barraAD">
+      <span class="parafuso" style="left:8px;top:8px"></span><span class="parafuso" style="right:8px;top:8px"></span>
+      <div class="estado"><span class="lamp on e-lamp"></span><span class="e-palavra">TOCANDO</span></div>
+      <div class="capa g">Disco 1</div>
+      <div class="texto t"><strong>Música 3</strong><small>Faixa 3 de 12 · Disco 1</small></div>
+      <div class="acoes"><span class="tecla tocar"><span class="e-icone">❚❚</span> <span class="e-tocar">Pausar</span></span><span class="tecla ver">Abrir o rádio</span></div>
+    </div>
+  </div>
+  <div class="prosecontras"><div class="p"><b>Prós</b><br>Reconhece-se o rádio de relance. O estado fica claro (lâmpada e palavra). Barato: reaproveita lâmpada, latão e capa.</div>
+  <div class="c"><b>Contras</b><br>A barra cresce uns 30 px. Sem "Próxima": para pular de faixa é preciso abrir o rádio.</div></div>
+</section>
+
+<section class="op" id="B">
+  <h2>B — mini-visor âmbar com as três teclas do rádio</h2>
+  <p class="resumo">A frase fica no vidro âmbar e as teclas Anterior, Tocar/Pausar e Próxima ficam na moldura de metal, como no rádio grande. O botão "Abrir o rádio" fica de fora.</p>
+  <div class="janela"><div class="tit"><span>Moa Media Player</span><span>—  □  ✕</span></div>
+    <div class="tela"><div class="h">Minha estante</div><div class="l"><div class="cd">Disco 1</div><div class="cd" style="background:#1F4D6B">Disco 2</div></div></div>
+    <div class="madeira latao-topo barraB">
+      <div class="visorB"><div class="linha"><span class="lamp on e-lamp"></span><span class="e-palavra">TOCANDO</span></div>
+        <strong>Música 3</strong><small>Faixa 3 de 12 · Disco 1</small></div>
+      <div class="metal"><span class="tecla">⏮ Anterior</span><span class="tecla tocar"><span class="e-icone">❚❚</span> <span class="e-tocar">Pausar</span></span><span class="tecla">Próxima ⏭</span></div>
+      <span class="tecla ver">Abrir o rádio</span>
+    </div>
+  </div>
+  <div class="prosecontras"><div class="p"><b>Prós</b><br>Pula de faixa sem sair da tela. É a versão mais fiel ao aparelho.</div>
+  <div class="c"><b>Contras</b><br>Quatro botões de 64 px no pé da tela. Em letra "Maior" a barra vira duas linhas e come espaço da tela.</div></div>
+</section>
+
+<section class="op" id="C">
+  <h2>C — gaveta: a barra é a ponta do rádio, embutida na base da janela</h2>
+  <p class="resumo">A barra tem uma alça e uma sombra para cima, como se o rádio estivesse guardado ali. Clicar em qualquer ponto abre o rádio; o botão "Abrir o rádio" continua visível.</p>
+  <div class="janela"><div class="tit"><span>Moa Media Player</span><span>—  □  ✕</span></div>
+    <div class="tela"><div class="h">Minha estante</div><div class="l"><div class="cd">Disco 1</div><div class="cd" style="background:#1F4D6B">Disco 2</div></div></div>
+    <div class="madeira latao-topo barraC"><span class="alca" style="position:absolute"></span><span class="parafuso" style="left:10px;top:12px"></span><span class="parafuso" style="right:10px;top:12px"></span>
+      <div class="linha"><span class="lamp on e-lamp"></span>
+        <span class="t" style="flex:1"><strong><span class="e-palavra">TOCANDO</span> · Música 3</strong><small>Faixa 3 de 12 · Disco 1</small></span>
+        <span class="tecla"><span class="e-icone">❚❚</span> <span class="e-tocar">Pausar</span></span><span class="tecla ver">Abrir o rádio</span></div>
+      <div class="dica">Toque em qualquer ponto desta gaveta para abrir o rádio</div>
+    </div>
+  </div>
+  <div class="prosecontras"><div class="p"><b>Prós</b><br>A barra inteira é um alvo grande, bom para quem erra o clique. A imagem "gaveta do rádio" é fácil de entender.</div>
+  <div class="c"><b>Contras</b><br>"Clique em qualquer lugar" é menos óbvio que um botão com texto (por isso a dica e o botão ficam). A barra fica mais alta.</div></div>
+</section>
+
+<section class="op" id="D">
+  <h2>D — o essencial, grande</h2>
+  <p class="resumo">Capa grande, nome da música em letra de título, disco por baixo e um único botão Tocar/Pausar. Clicar na capa ou no nome abre o rádio, com a etiqueta "Ir ao rádio" para não ficar escondido.</p>
+  <div class="janela"><div class="tit"><span>Moa Media Player</span><span>—  □  ✕</span></div>
+    <div class="tela"><div class="h">Minha estante</div><div class="l"><div class="cd">Disco 1</div><div class="cd" style="background:#1F4D6B">Disco 2</div></div></div>
+    <div class="madeira latao-topo barraD">
+      <div class="abrir"><div class="capa g">Disco 1</div>
+        <div class="t"><strong>Música 3</strong><small>Disco 1 · <span class="e-palavra-min">tocando</span></small><small class="ir">Ir ao rádio ▸</small></div></div>
+      <span class="tecla tocar"><span class="e-icone">❚❚</span> <span class="e-tocar">Pausar</span></span>
+    </div>
+  </div>
+  <div class="prosecontras"><div class="p"><b>Prós</b><br>A mais limpa; letras maiores; funciona bem na tela pequena.</div>
+  <div class="c"><b>Contras</b><br>Só "Tocar/Pausar": para trocar de faixa é preciso abrir o rádio. O estado em palavra é pequeno (só a lâmpada falta).</div></div>
+</section>
+
+<section class="op" id="E">
+  <h2>E — barra de progresso no topo (acrescenta a qualquer uma)</h2>
+  <p class="resumo">Mostrada sobre a ideia A. A barra comum de qualquer aplicativo: trilho, preenchimento e o tempo decorrido e total nas pontas. Só mostra, não é clicável (essa decisão continua sua).</p>
+  <div class="janela"><div class="tit"><span>Moa Media Player</span><span>—  □  ✕</span></div>
+    <div class="tela"><div class="h">Minha estante</div><div class="l"><div class="cd">Disco 1</div><div class="cd" style="background:#1F4D6B">Disco 2</div></div></div>
+    <div class="madeira latao-topo" style="padding-top:6px">
+      <div class="progresso"><span>1:24</span><div class="trilho"><div class="cheio"></div></div><span>3:42</span></div>
+      <div class="barraAD" style="padding-top:2px">
+        <div class="estado"><span class="lamp on e-lamp"></span><span class="e-palavra">TOCANDO</span></div>
+        <div class="capa g">Disco 1</div>
+        <div class="texto t"><strong>Música 3</strong><small>Faixa 3 de 12 · Disco 1</small></div>
+        <div class="acoes"><span class="tecla tocar"><span class="e-icone">❚❚</span> <span class="e-tocar">Pausar</span></span><span class="tecla ver">Abrir o rádio</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="prosecontras"><div class="p"><b>Prós</b><br>Dá noção de "quanto falta" e todo mundo já conhece. Tempos em letra legível nas pontas.</div>
+  <div class="c"><b>Contras</b><br>É mais um elemento na barra e anda a cada segundo (um pequeno redesenho contínuo, a medir no Pentium). Ficaria só no rádio e na barra, nunca nas outras telas.</div></div>
+</section>
+
+<section class="op" id="vazio">
+  <h2>Quando não há nada tocando</h2>
+  <p class="resumo">Hoje a barra some. Duas alternativas para você escolher:</p>
+  <div class="janela"><div class="tit"><span>Moa Media Player</span><span>—  □  ✕</span></div>
+    <div class="tela" style="height:90px"><div class="h">Minha estante</div></div>
+    <div class="madeira latao-topo vazio-nota" style="display:flex;gap:12px;align-items:center"><span class="lamp"></span><span>1) <b>Some</b> (como hoje)  ·  2) <b>PARADO — escolha um disco na estante</b> (lâmpada apagada, sem botões)</span></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+const b=document.body;
+function marca(grupo,el){document.querySelectorAll('['+grupo+']').forEach(x=>x.setAttribute('aria-pressed',x===el));}
+document.querySelectorAll('[data-p]').forEach(x=>x.onclick=()=>{b.classList.remove('vermelho-verde','azul-amarelo','pb');if(x.dataset.p)b.classList.add(x.dataset.p);marca('data-p',x)});
+document.querySelectorAll('[data-l]').forEach(x=>x.onclick=()=>{b.classList.remove('l-grande','l-maior');if(x.dataset.l)b.classList.add(x.dataset.l);marca('data-l',x)});
+document.querySelectorAll('[data-e]').forEach(x=>x.onclick=()=>{
+  const tocando=x.dataset.e==='tocando';
+  document.querySelectorAll('.e-tocar').forEach(e=>e.textContent=tocando?'Pausar':'Tocar');
+  document.querySelectorAll('.e-icone').forEach(e=>e.textContent=tocando?'❚❚':'▶');
+  document.querySelectorAll('.e-palavra').forEach(e=>e.textContent=tocando?'TOCANDO':'PAUSADO');
+  document.querySelectorAll('.e-palavra-min').forEach(e=>e.textContent=tocando?'tocando':'pausado');
+  document.querySelectorAll('.e-lamp').forEach(e=>e.classList.toggle('on',tocando));
+  marca('data-e',x)});
+const prog=document.getElementById('prog');
+if(prog){prog.addEventListener('click',ev=>{const t=prog.querySelector('.trilho').getBoundingClientRect();
+  const f=Math.min(1,Math.max(0,(ev.clientX-t.left)/t.width));document.getElementById('cheio').style.width=(f*100)+'%';
+  const seg=Math.round(f*222);document.getElementById('t-atual').textContent=Math.floor(seg/60)+':'+String(seg%60).padStart(2,'0');});}
+</script>
+</body>
+</html>

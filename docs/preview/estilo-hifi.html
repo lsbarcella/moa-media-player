@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moa — estilo hi-fi (preview)</title>
+<style>
+/* Preview em HTML (não é o app). Base: teclas de metal cinza com bisel, dentro de bandejas pretas
+   (referência enviada pelo autor em 28/11/2026). Os tons viram tokens em moa/ui/theme.py. */
+:root{
+  --bg:#F2F2EF; --ink:#16181A; --ink2:#3C4146; --card:#FFFFFF; --line:#B9BBBD;
+  --case:#26282B; --case-hi:#3A3D41; --tray:#0F1011; --tray-edge:#4A4D52;
+  --key-hi:#E4E4E1; --key:#C4C4C0; --key-lo:#9E9E9A; --key-edge:#F6F6F4; --key-shadow:#5B5B58;
+  --keyon-hi:#8C8C87; --keyon:#74746F; --keyon-lo:#62625E;
+  --glass-hi:#FFF1C8; --glass-lo:#F2CF76; --go:#1F4D2B; --lampon:#B7E4A8; --lampoff:#4A4F54;
+  --plate:#D5D6D8; --plate-lo:#A7A9AC; --white:#fff; --fs:20px; --danger:#8A1538; --focus:#14407A;
+}
+body.vermelho-verde{--go:#14407A;--lampon:#A8D4FF}
+body.azul-amarelo{--go:#8A1538;--lampon:#FFD0DC;--glass-hi:#FFE1D6;--glass-lo:#FFC2B0}
+body.pb{--bg:#fff;--case:#000;--case-hi:#000;--tray:#000;--tray-edge:#fff;--key-hi:#fff;--key:#fff;--key-lo:#fff;--key-edge:#fff;--key-shadow:#000;
+  --keyon-hi:#000;--keyon:#000;--keyon-lo:#000;--glass-hi:#fff;--glass-lo:#fff;--go:#000;--lampon:#fff;--plate:#fff;--plate-lo:#fff;--line:#000}
+body.l-grande{--fs:24px} body.l-maior{--fs:28px}
+*{box-sizing:border-box}
+body{margin:0;background:#DEDEDA;color:var(--ink);font:600 16px/1.4 system-ui,sans-serif}
+.topo{padding:16px 24px;background:#fff;border-bottom:3px solid #44484d}.topo h1{margin:0 0 4px;font-size:24px}.topo p{margin:0;color:#3c4146;max-width:90ch}
+.controles{display:flex;flex-wrap:wrap;gap:18px;padding:10px 24px;background:#fff;border-bottom:1px solid #bbb;position:sticky;top:0;z-index:9}
+.controles button{font:700 15px system-ui;padding:6px 12px;margin:2px;border:2px solid #333;border-radius:8px;background:#fff;cursor:pointer}
+.controles button[aria-pressed=true]{background:#16181A;color:#fff}
+main{max-width:1180px;margin:auto;padding:22px;display:grid;gap:30px}
+h2{margin:0 0 4px;font-size:21px}.res{margin:0 0 10px;color:#3c4146;max-width:92ch}
+.janela{width:100%;border:3px solid #16181A;border-radius:10px;overflow:hidden;background:var(--bg);box-shadow:0 6px 0 rgba(0,0,0,.25)}
+.tit{background:#cfd0cc;padding:6px 12px;font:700 14px system-ui;display:flex;justify-content:space-between}
+.cab{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;background:var(--card);border-bottom:3px solid var(--case);font-size:calc(var(--fs)*1.4);font-weight:800}
+.corpo{padding:18px 22px;font-size:var(--fs)}
+
+/* TECLA de metal com bisel (a base do estilo) */
+.tecla{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-width:64px;min-height:64px;padding:8px 20px;
+  font:800 var(--fs)/1.15 system-ui;color:var(--ink);text-align:center;cursor:default;border-radius:9px;
+  border:2px solid var(--key-shadow);border-top-color:var(--key-edge);border-left-color:var(--key-edge);
+  background-color:var(--key);
+  background-image:radial-gradient(ellipse at 50% 100%,rgba(255,255,255,.55) 0,rgba(255,255,255,0) 65%),linear-gradient(var(--key-hi),var(--key) 55%,var(--key-lo));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -3px 0 rgba(0,0,0,.18),0 2px 0 rgba(0,0,0,.55)}
+.tecla .ic{font-size:calc(var(--fs)*1.3);line-height:1}
+.tecla.on,.tecla:active{background-color:var(--keyon);color:#fff;border-color:#3d3d3a;border-bottom-color:var(--key-edge);border-right-color:var(--key-edge);
+  background-image:radial-gradient(ellipse at 50% 0,rgba(0,0,0,.35) 0,rgba(0,0,0,0) 70%),linear-gradient(var(--keyon-lo),var(--keyon) 40%,var(--keyon-hi));
+  box-shadow:inset 0 3px 6px rgba(0,0,0,.6);padding-top:11px;padding-bottom:5px}
+.tecla.go{background-color:var(--go);color:#fff;min-height:76px;
+  background-image:radial-gradient(ellipse at 50% 100%,rgba(255,255,255,.28) 0,rgba(255,255,255,0) 65%),linear-gradient(rgba(255,255,255,.3) 0,rgba(255,255,255,.3) 6px,rgba(255,255,255,0) 8px)}
+body.pb .tecla{background-image:none;box-shadow:inset 0 0 0 2px #fff,inset 0 0 0 4px #000}
+body.pb .tecla.on{background:#000;color:#fff;box-shadow:inset 0 0 0 3px #fff}
+body.pb .tecla.go{background:#000;color:#fff}
+.tecla.col{flex-direction:column;gap:2px}
+
+/* modo "só ícone onde o ícone é de aparelho antigo": transporte e volume */
+.vi{width:calc(var(--fs)*1.6);height:calc(var(--fs)*1.6);flex:none}
+.vi path,.vi rect{fill:currentColor}.vi .s{stroke:currentColor;stroke-width:2.4;stroke-linecap:round;fill:none}
+body.so .conhecida .tx{display:none}
+body.so .conhecida{min-width:88px;gap:0}
+body.so .conhecida .ic,body.so .conhecida .vi{transform:scale(1.25)}
+body.so .conhecida.col{gap:0}
+/* BANDEJA preta que segura as teclas */
+.bandeja{display:inline-flex;gap:6px;padding:7px;border-radius:14px;background:var(--tray);border:2px solid var(--tray-edge);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.35)}
+body.pb .bandeja{background:#000;border:3px solid #fff}
+
+/* GABINETE: grafite escovado com friso prateado */
+.gabinete{position:relative;background-color:var(--case);border:3px solid var(--plate-lo);border-radius:18px;padding:18px;color:#fff;
+  background-image:repeating-linear-gradient(to right,rgba(255,255,255,.035) 0 1px,rgba(0,0,0,0) 2px 4px),linear-gradient(var(--case-hi),var(--case));
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.18),inset 0 0 0 2px #000,0 6px 0 rgba(0,0,0,.4)}
+body.pb .gabinete{background-image:none;border:4px solid #fff;box-shadow:0 0 0 3px #000,inset 0 0 0 3px #000}
+.parafuso{position:absolute;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#eee,#7b7e82);border:1px solid #111}
+body.pb .parafuso{background:#fff;border:2px solid #000}
+.lamp{width:20px;height:20px;border-radius:50%;flex:none;border:3px solid #8b8e92;background:var(--lampoff);box-shadow:0 0 0 2px #000,inset 0 -2px 0 rgba(0,0,0,.35);
+  background-image:radial-gradient(circle at 35% 30%,rgba(255,255,255,.55),rgba(255,255,255,0) 40%)}
+.lamp.on{background-color:var(--lampon);box-shadow:0 0 0 2px #000,0 0 12px var(--lampon)}
+.visor{border:4px solid #000;border-radius:12px;padding:10px 16px;color:var(--ink);background:linear-gradient(var(--glass-hi),var(--glass-lo));
+  box-shadow:inset 0 0 12px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.7),0 0 0 2px var(--plate-lo)}
+body.pb .visor{background:#fff;box-shadow:inset 0 0 0 3px #fff;border-color:#000}
+.visor .est{display:flex;align-items:center;gap:10px;font-weight:800}
+.visor small{display:block;font-weight:600;font-size:calc(var(--fs)*.85)}
+.capa{width:84px;height:84px;flex:none;border-radius:5px;border:2px solid var(--plate-lo);background:#7A1F2E;color:#fff;display:grid;place-items:center;
+  font:800 14px system-ui;box-shadow:inset 12px 0 0 #1a1c1e,0 0 0 1px #000}
+.capa.p{width:72px;height:72px}
+.prog{display:flex;align-items:center;gap:14px;min-height:64px;color:#fff;font:800 calc(var(--fs)*.9) system-ui;cursor:pointer}
+.prog .tr{flex:1;height:30px;border-radius:15px;background:#fff;border:3px solid #000;overflow:hidden;box-shadow:inset 0 3px 5px rgba(0,0,0,.45)}
+.prog .ch{height:100%;width:38%;border-radius:12px;background:var(--go);box-shadow:inset 0 3px 0 rgba(255,255,255,.3)}
+body.pb .prog .ch{background:#000}body.pb .prog .tr{border-color:#fff;box-shadow:inset 0 0 0 3px #000}
+
+/* ESTANTE: fundo recuado grafite, tampo prateado */
+.estante{background-color:var(--case);padding:18px 18px 14px;border-bottom:16px solid var(--plate-lo);display:flex;gap:26px;flex-wrap:wrap;
+  box-shadow:inset 0 12px 16px rgba(0,0,0,.55),0 6px 0 rgba(0,0,0,.4);background-image:linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,0) 40px)}
+body.pb .estante{background:#000;border-bottom-color:#fff;box-shadow:inset 0 0 0 3px #fff}
+.estante .d{color:#fff;text-align:center;font-weight:800;width:150px}
+.cd{width:130px;height:130px;margin:0 auto 6px;border-radius:5px;border:2px solid var(--plate-lo);color:#fff;display:grid;place-items:center;font:800 18px system-ui;
+  box-shadow:inset 14px 0 0 #15171a,0 3px 0 rgba(0,0,0,.5);background:#7A1F2E}
+.placa{display:inline-block;margin:0 0 10px;padding:4px 22px;border-radius:7px;font-weight:800;color:var(--ink);
+  background:linear-gradient(var(--plate),var(--plate-lo));border:2px solid #6c6f73;box-shadow:inset 0 1px 0 #fff,0 2px 0 rgba(0,0,0,.35)}
+body.pb .placa{background:#fff;border:3px solid #000}
+.acoes{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.cartao{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:14px 18px;box-shadow:0 4px 0 rgba(0,0,0,.18),inset 0 2px 0 #fff;margin-bottom:12px}
+.banco{display:grid;gap:8px;margin-top:8px}
+.banco .tecla{justify-content:flex-start;padding-left:16px}
+
+/* barra do rádio (B + E) */
+.mini{position:relative;padding:12px 20px 8px;background-color:var(--case);border-top:5px solid var(--plate-lo);color:#fff;
+  background-image:repeating-linear-gradient(to right,rgba(255,255,255,.035) 0 1px,rgba(0,0,0,0) 2px 4px)}
+.mini .l1{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.mini .visor{flex:1;min-width:250px}
+.mini .dica{text-align:center;color:#dcdcd8;font:700 calc(var(--fs)*.75) system-ui}
+.vol{display:flex;align-items:center;gap:12px;margin-top:10px}
+.botao{width:96px;height:96px;border-radius:50%;flex:none;position:relative;
+  background:conic-gradient(from 0deg,#d8d8d4,#8d8d89,#e6e6e2,#8d8d89,#d8d8d4);border:3px solid #000;box-shadow:inset 0 0 0 7px #1c1e20,0 3px 0 rgba(0,0,0,.6)}
+.botao::after{content:"";position:absolute;left:50%;top:10px;width:6px;height:26px;margin-left:-3px;border-radius:3px;background:#111;transform:rotate(var(--a,40deg));transform-origin:50% 38px}
+.luzes{display:flex;gap:6px}.luzes .lamp{width:16px;height:16px}
+body.pb .botao{background:#fff}
+</style>
+</head>
+<body>
+<header class="topo"><h1>Estilo hi-fi: teclas de metal cinza com bisel em bandejas pretas</h1>
+<p><b>Novo:</b> o botão <i>Rótulos</i> mostra a proposta de cortar o texto onde o ícone vem de aparelhos antigos (anterior, tocar/pausar, próxima e volume com − e +). Preview em HTML (não é o app). Parte da imagem de referência do autor: teclas cinza com bisel, bandeja preta arredondada, tecla apertada mais escura e afundada. Mostra a <b>Estante</b>, <b>Tocando agora</b> e <b>Configurações</b> e a <b>barra do rádio (B + E)</b>. Troque paleta, letra e estado abaixo.</p></header>
+<div class="controles">
+ <div><b>Paleta:</b> <button data-p="" aria-pressed="true">Padrão</button><button data-p="vermelho-verde">Vermelho-verde</button><button data-p="azul-amarelo">Azul-amarelo</button><button data-p="pb">Preto e branco</button></div>
+ <div><b>Letra:</b> <button data-l="" aria-pressed="true">Normal</button><button data-l="l-grande">Grande</button><button data-l="l-maior">Maior</button></div>
+ <div><b>Rótulos:</b> <button data-r="" aria-pressed="true">Com texto</button><button data-r="so" aria-pressed="false">Só ícone onde é conhecido</button></div>
+ <div><b>Estado:</b> <button data-e="t" aria-pressed="true">Tocando</button><button data-e="p">Pausado</button></div>
+</div>
+<main>
+
+<section><h2>1. Estante, com a barra do rádio no pé</h2>
+<p class="res">Fundo recuado grafite, tampo prateado, plaquinha de metal nos títulos. Teclas cinza em bandejas. A barra do rádio é a mistura B + E aprovada: visor, Anterior / Tocar-Pausar / Próxima, "Abrir o rádio" e a barra de progresso clicável.</p>
+<div class="janela"><div class="tit"><span>Moa Media Player</span><span>—  □  ✕</span></div>
+ <div class="cab"><span></span><span>Minha estante</span><span class="tecla">⚙ Configurações</span></div>
+ <div class="corpo">
+  <div class="acoes"><span class="tecla go">＋ Criar uma playlist</span><span class="tecla">◉ Colocar um disco</span><span class="tecla">🗑 A Lixeira (0 discos)</span></div>
+  <span class="placa">Meus discos</span>
+  <div class="estante"><div class="d"><div class="cd">Disco 1</div>Disco 1</div><div class="d"><div class="cd" style="background:#1F4D6B">Disco 2</div>Disco 2</div><div class="d"><div class="cd" style="background:#4D6B1F">Disco 3</div>Disco 3</div><div class="d"><div class="cd" style="background:#6B3A1F">Disco 4</div>Disco 4</div></div>
+ </div>
+ <div class="mini"><span class="parafuso" style="left:8px;top:9px"></span><span class="parafuso" style="right:8px;top:9px"></span>
+  <div class="l1">
+   <div class="visor"><div class="est"><span class="lamp on e-lamp"></span><span class="e-pal">TOCANDO</span></div><strong>Música 3</strong><small>Faixa 3 de 12 · Disco 1</small></div>
+   <div class="bandeja"><span class="tecla col conhecida" aria-label="Anterior"><span class="ic">⏮</span><span class="tx">Anterior</span></span><span class="tecla col on e-tp conhecida"><span class="ic e-ic">❚❚</span><span class="e-tx tx">Pausar</span></span><span class="tecla col conhecida" aria-label="Próxima"><span class="ic">⏭</span><span class="tx">Próxima</span></span></div>
+   <span class="tecla">Abrir o rádio</span>
+  </div>
+  <div class="prog bar"><span class="t-at">1:24</span><div class="tr"><div class="ch"></div></div><span>3:42</span></div>
+  <div class="dica">Clique na barra para ir a outro ponto da música</div>
+ </div>
+</div></section>
+
+<section><h2>2. Tocando agora</h2>
+<p class="res">Gabinete grafite com friso prateado e parafusos. Visor de vidro, as três teclas na bandeja, botão de volume metálico com a coroa de luzes (continua só mostrando; muda com "Mais baixo/Mais alto") e "Voz mais clara" como tecla que fica afundada.</p>
+<div class="janela"><div class="tit"><span>Moa Media Player</span><span>—  □  ✕</span></div>
+ <div class="cab"><span class="tecla">‹ Voltar para a estante</span><span>Tocando agora</span><span class="tecla">⚙ Configurações</span></div>
+ <div class="corpo"><div class="gabinete" style="max-width:520px;margin:auto">
+  <span class="parafuso" style="left:8px;top:8px"></span><span class="parafuso" style="right:8px;top:8px"></span><span class="parafuso" style="left:8px;bottom:8px"></span><span class="parafuso" style="right:8px;bottom:8px"></span>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;font-weight:800"><span class="lamp on e-lamp"></span><span class="e-pal">TOCANDO</span></div>
+  <div class="visor" style="display:flex;gap:14px"><div class="capa p">Disco 1</div><div><strong style="font-size:calc(var(--fs)*1.3)">Música 3</strong><small>Disco: Disco 1</small><small>Faixa 3 de 12</small></div></div>
+  <div class="bandeja" style="display:flex;margin:14px 0"><span class="tecla col conhecida" style="flex:1" aria-label="Anterior"><span class="ic">⏮</span><span class="tx">Anterior</span></span><span class="tecla col on e-tp conhecida" style="flex:1.2"><span class="ic e-ic">❚❚</span><span class="e-tx tx">Pausar</span></span><span class="tecla col conhecida" style="flex:1" aria-label="Próxima"><span class="ic">⏭</span><span class="tx">Próxima</span></span></div>
+  <div class="prog bar"><span class="t-at">1:24</span><div class="tr"><div class="ch"></div></div><span>3:42</span></div>
+  <div class="bandeja" style="display:flex;align-items:center;gap:10px;padding:10px"><span class="tecla conhecida" style="flex:1" aria-label="Mais baixo"><svg class="vi" viewBox="0 0 32 24"><path d="M2 8h5l7-6v20l-7-6H2z"/><path class="s" d="M19 12h8"/></svg><span class="tx">Mais baixo</span></span><div class="botao" style="--a:40deg"></div><span class="tecla conhecida" style="flex:1" aria-label="Mais alto"><svg class="vi" viewBox="0 0 32 24"><path d="M2 8h5l7-6v20l-7-6H2z"/><path class="s" d="M19 12h8M23 8v8"/></svg><span class="tx">Mais alto</span></span></div>
+  <div style="text-align:center;margin:8px 0;font-weight:800">Volume: 6 de 10</div>
+  <span class="tecla on" style="width:100%;gap:12px"><span class="lamp on" style="width:18px;height:18px"></span>Voz mais clara: ligada</span>
+ </div></div>
+</div></section>
+
+<section><h2>3. Configurações: banco de teclas</h2>
+<p class="res">As opções de um grupo são um banco de teclas: apertar uma solta as outras. A escolhida fica afundada, com a lâmpada acesa e o "✓" em texto.</p>
+<div class="janela"><div class="tit"><span>Moa Media Player</span><span>—  □  ✕</span></div>
+ <div class="cab"><span class="tecla">‹ Voltar para onde eu estava</span><span>Configurações</span><span></span></div>
+ <div class="corpo"><div class="cartao"><div style="font-weight:800;font-size:calc(var(--fs)*1.3)">Tamanho da letra</div>
+  <div class="banco bandeja" style="display:grid;gap:6px;padding:8px">
+   <span class="tecla" style="justify-content:flex-start"><span class="lamp"></span>Normal</span>
+   <span class="tecla on" style="justify-content:flex-start"><span class="lamp on"></span>✓ Grande</span>
+   <span class="tecla" style="justify-content:flex-start"><span class="lamp"></span>Maior</span></div></div></div>
+</div></section>
+
+</main>
+<script>
+const b=document.body;
+const marca=(g,el)=>document.querySelectorAll('['+g+']').forEach(x=>x.setAttribute('aria-pressed',x===el));
+document.querySelectorAll('[data-p]').forEach(x=>x.onclick=()=>{b.classList.remove('vermelho-verde','azul-amarelo','pb');if(x.dataset.p)b.classList.add(x.dataset.p);marca('data-p',x)});
+document.querySelectorAll('[data-l]').forEach(x=>x.onclick=()=>{b.classList.remove('l-grande','l-maior');if(x.dataset.l)b.classList.add(x.dataset.l);marca('data-l',x)});
+document.querySelectorAll('[data-r]').forEach(x=>x.onclick=()=>{b.classList.toggle('so',x.dataset.r==='so');marca('data-r',x)});
+document.querySelectorAll('[data-e]').forEach(x=>x.onclick=()=>{const t=x.dataset.e==='t';
+ document.querySelectorAll('.e-tx').forEach(e=>e.textContent=t?'Pausar':'Tocar');
+ document.querySelectorAll('.e-ic').forEach(e=>e.textContent=t?'❚❚':'▶');
+ document.querySelectorAll('.e-pal').forEach(e=>e.textContent=t?'TOCANDO':'PAUSADO');
+ document.querySelectorAll('.e-lamp').forEach(e=>e.classList.toggle('on',t));
+ document.querySelectorAll('.e-tp').forEach(e=>e.classList.toggle('on',t));marca('data-e',x)});
+document.querySelectorAll('.bar').forEach(p=>p.addEventListener('click',ev=>{const tr=p.querySelector('.tr').getBoundingClientRect();
+ const f=Math.min(1,Math.max(0,(ev.clientX-tr.left)/tr.width));p.querySelector('.ch').style.width=(f*100)+'%';
+ const s=Math.round(f*222);p.querySelector('.t-at').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}));
+</script>
+</body></html>

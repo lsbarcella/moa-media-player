@@ -175,8 +175,8 @@ def test_volume_no_maximo_o_botao_vira_no_maximo_e_clicar_avisa(app):
     ctx.player.definir_degrau_de_volume(10)
     conteudo.redesenhar()
     raiz = conteudo.telas[Tela.RADIO].raiz
-    assert "No máximo" in textos(raiz) and "Volume: 10 de 10" in textos(raiz)
-    botao_com_texto(raiz, "No máximo").clicked()
+    assert "Volume: 10 de 10" in textos(raiz)           # o estado continua escrito
+    botao_com_texto(raiz, "Volume no máximo").clicked()   # a tecla só tem o símbolo; o nome é acessível
     assert "O volume já está no máximo." in textos(conteudo.telas[Tela.RADIO].raiz)
     assert ctx.player.degrau_de_volume == 10
 

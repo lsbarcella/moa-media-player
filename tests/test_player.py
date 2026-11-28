@@ -236,3 +236,36 @@ def test_ultima_faixa_corrompida_para_sem_excecao(player_rapido, disco):
     assert esperar(lambda: registro.fins)
     assert registro.erros == [2]
     assert player_rapido.estado == Estado.PARADO
+
+
+# -- buscar um ponto da faixa (barra de progresso clicável) --------------------------------
+
+def test_buscar_leva_a_posicao_para_o_ponto_pedido(player_relogio, faixa_longa):
+    player_relogio.carregar([faixa_longa])
+    assert esperar(lambda: (player_relogio.duracao() or 0) > 1)
+    player_relogio.buscar(2.5)
+    assert esperar(lambda: (player_relogio.posicao() or 0) >= 2.4)
+    assert player_relogio.posicao() == pytest.approx(2.6, abs=0.6)
+    assert player_relogio.estado == Estado.TOCANDO              # buscar não pausa nem para
+
+
+def test_buscar_com_a_faixa_pausada_continua_pausada(player_relogio, faixa_longa):
+    player_relogio.carregar([faixa_longa], tocar=False)
+    assert esperar(lambda: (player_relogio.duracao() or 0) > 1)
+    player_relogio.buscar(3.0)
+    assert esperar(lambda: abs((player_relogio.posicao() or 0) - 3.0) < 0.4)
+    assert player_relogio.estado == Estado.PAUSADO
+
+
+def test_buscar_alem_do_fim_ou_antes_do_inicio_fica_dentro_da_faixa(player_relogio, faixa_longa):
+    player_relogio.carregar([faixa_longa], tocar=False)
+    assert esperar(lambda: (player_relogio.duracao() or 0) > 1)
+    player_relogio.buscar(999)
+    assert esperar(lambda: (player_relogio.posicao() or 0) > 3.5)
+    player_relogio.buscar(-5)
+    assert esperar(lambda: (player_relogio.posicao() if player_relogio.posicao() is not None else 99) < 0.4)
+
+
+def test_buscar_sem_disco_nao_quebra(player_relogio):
+    player_relogio.buscar(3.0)                                  # nada carregado: ignora em silêncio
+    assert player_relogio.estado == Estado.PARADO

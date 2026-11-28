@@ -19,7 +19,7 @@ from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.player import DEGRAU_MAXIMO  # noqa: E402
 from moa.ui import ornamentos  # noqa: E402
 from moa.ui.instrumentos import BotaoDeVolume, EscalaDoVisor  # noqa: E402
-from moa.ui.widgets import EmPedacos, classe, definir_estado_da_tecla, definir_texto_do_botao, tecla_travavel, texto_de, aviso, capa_do_disco, botao, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
+from moa.ui.widgets import EmPedacos, classe, definir_estado_da_tecla, definir_texto_do_botao, tecla_travavel, texto_de, aviso, capa_do_disco, botao, botao_so_com_icone, definir_nome_da_tecla, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
 
 LARGURA_PARA_EMPILHAR = 900
 
@@ -159,7 +159,7 @@ class RadioView:
 
         ornamentos.instalar_parafusos(corpo)
 
-        # plaquinha "MOA" de latão e lâmpada + palavra
+        # plaquinha "MOA" de prata e lâmpada + palavra
         estado = caixa_h(10)
         p.lampada = Gtk.Box()
         p.lampada.get_style_context().add_class("moa-lampada")
@@ -197,7 +197,7 @@ class RadioView:
         # botões: anterior / tocar-pausar / próxima (o do meio troca quando muda o estado)
         p.controles = Gtk.Grid(column_spacing=10, column_homogeneous=False)
         metal = caixa_v(0)                      # moldura de metal escovado atrás das três teclas
-        metal.get_style_context().add_class("moa-metal")
+        metal.get_style_context().add_class("moa-bandeja")
         metal.pack_start(p.controles, False, False, 0)
         corpo.pack_start(metal, False, False, 0)
 
@@ -205,14 +205,17 @@ class RadioView:
         volume = caixa_v(8)
         volume.get_style_context().add_class("moa-volume")
         linha = caixa_h(8)
-        p.menos = botao("Mais baixo", ao_clicar=self._volume_menos)
-        p.mais = botao("Mais alto", ao_clicar=self._volume_mais)
+        p.menos = botao_so_com_icone("volume_menos", "Mais baixo", ao_clicar=self._volume_menos)
+        p.mais = botao_so_com_icone("volume_mais", "Mais alto", ao_clicar=self._volume_mais)
         p.botao_volume = BotaoDeVolume(DEGRAU_MAXIMO)     # só mostra; quem gira é "Mais baixo/Mais alto"
         p.botao_volume.set_halign(Gtk.Align.CENTER)
         p.botao_volume.set_valign(Gtk.Align.CENTER)
-        linha.pack_start(p.menos, True, True, 0)
-        linha.pack_start(p.botao_volume, False, False, 0)
-        linha.pack_start(p.mais, True, True, 0)
+        for tecla in (p.menos, p.mais):
+            tecla.set_size_request(120, -1)             # tecla só com símbolo: larga o bastante, sem esticar
+        linha.set_halign(Gtk.Align.CENTER)
+        linha.pack_start(p.menos, False, False, 0)
+        linha.pack_start(p.botao_volume, False, False, 12)
+        linha.pack_start(p.mais, False, False, 0)
         volume.pack_start(linha, False, False, 0)
         legenda = caixa_h(8)
         legenda.set_halign(Gtk.Align.CENTER)
@@ -259,8 +262,8 @@ class RadioView:
             self._montar_controles(visor.luz_acesa)
 
         degrau = self.ctx.player.degrau_de_volume
-        definir_texto_do_botao(p.menos, "No mínimo" if degrau <= 0 else "Mais baixo")
-        definir_texto_do_botao(p.mais, "No máximo" if degrau >= DEGRAU_MAXIMO else "Mais alto")
+        definir_nome_da_tecla(p.menos, "Volume no mínimo" if degrau <= 0 else "Mais baixo")
+        definir_nome_da_tecla(p.mais, "Volume no máximo" if degrau >= DEGRAU_MAXIMO else "Mais alto")
         classe(p.menos, "moa-inativo", degrau <= 0)
         classe(p.mais, "moa-inativo", degrau >= DEGRAU_MAXIMO)
         p.botao_volume.definir_degrau(degrau)

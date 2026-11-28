@@ -36,7 +36,7 @@ def test_o_parafuso_tem_fenda_e_a_fenda_muda_com_o_estado():
 
 
 @pytest.mark.parametrize("peca", ["parafuso", "dobradica", "serrilha", "lente"])
-def test_no_preto_e_branco_as_pecas_nao_tem_tom_de_latao_nem_de_metal(peca):
+def test_no_preto_e_branco_as_pecas_nao_tem_tom_de_prata_nem_de_metal(peca):
     """Só preto, branco e o cinza do contorno: os canais de cor ficam sempre próximos."""
     sup = _superficie(40, 40)
     getattr(cairo_pecas, f"desenhar_{peca}")(cairo.Context(sup), 40, 40, "preto-e-branco", estado=1)

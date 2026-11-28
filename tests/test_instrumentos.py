@@ -139,3 +139,33 @@ def test_no_radio_o_volume_gira_e_a_escala_marca_a_faixa(app):
     assert p.botao_volume.degrau == ctx.player.degrau_de_volume
     assert f"Volume: {ctx.player.degrau_de_volume} de 10" in textos(p.corpo)
     assert p.escala.faixa >= 1 and p.escala.total == len(ctx.discos[0].tracks)
+
+
+@com_tela
+def test_as_teclas_de_volume_so_tem_o_simbolo_e_um_nome_acessivel(app):
+    ctx, conteudo = app
+    ctx.radio.abrir_disco(ctx.discos[0], tocar=False)
+    ctx.session.ir_para(Tela.RADIO)
+    p = conteudo.telas[Tela.RADIO]._p
+    for tecla, nome in ((p.menos, "Mais baixo"), (p.mais, "Mais alto")):
+        assert textos(tecla) == []                              # nenhum texto visível
+        assert tecla.get_accessible().get_name() == nome        # mas um leitor de tela diz o nome
+        assert tecla.get_tooltip_text() == nome
+        # o símbolo é uma imagem com pelo menos o tamanho do alvo mínimo
+        assert tecla.get_preferred_height()[0] >= theme.ALVO_MINIMO_PX
+
+
+@com_tela
+def test_volume_no_minimo_e_no_maximo_apagam_a_tecla_e_dizem_o_motivo(app):
+    ctx, conteudo = app
+    ctx.radio.abrir_disco(ctx.discos[0], tocar=False)
+    ctx.session.ir_para(Tela.RADIO)
+    p = conteudo.telas[Tela.RADIO]._p
+    ctx.player.definir_degrau_de_volume(10)
+    ctx.radio.volume_mais()
+    assert p.mais.get_style_context().has_class("moa-inativo")
+    assert p.mais.get_accessible().get_name() == "Volume no máximo"
+    ctx.player.definir_degrau_de_volume(5)
+    ctx.radio.volume_mais()
+    assert not p.mais.get_style_context().has_class("moa-inativo")
+    assert p.mais.get_accessible().get_name() == "Mais alto"
