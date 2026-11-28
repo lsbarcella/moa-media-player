@@ -420,7 +420,9 @@ def medir_acoes(nome: str, musica: Path, pasta: Path, repeticoes: int) -> list[t
         janela.get_pixbuf()
 
     def cronometrar(rotulo: str, acao, preparo=None) -> tuple:
-        tempos = []
+        """Duas medidas por ação: até a tela responder (a que o usuário sente) e até terminar de
+        montar tudo (listas grandes vêm em pedaços, então o resto aparece um pouco depois)."""
+        primeiras, completas = [], []
         console.passo = f"{console.base}: {rotulo}"
         for _ in range(repeticoes):
             if preparo is not None:
@@ -428,12 +430,15 @@ def medir_acoes(nome: str, musica: Path, pasta: Path, repeticoes: int) -> list[t
                 pronto()
             t = time.perf_counter()
             acao()
+            janela.get_pixbuf()                        # desenha o que já está pronto
+            primeiras.append((time.perf_counter() - t) * 1000)
             pronto()
-            tempos.append((time.perf_counter() - t) * 1000)
-        mediana = statistics.median(tempos)
-        console.dizer(f"   {rotulo:24s} {mediana:7.0f} ms  (máx {max(tempos):.0f})")
+            completas.append((time.perf_counter() - t) * 1000)
+        mediana, completa = statistics.median(primeiras), statistics.median(completas)
+        console.dizer(f"   {rotulo:24s} {mediana:7.0f} ms  (máx {max(primeiras):.0f}; completo {completa:.0f})")
         return (nome, f"acao_{rotulo}_mediana_ms", mediana, "ms"), \
-               (nome, f"acao_{rotulo}_maximo_ms", max(tempos), "ms")
+               (nome, f"acao_{rotulo}_maximo_ms", max(primeiras), "ms"), \
+               (nome, f"acao_{rotulo}_completo_ms", completa, "ms")
 
     estante = ctx.session.voltar_para_a_estante
     disco = ctx.discos[0]
@@ -564,13 +569,16 @@ def relatorio(maquina: dict[str, str], medidas: list[tuple], falhas: list[str], 
     nomes = [m[:-len("_mediana_ms")] for _c, m, _v, _u in medidas if m.endswith("_mediana_ms")]
     acoes = list(dict.fromkeys(n.removeprefix("acao_") for n in nomes))
     if acoes:
-        linhas += ["", "AÇÕES (ms, mediana / máximo)", f"{'':26s}" + "".join(f"{c:>16s}" for c in cenarios)]
+        linhas += ["", "AÇÕES (ms: até a tela responder, mediana / máximo / até terminar de montar)",
+                   f"{'':26s}" + "".join(f"{c:>26s}" for c in cenarios)]
         for acao in acoes:
             celulas = ""
             for c in cenarios:
                 med = por_cenario[c].get(f"acao_{acao}_mediana_ms")
                 mx = por_cenario[c].get(f"acao_{acao}_maximo_ms")
-                celulas += f"{med:8.0f} /{mx:5.0f}  " if med is not None else f"{'-':>16s}"
+                completo = por_cenario[c].get(f"acao_{acao}_completo_ms", med)
+                celulas += (f"{med:8.0f} /{mx:5.0f} /{completo:6.0f}  " if med is not None
+                            else f"{'-':>26s}")
             linhas.append(f"{acao:26s}{celulas}")
     if "tocando" in por_cenario and "cpu_tocando_pct" in por_cenario["tocando"]:
         linhas += ["", f"CPU tocando: {por_cenario['tocando']['cpu_tocando_pct']:.1f} % (meta < 5)"]

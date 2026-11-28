@@ -115,7 +115,7 @@ def test_relatorio_junta_cenarios_e_falhas():
                ("tocando", "cpu_tocando_pct", 2.5, "%")]
     texto = medir.relatorio(maquina, medidas, ["Abertura: boom"], 125)
     assert "duração 2 min 5 s" in texto and "4096 MB de RAM" in texto
-    assert "volume" in texto and "40 /   60" in texto and "30 /   35" in texto
+    assert "volume" in texto and "40 /   60 /    40" in texto and "30 /   35 /    30" in texto
     assert "CPU tocando: 2.5 %" in texto
     assert "FALHAS" in texto and "Abertura: boom" in texto
 
