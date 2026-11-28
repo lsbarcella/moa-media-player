@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Moa Media Player
+GenericName=Estante de discos
+Comment=Ouvir sua coleção de discos
+Exec=moa
+Icon=br.tcc.Moa
+Terminal=false
+Categories=AudioVideo;Audio;Player;
+StartupWMClass=br.tcc.Moa

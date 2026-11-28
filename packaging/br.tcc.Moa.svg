@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ícone PROVISÓRIO, desenhado para o projeto (licença GPL-3.0-or-later). A arte da moa com fones de ouvido ainda será feita (ADR-0009). -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <rect x="8" y="8" width="240" height="240" rx="48" fill="#4A2A12"/>
+  <circle cx="128" cy="136" r="72" fill="#FAF5E9" stroke="#1E1913" stroke-width="8"/>
+  <circle cx="128" cy="136" r="22" fill="#4A2A12"/>
+  <circle cx="128" cy="136" r="8" fill="#FAF5E9"/>
+  <path d="M52 140 V122 a76 76 0 0 1 152 0 V140" fill="none" stroke="#FFD27A" stroke-width="14" stroke-linecap="round"/>
+  <rect x="38" y="134" width="30" height="52" rx="12" fill="#FFD27A" stroke="#1E1913" stroke-width="6"/>
+  <rect x="188" y="134" width="30" height="52" rx="12" fill="#FFD27A" stroke="#1E1913" stroke-width="6"/>
+</svg>

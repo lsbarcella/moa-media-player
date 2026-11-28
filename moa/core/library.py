@@ -136,6 +136,15 @@ def read_track(path: Path) -> Track:
     )
 
 
+def read_musicbrainz_album_id(path: Path) -> str | None:
+    """O identificador do álbum no MusicBrainz, se o Picard o gravou nas tags (M6).
+
+    É uma leitura à parte de `read_track`: só roda para os discos que a rede
+    opcional vai consultar, para o cache das faixas não mudar.
+    """
+    return _tag(_open_tags(path), "musicbrainz_albumid", "TXXX:MusicBrainz Album Id")
+
+
 # ---------------------------------------------------------------------------
 # Montagem do disco
 # ---------------------------------------------------------------------------

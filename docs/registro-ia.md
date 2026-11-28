@@ -66,3 +66,91 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Pedido:** o autor quis colocar o nome completo e o ano na licença. A IA explicou que o `LICENSE` é o texto oficial da GPL e não deve ser editado; o nome e o ano vão no README e nos cabeçalhos dos arquivos.
 - **Decisões do autor:** titular Leonardo dos Santos Barcella, ano 2026, GPL v3 **ou posterior**.
 - **Feito:** cabeçalho de três linhas em 19 arquivos-fonte, seção de direitos autorais no README, ADR-0009 atualizado e o teste `tests/test_license_headers.py`, que falha se um arquivo novo ficar sem o cabeçalho.
+
+## 26/11/2026 — M2: reprodução (execução autônoma do MVP, `lfg`)
+
+- **Pedido:** montar todo o MVP (M2 a M9) antes dos reviews, seguindo o plano `docs/plans/2026-11-26-0653-feat-moa-mvp-m2-a-m9-plan.md`, em um ramo `mvp`.
+- **Feito:** `core/player.py` (fila do disco, volume em 11 posições com curva cúbica e teto 1.0, ReplayGain, "Voz mais clara" desligada por padrão, erro numa faixa pula para a próxima, fim do disco para), `core/state.py` (onde parou e recentes), `core/config.py` (JSON com gravação atômica) e a migração 2 do banco. ADR-0010.
+- **Verificação:** 183 testes passando. Teste de mutação nas três regras mais delicadas (teto do volume, fim do disco, pulo no erro): os testes falharam como esperado.
+- **Decisões provisórias** (a revisar pelo autor): curva e padrão do volume, ganhos de "Voz mais clara" (−3, +3, +6 dB), fim do disco para.
+- **NÃO testado:** som real, ReplayGain com arquivos reais, qualidade do equalizador.
+
+## 26/11/2026 — M3: telas principais
+
+- **Pedido:** continuar o MVP: Estante, Tocando agora e Configurações, seguindo o preview aprovado.
+- **Feito:** `core/session.py` (navegação e avisos que ficam até a próxima ação), `core/radio.py` (as frases do visor, testáveis sem janela), `core/contexto.py`, `ui/theme.py` (4 paletas e 3 tamanhos de letra gerados em Python, contraste 7:1 testado), `ui/window.py` (cabeçalho fixo, mini-rádio, atalhos de teclado), `ui/shelf_view.py`, `ui/radio_view.py`, `ui/settings_view.py`, `ui/loader.py` (varredura em segundo plano, uma conexão de banco por thread), 10 ícones SVG originais e `tools/make_synthetic_collection.py` (80 discos, 800 faixas, para verificar sem usar a coleção real). ADR-0011.
+- **Verificação:** 247 testes; as telas foram desenhadas fora da tela (`Gtk.OffscreenWindow`) e os PNGs foram olhados; `timeout 5 python3 -m moa` abre (código 124). Teste de mutação em três regras (aviso até a próxima ação, contraste das paletas, limite do volume): os testes falharam como esperado.
+- **Bug achado pelos testes:** dar "Tocar" num disco pausado não registrava o disco em "Ouvidos há pouco"; corrigido.
+- **Decisões provisórias:** progresso só em texto, fim do disco para, tema claro, X do sistema, abre sempre na Estante com "Continuar a ouvir" (ADR-0011).
+- **NÃO testado:** aparência no monitor real do notebook, X do Cinnamon, HD mecânico, paletas de daltonismo com simulador ou pessoa daltônica.
+
+## 26/11/2026 — M4 (parte 1): dados dos discos montados e da Caixa
+
+- **Feito:** migração 3 do banco, `MixDisc`, `core/custom_albums.py` (criar, adicionar sem duplicar, remover, nome sugerido), `core/box.py` (Caixa, nome e capa com "Como era antes", "Apagar de vez" com regras de segurança), escolhas de capa em `refresh_covers`, `Contexto.recarregar` e o `test_loader.py` que faltava (conexão por thread). ADR-0012.
+- **Verificação:** 275 testes. Mutação em quatro regras de segurança do apagar: três foram pegas de primeira; uma sobreviveu (faixa apontando para fora da pasta) e gerou um teste novo, depois pega.
+- **Tropeço:** uma suíte "quebrada" depois de uma mutação era só o cache de bytecode velho (arquivo de mesmo tamanho na mesma hora); resolvido limpando `__pycache__`; nas mutações seguintes o bytecode foi desligado.
+- **NÃO testado:** apagar em disco de rede, uso real.
+
+## 26/11/2026 — M4 (parte 2): telas de montar disco, Caixa e editar
+
+- **Feito:** tela "Criar uma playlist" (digitar vai direto para a busca, marcações sobrevivem ao filtro), painel do "+" com as capas dos discos, tela da Caixa (com "Apagar de vez" só nela), tela "Mexendo no disco" (nome, capa, "Como era antes", "Tirar da estante"). 307 testes passando.
+- **Execução interrompida por limite de uso:** M5 a M9 NÃO foram feitos (robustez, MusicBrainz, cópia de CD, empacotamento, avaliação). ADRs 0013 em diante e o ADR do M4 sobre telas ainda não escritos.
+
+## 27/11/2026 — M5: robustez
+
+- **Pedido:** seguir o MVP pelo M5.
+- **Feito:** `core/logsetup.py` (log com rotação e gancho de exceções), `core/autostart.py`, `ui/inibidor.py` (suspensão), faixa de falha calma na janela (`Session.falha`), `do_startup` no `app.py`. ADR-0013.
+- **Verificação:** 328 testes passando (inclui o de instância única com barramento D-Bus próprio); o app real abre, grava o log e fecha sem erro.
+- **Achado:** no teste de instância única, o primeiro processo leva mais de 4 s para abrir num barramento novo; o teste espera o log dizer "iniciado".
+- **Decisão provisória:** a abertura automática só é criada quando o comando `moa` está instalado.
+- **NÃO testado:** suspensão real e abertura automática no login. O registro do M4 e o ADR das telas do M4 continuam por escrever.
+
+## 27/11/2026 — Documentação do M4 e M6: rede opcional
+
+- **Pedido:** documentar o M4 e seguir para o M6.
+- **Feito (M4):** ADR-0014 (as quatro telas do M4). O diário do M4 já existia.
+- **Feito (M6):** `core/musicbrainz.py` (cliente com limite de 1 pedido por segundo, atualizador em segundo plano, `aplicar` e `capas_baixadas`), migração 4 do banco, `read_musicbrainz_album_id`, capas baixadas como alternativa em `refresh_covers`, camada lida uma vez por abertura no `Contexto`, rede disparada pelo `Carregador` depois de a estante aparecer, `esta_online` com `Gio.NetworkMonitor` e `MOA_SEM_REDE`. ADR-0015.
+- **Verificação:** 355 testes (26 novos, com servidor HTTP falso local, nenhum acesso à internet). Mutação em cinco regras (número de faixas na busca, nome só quando falta a tag, não tentar offline, camada lida uma vez): todas pegas. App real abre com 80 discos e o log diz "sem conexão".
+- **Tropeço:** um teste meu estava errado (disco sem tags nunca gera pedido, então "reconsultar depois de 30 dias" não podia ser observado); corrigido usando um disco com ID.
+- **Decisão provisória:** `User-Agent` apenas `MoaMediaPlayer/0.1`, sem URL do projeto nem contato.
+- **NÃO testado:** servidores reais do MusicBrainz e do Cover Art Archive.
+
+## 27/11/2026 — Texto das cores e ambiente XFCE
+
+- **Pedido:** trocar "Cores normais" por "Cores padrão" nas Configurações; avaliar Windows; saber se o XFCE dá problema.
+- **Feito:** texto trocado em `theme.py`, no preview e no ADR-0006 (355 testes passam). CLAUDE.md e README passam a dizer Linux Mint XFCE. ADR-0016.
+- **Decisão do autor:** ambiente-alvo XFCE. Windows foi apresentado em três opções (A: mesma stack empacotada; B: outro toolkit; C: preparar o código sem entregar); a escolha ficou em aberto.
+- **NÃO testado:** inibição de suspensão, autostart e aparência no XFCE real.
+
+## 27/11/2026 — Instalador entra no plano (M8)
+
+- **Pedido:** um instalador executável, para o usuário não precisar resolver pacotes à mão (o `apt` do notebook não achou `gstreamer1.0-plugins-base`).
+- **Feito:** a meta foi escrita no M8 do CLAUDE.md. Nada implementado.
+- **Em aberto:** o formato do instalador (`.deb` com dependências embutidas, `.run` autoextraível ou script em volta do `.deb`); a IA apresenta as opções antes de implementar.
+
+## 27/11/2026 — Leitor de CD confirmado
+
+- **Informado pelo autor:** o notebook do pai tem leitor de CD. O M7 deixa de ser condicionado e entra no plano.
+- **Em aberto antes de implementar:** formato da cópia (FLAC ou MP3), pacotes de leitura e codificação no Mint XFCE (a confirmar no `check_deps.sh`, com ADR).
+
+## 27/11/2026 — M7 (parte 1): núcleo da cópia de CD
+
+- **Decisões do autor:** formato FLAC; leitura com cdparanoia.
+- **Feito:** `core/ripper.py` (copiar faixa a faixa para pasta provisória, tags mínimas, cancelar, resultados calmos, "Disco N"), 12 testes em `tests/test_ripper.py` com gerador de áudio no lugar do CD, `check_deps.sh` confere `cdparanoiasrc` e `flacenc`, ADR-0017, CLAUDE.md atualizado.
+- **NÃO testado:** CD de verdade (o leitor daqui está vazio) e a leitura do sumário (`contar_faixas_do_cd`). A tela de colocar o disco ainda não existe e precisa de proposta de desenho.
+
+## 27/11/2026 — M7 (parte 2): tela "Aparelho de CD"
+
+- **Pedido:** cinco opções de desenho para colocar um disco; o autor escolheu a **A (aparelho de CD)**.
+- **Feito:** preview em HTML com as 5 opções; `core/aparelho.py` (estados, textos do visor, cópia em thread, cancelar), `ui/cd_view.py`, botão "Colocar um disco" na Estante (também com a estante vazia), `Carregador.reler`, ligação no `app.py`, limpeza de sobras de cópia interrompida, ADR-0018.
+- **Verificação:** testes novos de núcleo (`test_aparelho.py`) e de tela (`test_cd_view.py`, com gerador de áudio no lugar do CD); telas desenhadas e conferidas por imagem.
+- **NÃO testado:** CD de verdade, a gaveta no XFCE, HD mecânico.
+- **Em aberto:** ouvir música durante a cópia; impedir a suspensão durante a cópia.
+
+## 27/11/2026 — M8 (primeira etapa): pacote .deb e instaladores no plano
+
+- **Pedido:** gerar o `.deb` primeiro; registrar nos planos que o autor quer instaladores, principalmente para Windows, depois.
+- **Feito:** CLAUDE.md (M8 vira o `.deb`; novo M10 com o instalador `.run` offline e o Windows, com a decisão técnica em aberto), `tools/build_deb.sh`, `packaging/` (comando `moa`, `.desktop`, ícone provisório), `tests/test_packaging.py`, ADR-0019. O pacote tem ~68 KB.
+- **Verificação:** o pacote extraído roda `moa` a partir de `/`, e a abertura automática é criada com o caminho do comando.
+- **NÃO testado:** instalação em Mint limpo (`apt install ./arquivo.deb`), menu do XFCE, desinstalação.
+- **Pendência:** a janela em branco no notebook do pai ainda não foi diagnosticada (a saída do terminal e do log não chegou).

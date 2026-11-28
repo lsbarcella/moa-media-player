@@ -17,6 +17,7 @@ Princípios:
 - Só usamos o `sqlite3` que já vem no Python (sem dependência nova).
 """
 
+import json
 import logging
 import os
 import sqlite3
@@ -60,11 +61,101 @@ def _migracao_1(conexao: sqlite3.Connection) -> None:
         )""")
 
 
-MIGRACOES = [_migracao_1]
+def _migracao_2(conexao: sqlite3.Connection) -> None:
+    """Onde o idoso parou e os discos ouvidos há pouco (M2). Aditiva: não toca no M1."""
+    conexao.execute("""
+        CREATE TABLE playback (
+            id          INTEGER PRIMARY KEY CHECK (id = 1),   -- uma linha só
+            album_id    TEXT NOT NULL,
+            track_index INTEGER NOT NULL,
+            seconds     REAL NOT NULL
+        )""")
+    conexao.execute("""
+        CREATE TABLE recent_albums (
+            album_id  TEXT PRIMARY KEY,
+            played_at REAL NOT NULL
+        )""")
+
+
+def _migracao_3(conexao: sqlite3.Connection) -> None:
+    """Discos montados, Caixa e edições de nome e capa (M4). Aditiva."""
+    conexao.execute("""
+        CREATE TABLE mix_discs (
+            id         TEXT PRIMARY KEY,
+            name       TEXT NOT NULL,
+            created_at REAL NOT NULL
+        )""")
+    conexao.execute("""
+        CREATE TABLE mix_tracks (
+            mix_id   TEXT NOT NULL,
+            position INTEGER NOT NULL,
+            path     TEXT NOT NULL,           -- faixa de outro disco: só a referência
+            PRIMARY KEY (mix_id, position)
+        )""")
+    conexao.execute("""
+        CREATE TABLE box (
+            album_id TEXT PRIMARY KEY,        -- disco tirado da estante (a Caixa)
+            put_at   REAL NOT NULL
+        )""")
+    conexao.execute("""
+        CREATE TABLE overrides (
+            album_id        TEXT PRIMARY KEY,
+            name            TEXT,             -- nome escolhido pelo usuário (NULL: o original)
+            cover_kind      TEXT,             -- 'embedded', 'file' ou 'drawn' (NULL: automática)
+            cover_path      TEXT,
+            prev_name       TEXT,             -- valores de antes da última edição
+            prev_cover_kind TEXT,
+            prev_cover_path TEXT,
+            has_prev        INTEGER NOT NULL DEFAULT 0
+        )""")
+
+
+def _migracao_4(conexao: sqlite3.Connection) -> None:
+    """O que veio do MusicBrainz, por disco (M6). Aditiva: as tags do usuário nunca são tocadas."""
+    conexao.execute("""
+        CREATE TABLE musicbrainz (
+            folder       TEXT PRIMARY KEY,   -- pasta do disco
+            status       TEXT NOT NULL,      -- 'ok' (achei) ou 'nada' (sem certeza: não muda nada)
+            mbid         TEXT,               -- identificador do álbum no MusicBrainz
+            title        TEXT,               -- nome do álbum
+            artist       TEXT,               -- artista do álbum
+            track_titles TEXT,               -- lista JSON com o nome de cada faixa, na ordem
+            cover_path   TEXT,               -- capa baixada (no cache do app)
+            checked_at   REAL NOT NULL       -- quando foi consultado (para tentar de novo depois)
+        )""")
+
+
+MIGRACOES = [_migracao_1, _migracao_2, _migracao_3, _migracao_4]
 
 
 class EsquemaMaisNovoQueOApp(Exception):
     """O arquivo foi criado por uma versão mais nova do app."""
+
+
+@dataclass(frozen=True)
+class Override:
+    """Nome e capa escolhidos pelo usuário para um disco, com o valor de antes."""
+
+    name: str | None = None
+    cover_kind: str | None = None
+    cover_path: str | None = None
+    prev_name: str | None = None
+    prev_cover_kind: str | None = None
+    prev_cover_path: str | None = None
+    has_prev: bool = False
+
+
+@dataclass(frozen=True)
+class RegistroMB:
+    """O que o MusicBrainz respondeu sobre um disco (ou que não achou nada confiável)."""
+
+    status: str                                  # 'ok' ou 'nada'
+    mbid: str | None = None
+    title: str | None = None
+    artist: str | None = None
+    track_titles: tuple[str, ...] = ()
+    cover_path: Path | None = None
+    checked_at: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -172,6 +263,141 @@ class Database:
     def delete_tracks_except(self, caminhos: Iterable[str]) -> None:
         """Esquece as faixas que não estão mais na pasta de música."""
         self._apagar_exceto("tracks", "path", caminhos)
+
+    # -- onde parou e recentes (M2) -------------------------------------------
+
+    def save_playback(self, album_id: str, indice: int, segundos: float) -> None:
+        with self._transacao():
+            self._conexao.execute(
+                "INSERT OR REPLACE INTO playback VALUES (1, ?, ?, ?)", (album_id, indice, segundos))
+
+    def load_playback(self) -> tuple[str, int, float] | None:
+        linha = self._conexao.execute(
+            "SELECT album_id, track_index, seconds FROM playback WHERE id = 1").fetchone()
+        return (linha[0], linha[1], linha[2]) if linha else None
+
+    def touch_recent(self, album_id: str, limite: int) -> None:
+        """Põe o disco como o mais novo dos recentes e guarda só os `limite` últimos."""
+        with self._transacao():
+            self._conexao.execute(
+                "INSERT OR REPLACE INTO recent_albums VALUES (?, ?)", (album_id, time.time()))
+            self._conexao.execute(
+                "DELETE FROM recent_albums WHERE album_id NOT IN "
+                "(SELECT album_id FROM recent_albums ORDER BY played_at DESC, rowid DESC LIMIT ?)",
+                (limite,))
+
+    def load_recents(self) -> list[str]:
+        """Do mais novo para o mais antigo."""
+        linhas = self._conexao.execute(
+            "SELECT album_id FROM recent_albums ORDER BY played_at DESC, rowid DESC")
+        return [linha[0] for linha in linhas]
+
+    # -- discos montados (M4) ---------------------------------------------------
+
+    def create_mix(self, mix_id: str, nome: str, caminhos: list[str]) -> None:
+        with self._transacao():
+            self._conexao.execute("INSERT INTO mix_discs VALUES (?, ?, ?)", (mix_id, nome, time.time()))
+            self._conexao.executemany(
+                "INSERT INTO mix_tracks VALUES (?, ?, ?)",
+                ((mix_id, posicao, caminho) for posicao, caminho in enumerate(caminhos)))
+
+    def add_mix_track(self, mix_id: str, caminho: str) -> bool:
+        """Põe a faixa no fim do disco montado. False se ela já estava (não duplica)."""
+        with self._transacao():
+            ja_tem = self._conexao.execute(
+                "SELECT 1 FROM mix_tracks WHERE mix_id = ? AND path = ?", (mix_id, caminho)).fetchone()
+            if ja_tem:
+                return False
+            proxima = self._conexao.execute(
+                "SELECT COALESCE(MAX(position) + 1, 0) FROM mix_tracks WHERE mix_id = ?",
+                (mix_id,)).fetchone()[0]
+            self._conexao.execute("INSERT INTO mix_tracks VALUES (?, ?, ?)", (mix_id, proxima, caminho))
+            return True
+
+    def remove_mix_track(self, mix_id: str, caminho: str) -> None:
+        with self._transacao():
+            self._conexao.execute("DELETE FROM mix_tracks WHERE mix_id = ? AND path = ?", (mix_id, caminho))
+
+    def delete_mix(self, mix_id: str) -> None:
+        with self._transacao():
+            self._conexao.execute("DELETE FROM mix_tracks WHERE mix_id = ?", (mix_id,))
+            self._conexao.execute("DELETE FROM mix_discs WHERE id = ?", (mix_id,))
+
+    def load_mixes(self) -> list[tuple[str, str, list[str]]]:
+        """(id, nome, caminhos das faixas na ordem escolhida) de cada disco montado."""
+        discos = self._conexao.execute("SELECT id, name FROM mix_discs ORDER BY created_at, id").fetchall()
+        resultado = []
+        for mix_id, nome in discos:
+            caminhos = [linha[0] for linha in self._conexao.execute(
+                "SELECT path FROM mix_tracks WHERE mix_id = ? ORDER BY position", (mix_id,))]
+            resultado.append((mix_id, nome, caminhos))
+        return resultado
+
+    # -- Caixa e edições (M4) -----------------------------------------------------
+
+    def put_in_box(self, album_id: str) -> None:
+        with self._transacao():
+            self._conexao.execute("INSERT OR REPLACE INTO box VALUES (?, ?)", (album_id, time.time()))
+
+    def take_out_of_box(self, album_id: str) -> None:
+        with self._transacao():
+            self._conexao.execute("DELETE FROM box WHERE album_id = ?", (album_id,))
+
+    def load_box(self) -> list[str]:
+        return [linha[0] for linha in self._conexao.execute("SELECT album_id FROM box ORDER BY put_at, album_id")]
+
+    def get_override(self, album_id: str) -> Override | None:
+        linha = self._conexao.execute(
+            "SELECT name, cover_kind, cover_path, prev_name, prev_cover_kind, prev_cover_path, has_prev "
+            "FROM overrides WHERE album_id = ?", (album_id,)).fetchone()
+        return Override(*linha[:6], bool(linha[6])) if linha else None
+
+    def load_overrides(self) -> dict[str, Override]:
+        linhas = self._conexao.execute(
+            "SELECT album_id, name, cover_kind, cover_path, prev_name, prev_cover_kind, prev_cover_path, "
+            "has_prev FROM overrides")
+        return {l[0]: Override(*l[1:7], bool(l[7])) for l in linhas}
+
+    def save_override(self, album_id: str, valor: Override) -> None:
+        with self._transacao():
+            self._conexao.execute(
+                "INSERT OR REPLACE INTO overrides VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (album_id, valor.name, valor.cover_kind, valor.cover_path, valor.prev_name,
+                 valor.prev_cover_kind, valor.prev_cover_path, int(valor.has_prev)))
+
+    def delete_override(self, album_id: str) -> None:
+        with self._transacao():
+            self._conexao.execute("DELETE FROM overrides WHERE album_id = ?", (album_id,))
+
+    # -- MusicBrainz (M6) ----------------------------------------------------
+
+    def get_mb(self, pasta: str) -> RegistroMB | None:
+        return self.load_mb().get(pasta)
+
+    def load_mb(self) -> dict[str, RegistroMB]:
+        linhas = self._conexao.execute(
+            "SELECT folder, status, mbid, title, artist, track_titles, cover_path, checked_at "
+            "FROM musicbrainz").fetchall()
+        resultado = {}
+        for pasta, status, mbid, titulo, artista, faixas, capa, quando in linhas:
+            try:
+                nomes = tuple(str(n) for n in json.loads(faixas)) if faixas else ()
+            except ValueError:
+                nomes = ()
+            resultado[pasta] = RegistroMB(status, mbid, titulo, artista, nomes,
+                                          Path(capa) if capa else None, quando)
+        return resultado
+
+    def save_mb(self, pasta: str, registro: RegistroMB) -> None:
+        with self._transacao():
+            self._conexao.execute(
+                "INSERT OR REPLACE INTO musicbrainz VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (pasta, registro.status, registro.mbid, registro.title, registro.artist,
+                 json.dumps(list(registro.track_titles), ensure_ascii=False),
+                 str(registro.cover_path) if registro.cover_path else None, registro.checked_at))
+
+    def delete_mb_except(self, pastas: Iterable[str]) -> None:
+        self._apagar_exceto("musicbrainz", "folder", pastas)
 
     # -- cache das capas -----------------------------------------------------
 

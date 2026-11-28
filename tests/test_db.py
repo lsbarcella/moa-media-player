@@ -185,3 +185,42 @@ def test_cria_a_pasta_do_banco_se_ela_nao_existe(tmp_path):
     db = Database.open(tmp_path / "ainda" / "nao" / "existe" / "moa.db")
     db.close()
     assert (tmp_path / "ainda" / "nao" / "existe" / "moa.db").exists()
+
+
+# ---------------------------------------------------------------------------
+# Migração 2 (M2): onde parou e recentes
+# ---------------------------------------------------------------------------
+
+def test_migracao_2_sobre_banco_da_versao_1_preserva_faixas_e_capas(tmp_path):
+    caminho = tmp_path / "antigo.db"
+    # Monta na mão um banco "do M1": só a migração 1 e dados dentro.
+    conexao = sqlite3.connect(caminho, isolation_level=None)
+    from moa.core.db import _migracao_1
+    _migracao_1(conexao)
+    conexao.execute("PRAGMA user_version = 1")
+    conexao.execute("INSERT INTO tracks VALUES ('/m/CD/01.mp3', 1.5, 10, 'Samba', 1, 'Zeca', 'CD', NULL)")
+    conexao.execute("INSERT INTO covers VALUES ('/m/CD', 'sig', 'file', '/m/CD/folder.jpg', NULL)")
+    conexao.close()
+
+    banco = Database(caminho)
+    try:
+        assert banco.schema_version() == len(MIGRACOES) >= 2
+        assert banco.load_tracks()["/m/CD/01.mp3"].title == "Samba"
+        assert banco.get_cover("/m/CD").signature == "sig"
+        assert banco.load_playback() is None and banco.load_recents() == []
+    finally:
+        banco.close()
+
+
+def test_onde_parou_vai_e_volta_e_so_existe_uma_linha(db):
+    assert db.load_playback() is None
+    db.save_playback("/m/A", 3, 12.5)
+    db.save_playback("/m/B", 0, 0.0)
+    assert db.load_playback() == ("/m/B", 0, 0.0)
+
+
+def test_recentes_ficam_no_limite_sem_repetir_com_o_mais_novo_primeiro(db):
+    for nome in "ABCDEFGH":
+        db.touch_recent(f"/m/{nome}", 6)
+    db.touch_recent("/m/D", 6)                      # D volta a ser o mais novo, sem duplicar
+    assert db.load_recents() == ["/m/D", "/m/H", "/m/G", "/m/F", "/m/E", "/m/C"]
