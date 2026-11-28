@@ -149,9 +149,10 @@ def test_o_tempo_nas_pontas_acompanha_a_musica(app):
     assert any(":" in x and len(x) <= 5 for x in t)          # "0:00" e a duração
 
 
-def test_a_dica_diz_em_texto_que_a_barra_e_clicavel(app):
+def test_a_barra_diz_que_e_clicavel_numa_dica_e_nao_gasta_uma_linha_inteira(app):
     ctx, conteudo = _com_radio_tocando(app)
-    assert any("Clique na barra" in x for x in textos(conteudo.mini))
+    assert "Clique" in conteudo.barra_do_radio.get_tooltip_text()
+    assert not any("Clique na barra" in x for x in textos(conteudo.mini))        # a linha de dica saiu (altura)
 
 
 def test_a_barra_em_letra_maior_desenha_sem_erro(app, tmp_path):
@@ -159,3 +160,26 @@ def test_a_barra_em_letra_maior_desenha_sem_erro(app, tmp_path):
     ctx.preferencias.mudar(letra="maior")
     conteudo.redesenhar()
     desenhar(conteudo, tmp_path / "maior.png")
+
+
+def test_a_barra_do_pe_ocupa_no_maximo_um_quarto_da_janela_mesmo_em_letra_maior(app, tmp_path):
+    """O básico do rádio tem de caber: em 1366x768 e letra Maior, a barra não passa de 28% da altura."""
+    ctx, conteudo = _com_radio_tocando(app)
+    ctx.preferencias.mudar(letra="maior")
+    conteudo.redesenhar()
+    janela = Gtk.OffscreenWindow()
+    janela.set_size_request(1366, 768)
+    janela.add(conteudo.raiz)
+    janela.show_all()
+    girar(0.5)
+    altura = conteudo.mini.get_allocated_height()
+    janela.remove(conteudo.raiz)
+    janela.destroy()
+    assert altura <= 768 * 0.28, altura
+
+
+def test_a_barra_do_pe_tem_o_visor_escuro_sem_ruler_antiga(app):
+    ctx, conteudo = _com_radio_tocando(app)
+    from moa.ui import theme
+    css = theme.gerar_css("normal", "maior")
+    assert "#FFE9A8" not in css and "#F2CF76" not in css        # o âmbar terroso do visor saiu de vez

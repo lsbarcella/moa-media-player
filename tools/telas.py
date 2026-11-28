@@ -47,7 +47,7 @@ TELAS = {
     "configuracoes": Tela.CONFIGURACOES,
     "playlist": Tela.PLAYLIST,
 }
-LARGURA, ALTURA = 1100, 800
+LARGURA, ALTURA = 1100, 800          # tamanho padrão da imagem; `--tamanho 1366x768` imita o notebook
 
 
 def _medidor():
@@ -73,7 +73,7 @@ def _girar(segundos: float) -> None:
         time.sleep(0.01)
 
 
-def gerar(destino: Path, paletas=None, letras=None, telas=None) -> list[Path]:
+def gerar(destino: Path, paletas=None, letras=None, telas=None, tamanho=(LARGURA, ALTURA)) -> list[Path]:
     """Grava uma imagem por (tela, paleta, letra) e devolve os caminhos."""
     paletas = list(paletas or theme.PALETAS)
     letras = list(letras or theme.ESCALAS)
@@ -93,7 +93,7 @@ def gerar(destino: Path, paletas=None, letras=None, telas=None) -> list[Path]:
                        pasta_miniaturas=base / "miniaturas")
         conteudo = Conteudo(ctx)
         janela = Gtk.OffscreenWindow()
-        janela.set_size_request(LARGURA, ALTURA)
+        janela.set_size_request(*tamanho)
         janela.add(conteudo.raiz)
         janela.show_all()
         ctx.definir_colecao(scan(musica), {})
@@ -119,8 +119,10 @@ def main() -> int:
     ap.add_argument("--paletas", nargs="*", choices=list(theme.PALETAS))
     ap.add_argument("--letras", nargs="*", choices=list(theme.ESCALAS))
     ap.add_argument("--telas", nargs="*", choices=list(TELAS))
+    ap.add_argument("--tamanho", default=f"{LARGURA}x{ALTURA}", help="LARGURAxALTURA da janela, ex.: 1366x768")
     args = ap.parse_args()
-    arquivos = gerar(args.destino, args.paletas, args.letras, args.telas)
+    largura, altura = (int(n) for n in args.tamanho.lower().split("x"))
+    arquivos = gerar(args.destino, args.paletas, args.letras, args.telas, (largura, altura))
     print(f"{len(arquivos)} imagens em {args.destino}")
     return 0
 

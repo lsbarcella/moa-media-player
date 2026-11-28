@@ -217,7 +217,7 @@ def test_trocar_de_disco_troca_so_a_capa_e_os_textos(app):
     corpo, capa = visao._p.corpo, visao._p.capa
     ctx.radio.abrir_disco(ctx.discos[1])
     assert visao._p.corpo is corpo and visao._p.capa is not capa
-    assert f"Disco: {ctx.discos[1].title}" in textos(visao._p.corpo)
+    assert any(t.startswith(f"Disco: {ctx.discos[1].title} · Faixa 1 de") for t in textos(visao._p.corpo))
 
 
 def test_o_foco_nao_pula_quando_so_o_volume_muda(app):
