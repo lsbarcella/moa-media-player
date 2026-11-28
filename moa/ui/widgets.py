@@ -23,6 +23,7 @@ gi.require_version("GdkPixbuf", "2.0")
 from gi.repository import GdkPixbuf, GLib, Gtk, Pango, PangoCairo  # noqa: E402
 
 from moa.core.covers import substitute_cover  # noqa: E402
+from moa.ui import cairo_pecas, theme  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -271,16 +272,19 @@ def _carregar_miniatura(caminho: Path, lado: int) -> GdkPixbuf.Pixbuf | None:
 
 
 class Capa(Gtk.DrawingArea):
-    """A capa de um disco: a miniatura, ou o nome em letras grandes sobre uma cor.
+    """A capa de um disco numa caixa de CD: a miniatura, ou o nome em letras grandes sobre uma cor.
 
-    A capa substituta é desenhada (sem arquivo), com a mesma cor sempre para o
-    mesmo nome (regra do M1) e texto branco de alto contraste.
+    A arte fica no miolo da caixa (moldura de plástico e lombada com dobradiças, ADR-0024). A caixa
+    vem do cache de desenho e deixa o miolo transparente, então o reflexo da moldura nunca cobre a
+    arte. A capa substituta é desenhada (sem arquivo), com a mesma cor sempre para o mesmo nome
+    (regra do M1) e texto branco de alto contraste.
     """
 
     def __init__(self, disco, miniatura: Path | None, lado: int = LADO_DA_CAPA):
         super().__init__()
         self.lado = lado
-        self._pixbuf = _carregar_miniatura(miniatura, lado) if miniatura else None
+        self._geometria = cairo_pecas.geometria_da_caixa(lado)
+        self._pixbuf = _carregar_miniatura(miniatura, self._geometria.arte_lado) if miniatura else None
         self._substituta = substitute_cover(disco)
         self.set_size_request(lado, lado)
         self.set_halign(Gtk.Align.CENTER)
@@ -288,18 +292,30 @@ class Capa(Gtk.DrawingArea):
         self.connect("draw", self._desenhar)
 
     def _desenhar(self, _area, cr) -> bool:
-        lado = self.lado
+        g = self._geometria
+        cr.save()                                    # a arte nunca passa do miolo
+        cr.rectangle(g.arte_x, g.arte_y, g.arte_lado, g.arte_lado)
+        cr.clip()
         if self._pixbuf is not None:
-            Gtk.render_background(self.get_style_context(), cr, 0, 0, lado, lado)
             from gi.repository import Gdk
             Gdk.cairo_set_source_pixbuf(cr, self._pixbuf,
-                                        (lado - self._pixbuf.get_width()) / 2,
-                                        (lado - self._pixbuf.get_height()) / 2)
+                                        g.arte_x + (g.arte_lado - self._pixbuf.get_width()) / 2,
+                                        g.arte_y + (g.arte_lado - self._pixbuf.get_height()) / 2)
             cr.paint()
-            return False
+        else:
+            self._desenhar_capa_substituta(cr)
+        cr.restore()
+        caixa = cairo_pecas.CACHE.obter("caixa", self.lado, self.lado, theme.paleta_atual(), 0,
+                                        cairo_pecas.desenhar_caixa_de_cd)
+        cr.set_source_surface(caixa, 0, 0)
+        cr.paint()
+        return False
+
+    def _desenhar_capa_substituta(self, cr) -> None:
+        g = self._geometria
         fundo = self._substituta.background
         cr.set_source_rgb(*(int(fundo[i:i + 2], 16) / 255 for i in (1, 3, 5)))
-        cr.rectangle(0, 0, lado, lado)
+        cr.rectangle(g.arte_x, g.arte_y, g.arte_lado, g.arte_lado)
         cr.fill()
         cor = self._substituta.text_color
         cr.set_source_rgb(*(int(cor[i:i + 2], 16) / 255 for i in (1, 3, 5)))
@@ -307,16 +323,16 @@ class Capa(Gtk.DrawingArea):
         fonte = Pango.FontDescription("Sans Bold")
         fonte.set_absolute_size(20 * Pango.SCALE)     # texto nunca abaixo de 20 px
         layout.set_font_description(fonte)
-        layout.set_width((lado - 16) * Pango.SCALE)
+        largura = g.arte_lado - 16
+        layout.set_width(largura * Pango.SCALE)
         layout.set_wrap(Pango.WrapMode.WORD_CHAR)
         layout.set_alignment(Pango.Alignment.CENTER)
         layout.set_ellipsize(Pango.EllipsizeMode.END)
-        layout.set_height((lado - 16) * Pango.SCALE)
+        layout.set_height(largura * Pango.SCALE)
         layout.set_text(self._substituta.title, -1)
         _, altura = layout.get_pixel_size()
-        cr.move_to(8, max(8, (lado - altura) / 2))
+        cr.move_to(g.arte_x + 8, g.arte_y + max(8, (g.arte_lado - altura) / 2))
         PangoCairo.show_layout(cr, layout)
-        return False
 
 
 class Mosaico(Gtk.DrawingArea):

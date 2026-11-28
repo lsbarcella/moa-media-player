@@ -15,6 +15,7 @@ Sem animação contínua: a peça só é redesenhada quando o estado muda.
 
 import math
 from collections import OrderedDict
+from typing import NamedTuple
 
 import cairo
 
@@ -140,6 +141,83 @@ def desenhar_lente(cr: cairo.Context, w: int, h: int, paleta: str, estado: bool 
         cr.fill()
 
 
+class GeometriaDaCaixa(NamedTuple):
+    """Onde ficam as partes da caixa de CD, em pixels (como uma `interface` de TypeScript)."""
+    quadro: int         # espessura da moldura de plástico
+    lombada: int        # largura da lombada, à esquerda
+    arte_x: int
+    arte_y: int
+    arte_lado: int      # a arte é um quadrado
+
+
+def geometria_da_caixa(lado: int) -> GeometriaDaCaixa:
+    """Divide um quadrado `lado` x `lado` em moldura, lombada e o quadrado da arte."""
+    quadro = max(4, round(lado * 0.045))
+    lombada = max(8, round(lado * 0.09))
+    arte_lado = lado - lombada - 2 * quadro
+    return GeometriaDaCaixa(quadro, lombada, lombada + quadro, (lado - arte_lado) // 2, arte_lado)
+
+
+def desenhar_caixa_de_cd(cr: cairo.Context, w: int, h: int, paleta: str, estado: int = 0) -> None:
+    """Moldura de plástico + lombada com duas dobradiças. O MIOLO FICA TRANSPARENTE.
+
+    A arte do disco é pintada por quem chama, dentro do miolo. Como o reflexo só existe na
+    moldura, ele nunca cobre a arte nem o texto da capa substituta (ADR-0024).
+    """
+    g = geometria_da_caixa(min(w, h))
+    lado = min(w, h)
+    contorno = _contorno(paleta)
+    # moldura de plástico: retângulo arredondado com o miolo recortado (regra par-ímpar)
+    cr.new_path()
+    _retangulo_arredondado(cr, 0.5, 0.5, lado - 1, lado - 1, 6)
+    cr.rectangle(g.arte_x, g.arte_y, g.arte_lado, g.arte_lado)
+    cr.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
+    if contorno:
+        cr.set_source_rgb(*_rgb(paleta, "white"))
+    else:
+        plastico = cairo.LinearGradient(0, 0, lado, lado)
+        plastico.add_color_stop_rgb(0, *_rgb(paleta, "metal_hi"))
+        plastico.add_color_stop_rgb(1, *_rgb(paleta, "metal_lo"))
+        cr.set_source(plastico)
+    cr.fill()
+    cr.set_fill_rule(cairo.FILL_RULE_WINDING)
+    # contorno só por fora (riscar o miolo sujaria a borda da arte)
+    cr.new_path()
+    _retangulo_arredondado(cr, 0.5, 0.5, lado - 1, lado - 1, 6)
+    cr.set_source_rgb(*_rgb(paleta, "dark"))
+    cr.set_line_width(3 if contorno else 1.5)
+    cr.stroke()
+    # lombada: faixa escura na esquerda (cinza-escuro, decisão em aberto do autor)
+    cr.rectangle(g.quadro, g.quadro, g.lombada, lado - 2 * g.quadro)
+    cr.set_source_rgb(*_rgb(paleta, "dark"))
+    cr.fill()
+    # duas dobradiças na lombada, em cima e embaixo
+    dobradica = max(6, g.lombada - 2)
+    for y in (g.quadro + 2, lado - g.quadro - 2 - dobradica):
+        cr.save()
+        cr.translate(g.quadro + (g.lombada - dobradica) / 2, y)
+        desenhar_dobradica(cr, dobradica, dobradica, paleta)
+        cr.restore()
+    # reflexo: um fio claro só no alto da moldura e na borda esquerda da lombada
+    if not contorno:
+        cr.set_source_rgba(1, 1, 1, 0.75)
+        cr.set_line_width(1.5)
+        cr.move_to(8, 1.5)
+        cr.line_to(lado - 8, 1.5)
+        cr.move_to(1.5, 8)
+        cr.line_to(1.5, lado - 8)
+        cr.stroke()
+
+
+def _retangulo_arredondado(cr: cairo.Context, x: float, y: float, w: float, h: float, r: float) -> None:
+    cr.move_to(x + r, y)
+    cr.arc(x + w - r, y + r, r, -math.pi / 2, 0)
+    cr.arc(x + w - r, y + h - r, r, 0, math.pi / 2)
+    cr.arc(x + r, y + h - r, r, math.pi / 2, math.pi)
+    cr.arc(x + r, y + r, r, math.pi, 3 * math.pi / 2)
+    cr.close_path()
+
+
 class CacheDeDesenho:
     """Guarda o desenho pronto de cada peça por (nome, tamanho, estado, paleta).
 
@@ -153,6 +231,9 @@ class CacheDeDesenho:
 
     def __len__(self) -> int:
         return len(self._itens)
+
+    def chaves(self) -> list:
+        return list(self._itens)
 
     def limpar(self) -> None:
         self._itens.clear()
