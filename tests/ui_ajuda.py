@@ -63,8 +63,15 @@ def botoes(raiz: Gtk.Widget) -> list[Gtk.Button]:
     return [w for w in todos_os_widgets(raiz) if isinstance(w, Gtk.Button)]
 
 
+def nome_do_botao(botao: Gtk.Button) -> str:
+    """O que um leitor de tela diz do botão: o nome acessível (teclas só com ícone) ou o texto."""
+    nome = botao.get_accessible().get_name() or ""
+    return nome
+
+
 def botao_com_texto(raiz: Gtk.Widget, texto: str) -> Gtk.Button:
+    """Acha o botão pelo texto visível ou, nas teclas só com ícone, pelo nome acessível."""
     for b in botoes(raiz):
-        if texto in textos(b):
+        if texto in textos(b) or nome_do_botao(b) == texto:
             return b
     raise AssertionError(f"não achei o botão {texto!r}; textos na tela: {textos(raiz)}")

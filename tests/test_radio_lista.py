@@ -13,7 +13,7 @@ import pytest
 from moa.core.session import Tela
 from moa.ui import widgets
 from tests.test_ui_smoke import app, musica, montar  # noqa: F401  (fixtures)
-from tests.ui_ajuda import girar, tem_display, textos
+from tests.ui_ajuda import girar, nome_do_botao, tem_display, textos
 
 pytestmark = pytest.mark.skipif(not tem_display(), reason="sem sessão gráfica (DISPLAY)")
 
@@ -178,10 +178,11 @@ def test_volume_atualiza_barras_texto_e_botoes(app):
     assert p.botao_volume.degrau == degrau
     ctx.player.definir_degrau_de_volume(10)
     ctx.radio.volume_menos(); ctx.radio.volume_mais()
-    assert "No máximo" in textos(p.mais) and p.mais.get_style_context().has_class("moa-inativo")
+    assert nome_do_botao(p.mais) == "Volume no máximo" and p.mais.get_style_context().has_class("moa-inativo")
+    assert not textos(p.mais)                       # só o símbolo: sem texto visível (ADR-0025)
     ctx.player.definir_degrau_de_volume(0)
     ctx.radio.volume_menos()
-    assert "No mínimo" in textos(p.menos)
+    assert nome_do_botao(p.menos) == "Volume no mínimo"
 
 
 def test_voz_mais_clara_muda_o_texto_e_a_cor(app):
