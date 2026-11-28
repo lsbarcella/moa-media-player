@@ -354,6 +354,19 @@ entry:focus {{ outline: 5px solid {c['focus']}; outline-offset: 3px; }}
 _provedor = None
 
 
+_paleta_atual = "normal"
+
+
+def definir_paleta_atual(paleta: str) -> None:
+    """Guarda a paleta em uso para as peças em Cairo, que a leem na hora de desenhar (KTD12)."""
+    global _paleta_atual
+    _paleta_atual = paleta if paleta in PALETAS else "normal"
+
+
+def paleta_atual() -> str:
+    return _paleta_atual
+
+
 def aplicar(paleta: str, letra: str) -> None:
     """Carrega o CSS na tela inteira do app (troca o anterior, se houver)."""
     import gi
@@ -362,6 +375,7 @@ def aplicar(paleta: str, letra: str) -> None:
     from gi.repository import Gdk, Gtk
 
     global _provedor
+    definir_paleta_atual(paleta)
     tela = Gdk.Screen.get_default()
     if tela is None:
         return
