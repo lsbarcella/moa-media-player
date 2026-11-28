@@ -284,3 +284,10 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Opção B escolhida:** ano das tags e do MusicBrainz (migração 5), "Artista · Álbum · Ano" no visor, ADR-0027. 
 - **Achados:** um caso de teste com espaços na data que o próprio mutagen recusa gravar; os discos montados são outro tipo e precisaram de `year`; a migração precisa marcar o cache como desatualizado para o ano ser lido.
 - **NÃO testado:** no notebook do pai; a primeira abertura (que relê as tags de tudo uma vez) não foi cronometrada lá.
+
+## 28/11/2026 — Segundo teste no notebook: barra recolhida, rádio fixo e letra menor (ADR-0028)
+
+- **Pedidos:** barra do pé com efeito de hover (ocupa espaço demais); "Abrir o rádio" na mesma linha de Anterior e Próxima, todo à direita; painel do rádio fixo ao lado da lista; baixar o tamanho de todas as letras proporcionalmente (Maior quebra tudo, Grande algumas, Normal quase).
+- **Feito:** escala 17/20/24 px (era 20/24/28); barra do pé numa linha, com um fio de andamento e o progresso clicável flutuando por cima só com o mouse na barra; painel do rádio com rolagem própria (só a lista rola); só a letra Maior empilha. Regras do CLAUDE.md reescritas (letra e exceção do hover). Testes novos: posição de "Abrir o rádio", hover com pausa e cancelamento, o progresso não redimensiona a tela, o painel não se move ao rolar a lista, letra e empilhamento.
+- **Incidente:** o app rodando desta pasta usou o atualizador de teste (ADR-0020) e trocou `moa/` e `tools/` pela `dev`, desfazendo o trabalho não comitado. Nada se perdeu (as pastas `*.anterior/` eram idênticas ao commit e o autor restaurou com `git checkout`). Lição: não rodar o app a partir do repositório de desenvolvimento com a atualização de teste ligada.
+- **NÃO testado:** no notebook do pai; se 17 px é legível para ele.

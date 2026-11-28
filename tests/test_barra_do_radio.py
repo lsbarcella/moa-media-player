@@ -133,6 +133,7 @@ def test_a_barra_some_na_tela_do_radio_e_sem_nada_tocando(app):
 
 def test_clicar_na_barra_de_progresso_da_janela_busca_no_rádio(app, monkeypatch, tmp_path):
     ctx, conteudo = _com_radio_tocando(app)
+    conteudo.mostrar_o_progresso(True)
     desenhar(conteudo, tmp_path / "janela.png")           # a janela precisa estar na tela para ter tamanho
     pedidos = []
     monkeypatch.setattr(ctx.radio, "buscar_fracao", pedidos.append)
@@ -143,14 +144,16 @@ def test_clicar_na_barra_de_progresso_da_janela_busca_no_rádio(app, monkeypatch
 
 def test_o_tempo_nas_pontas_acompanha_a_musica(app):
     ctx, conteudo = _com_radio_tocando(app)
-    girar(0.3)
+    conteudo.mostrar_o_progresso(True)
+    girar(0.4)
     conteudo.atualizar_progresso_do_mini()
-    t = textos(conteudo.mini)
+    t = textos(conteudo._flutuante)
     assert any(":" in x and len(x) <= 5 for x in t)          # "0:00" e a duração
 
 
 def test_a_barra_diz_que_e_clicavel_numa_dica_e_nao_gasta_uma_linha_inteira(app):
     ctx, conteudo = _com_radio_tocando(app)
+    conteudo.mostrar_o_progresso(True)
     assert "Clique" in conteudo.barra_do_radio.get_tooltip_text()
     assert not any("Clique na barra" in x for x in textos(conteudo.mini))        # a linha de dica saiu (altura)
 
@@ -162,20 +165,93 @@ def test_a_barra_em_letra_maior_desenha_sem_erro(app, tmp_path):
     desenhar(conteudo, tmp_path / "maior.png")
 
 
-def test_a_barra_do_pe_ocupa_no_maximo_um_quarto_da_janela_mesmo_em_letra_maior(app, tmp_path):
-    """O básico do rádio tem de caber: em 1366x768 e letra Maior, a barra não passa de 28% da altura."""
-    ctx, conteudo = _com_radio_tocando(app)
-    ctx.preferencias.mudar(letra="maior")
-    conteudo.redesenhar()
+def _janela_1366(conteudo):
     janela = Gtk.OffscreenWindow()
     janela.set_size_request(1366, 768)
     janela.add(conteudo.raiz)
     janela.show_all()
-    girar(0.5)
+    girar(0.6)
+    return janela
+
+
+def test_a_barra_recolhida_ocupa_pouco_mesmo_em_letra_maior(app):
+    """Sem o mouse em cima, a barra é uma linha só: no máximo 18% de uma janela de 1366x768.
+
+    O piso vem do alvo mínimo de 64 px das teclas, mais a borda, a bandeja e o fio de andamento.
+    """
+    ctx, conteudo = _com_radio_tocando(app)
+    ctx.preferencias.mudar(letra="maior")
+    conteudo.redesenhar()
+    janela = _janela_1366(conteudo)
     altura = conteudo.mini.get_allocated_height()
     janela.remove(conteudo.raiz)
     janela.destroy()
-    assert altura <= 768 * 0.28, altura
+    assert altura <= 768 * 0.18, altura
+
+
+def test_abrir_o_radio_fica_na_linha_de_anterior_e_proxima_todo_para_a_direita(app):
+    ctx, conteudo = _com_radio_tocando(app)
+    janela = _janela_1366(conteudo)
+    anterior = botao_com_texto(conteudo.mini, "Anterior")
+    proxima = botao_com_texto(conteudo.mini, "Próxima")
+    abrir = botao_com_texto(conteudo.mini, "Abrir o rádio")
+    (_, y_ant), (x_abrir, y_abrir) = (anterior.translate_coordinates(janela, 0, 0),
+                                       abrir.translate_coordinates(janela, 0, 0))
+    x_prox = proxima.translate_coordinates(janela, 0, 0)[0] + proxima.get_allocated_width()
+    direita_do_abrir = x_abrir + abrir.get_allocated_width()
+    janela.remove(conteudo.raiz)
+    janela.destroy()
+    assert abs(y_ant - y_abrir) < 40                    # a mesma linha
+    assert x_abrir > x_prox + 20                        # depois das três teclas
+    assert direita_do_abrir >= 1366 - 40                # encostado na direita (menos a margem da barra)
+
+
+def test_o_progresso_so_aparece_com_o_mouse_em_cima_e_some_depois_de_uma_pausa(app):
+    ctx, conteudo = _com_radio_tocando(app)
+    janela = _janela_1366(conteudo)
+    assert not conteudo.progresso_visivel()
+    conteudo.mostrar_o_progresso(True)
+    girar(0.4)
+    assert conteudo.progresso_visivel()
+    conteudo.esconder_o_progresso_depois_de_uma_pausa()
+    assert conteudo.progresso_visivel()                 # ainda: a pausa dá tempo de o mouse chegar na barra
+    girar(0.7)
+    assert not conteudo.progresso_visivel()
+    janela.remove(conteudo.raiz)
+    janela.destroy()
+
+
+def test_voltar_o_mouse_a_tempo_cancela_o_sumico(app):
+    ctx, conteudo = _com_radio_tocando(app)
+    janela = _janela_1366(conteudo)
+    conteudo.mostrar_o_progresso(True)
+    conteudo.esconder_o_progresso_depois_de_uma_pausa()
+    conteudo.mostrar_o_progresso(True)                  # o mouse voltou
+    girar(0.7)
+    assert conteudo.progresso_visivel()
+    janela.remove(conteudo.raiz)
+    janela.destroy()
+
+
+def test_o_progresso_flutua_por_cima_e_nao_mexe_na_altura_da_tela(app):
+    """Mostrar o progresso não redimensiona a tela de baixo (isso pesaria no notebook antigo)."""
+    ctx, conteudo = _com_radio_tocando(app)
+    janela = _janela_1366(conteudo)
+    antes = conteudo.pilha.get_allocated_height()
+    conteudo.mostrar_o_progresso(True)
+    girar(0.4)
+    depois = conteudo.pilha.get_allocated_height()
+    janela.remove(conteudo.raiz)
+    janela.destroy()
+    assert antes == depois
+
+
+def test_um_fio_fino_sempre_mostra_o_andamento_mesmo_sem_o_mouse(app):
+    ctx, conteudo = _com_radio_tocando(app)
+    assert conteudo.fio_do_radio is not None and conteudo.fio_do_radio.get_visible()
+    conteudo.fio_do_radio.set_fraction(0)
+    conteudo.atualizar_progresso_do_mini()
+    assert 0.0 <= conteudo.fio_do_radio.get_fraction() <= 1.0
 
 
 def test_a_barra_do_pe_tem_o_visor_escuro_sem_ruler_antiga(app):

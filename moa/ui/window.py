@@ -19,7 +19,7 @@ import gi
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
-from gi.repository import Gdk, GLib, Gtk  # noqa: E402
+from gi.repository import Gdk, GLib, Gtk, Pango  # noqa: E402
 
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.session import Tela  # noqa: E402
@@ -67,12 +67,23 @@ class Conteudo:
         self.sobreposicao.add_overlay(self.plus.raiz)
         self.raiz.pack_start(self.sobreposicao, True, True, 0)
 
-        self.mini = caixa_v(4)                       # a barra do rádio (ADR-0026)
-        self.mini.get_style_context().add_class("moa-mini")
-        ornamentos.instalar_parafusos(self.mini, diametro=12, margem=6)
-        self.barra_do_radio: BarraDeProgresso | None = None
-        self._progresso_do_mini: LinhaDeProgresso | None = None
+        # A barra do rádio (ADR-0026, ADR-0028). `mini` é uma EventBox só para ouvir o mouse; o
+        # desenho está em `_mini_corpo`. O progresso clicável NÃO fica dentro da barra: ele flutua
+        # por cima da tela (Overlay) e só aparece com o mouse em cima, para a barra ficar baixa e a
+        # tela de baixo nunca ser redimensionada (isso pesaria no notebook antigo).
+        self.mini = Gtk.EventBox()
+        self.mini.add_events(Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
+        self._mini_corpo = caixa_v(2)
+        self._mini_corpo.get_style_context().add_class("moa-mini")
+        ornamentos.instalar_parafusos(self._mini_corpo, diametro=12, margem=6)
+        self.mini.add(self._mini_corpo)
+        self.fio_do_radio: Gtk.ProgressBar | None = None
         self.raiz.pack_start(self.mini, False, False, 0)
+        self._montar_o_progresso_flutuante()
+        self.mini.connect("enter-notify-event", self._ao_mouse_na_barra)
+        self.mini.connect("leave-notify-event", self._ao_mouse_fora_da_barra)
+        self.mini.connect("size-allocate", self._ao_mudar_o_tamanho_da_barra)
+        self._sumico_agendado: int | None = None
 
         self.telas: dict[Tela, object] = {}
         self.registrar(Tela.ESTANTE, ShelfView(contexto))
@@ -107,6 +118,8 @@ class Conteudo:
         rolagem.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         rolagem.set_overlay_scrolling(False)      # a barra fica sempre à vista (nada de aparecer só com o mouse)
         rolagem.add(visao.raiz)
+        if hasattr(visao, "rolagem_externa"):         # a tela do rádio decide sozinha como a janela rola
+            visao.rolagem_externa = rolagem
         self.pilha.add_named(rolagem, tela.value)
         self.telas[tela] = visao
 
@@ -175,8 +188,74 @@ class Conteudo:
         self.area_da_falha.pack_start(aviso(texto), False, False, 0)
         self.area_da_falha.show_all()
 
+    # -- progresso que flutua por cima, só com o mouse na barra (ADR-0028) ---------------------
+
+    PAUSA_PARA_SUMIR_MS = 400          # dá tempo de o mouse ir da barra até o progresso (ou voltar)
+
+    def _montar_o_progresso_flutuante(self) -> None:
+        self._progresso_do_mini = LinhaDeProgresso(self._buscar_do_mini)
+        self.barra_do_radio = self._progresso_do_mini.barra
+        moldura = Gtk.EventBox()
+        moldura.add_events(Gdk.EventMask.ENTER_NOTIFY_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
+        miolo = caixa_h(0)
+        miolo.get_style_context().add_class("moa-flutuante")
+        miolo.pack_start(self._progresso_do_mini, True, True, 0)
+        moldura.add(miolo)
+        self._flutuante = Gtk.Revealer()
+        self._flutuante.set_transition_type(Gtk.RevealerTransitionType.SLIDE_UP)
+        self._flutuante.set_transition_duration(120)
+        self._flutuante.set_valign(Gtk.Align.END)
+        self._flutuante.set_halign(Gtk.Align.FILL)
+        self._flutuante.add(moldura)
+        self.sobreposicao.add_overlay(self._flutuante)
+        self.sobreposicao.set_overlay_pass_through(self._flutuante, True)
+        moldura.connect("enter-notify-event", self._ao_mouse_na_barra)
+        moldura.connect("leave-notify-event", self._ao_mouse_fora_da_barra)
+        self._flutuante.show_all()
+        self._flutuante.set_reveal_child(False)
+
+    def _ao_mudar_o_tamanho_da_barra(self, _widget, alocacao) -> None:
+        """O progresso flutua logo acima da barra: a margem de baixo acompanha a altura dela."""
+        if self._flutuante.get_margin_bottom() != alocacao.height:
+            self._flutuante.set_margin_bottom(alocacao.height)
+
+    def _ao_mouse_na_barra(self, *_args) -> bool:
+        self.mostrar_o_progresso(True)
+        return False
+
+    def _ao_mouse_fora_da_barra(self, _widget, evento) -> bool:
+        if evento.detail == Gdk.NotifyType.INFERIOR:         # o mouse só passou para um botão de dentro
+            return False
+        self.esconder_o_progresso_depois_de_uma_pausa()
+        return False
+
+    def mostrar_o_progresso(self, mostrar: bool) -> None:
+        """Mostra (ou esconde já) o progresso flutuante. Mostrar cancela um sumiço agendado."""
+        self._cancelar_o_sumico()
+        if mostrar and self.mini.get_visible():
+            self.atualizar_progresso_do_mini()
+        self._flutuante.set_reveal_child(bool(mostrar) and self.mini.get_visible())
+
+    def esconder_o_progresso_depois_de_uma_pausa(self) -> None:
+        self._cancelar_o_sumico()
+        self._sumico_agendado = GLib.timeout_add(self.PAUSA_PARA_SUMIR_MS, self._sumir)
+
+    def _sumir(self) -> bool:
+        self._sumico_agendado = None
+        self._flutuante.set_reveal_child(False)
+        return False
+
+    def _cancelar_o_sumico(self) -> None:
+        if self._sumico_agendado is not None:
+            GLib.source_remove(self._sumico_agendado)
+            self._sumico_agendado = None
+
+    def progresso_visivel(self) -> bool:
+        return self._flutuante.get_reveal_child()
+
     def _desenhar_mini(self) -> None:
-        """A barra do rádio no pé das outras telas: visor, teclas, "Abrir o rádio" e a barra de progresso.
+        """A barra do rádio no pé das outras telas: uma linha só (visor, as três teclas e "Abrir o rádio"
+        à direita) e um fio fino com o andamento. O progresso clicável aparece com o mouse em cima.
 
         Só é refeita quando muda o que ela mostra (música, faixa, tocando ou pausado). O andamento
         da música é atualizado no lugar, uma vez por segundo, por `atualizar_progresso_do_mini`.
@@ -188,36 +267,39 @@ class Conteudo:
         if chave == self._chave_do_mini:
             return
         self._chave_do_mini = chave
-        limpar(self.mini)
-        self.barra_do_radio, self._progresso_do_mini = None, None
+        limpar(self._mini_corpo)
+        self.fio_do_radio = None
         if escondido:
+            self._flutuante.set_reveal_child(False)
             self.mini.hide()
             self.mini.set_no_show_all(True)
             return
         self.mini.set_no_show_all(False)
 
-        # linha de cima: visor, as três teclas na bandeja preta e "Abrir o rádio"
-        linha = Gtk.FlowBox()
-        linha.set_selection_mode(Gtk.SelectionMode.NONE)
-        linha.set_homogeneous(False)
-        linha.set_min_children_per_line(1)
-        linha.set_max_children_per_line(3)
-        linha.set_column_spacing(14)
-        linha.set_row_spacing(10)
+        # o fio fino do andamento, sempre à vista, na borda de cima da barra
+        self.fio_do_radio = Gtk.ProgressBar()
+        self.fio_do_radio.get_style_context().add_class("moa-fio")
+        self._mini_corpo.pack_start(self.fio_do_radio, False, False, 0)
+
+        # a linha única: visor, as três teclas na bandeja preta e "Abrir o rádio" todo à direita
+        linha = caixa_h(14)
         vidro = caixa_v(2)
         vidro.get_style_context().add_class("moa-visor")
-        vidro.set_size_request(260, -1)
-        vidro.set_hexpand(True)
-        estado = caixa_h(10)                      # lâmpada, estado e música numa só linha: a barra fica baixa
+        vidro.set_size_request(280, -1)
+        estado = caixa_h(10)                      # lâmpada, estado e música numa só linha
         lampada = Gtk.Box()
         lampada.get_style_context().add_class("moa-lampada")
         lampada.set_valign(Gtk.Align.CENTER)
         classe(lampada, "moa-acesa", visor.luz_acesa)
         estado.pack_start(lampada, False, False, 0)
         estado.pack_start(rotulo(visor.palavra, "moa-forte", quebrar=False), False, False, 0)
-        estado.pack_start(rotulo(visor.titulo, "moa-grande", quebrar=False), False, False, 0)
+        titulo = rotulo(visor.titulo, "moa-grande", quebrar=False, largura_maxima=22)
+        titulo.set_ellipsize(Pango.EllipsizeMode.END)
+        estado.pack_start(titulo, False, False, 0)
         vidro.pack_start(estado, False, False, 0)
-        vidro.pack_start(rotulo(f"{visor.faixa} · {visor.disco}", quebrar=False), False, False, 0)
+        detalhe = rotulo(f"{visor.faixa} · {visor.disco}", quebrar=False, largura_maxima=32)
+        detalhe.set_ellipsize(Pango.EllipsizeMode.END)
+        vidro.pack_start(detalhe, False, False, 0)
         bandeja = caixa_h(6)
         bandeja.get_style_context().add_class("moa-bandeja")
         bandeja.pack_start(botao("Anterior", ao_clicar=self._anterior_do_mini, icone_nome="anterior"), False, False, 0)
@@ -229,22 +311,20 @@ class Conteudo:
                                False, False, 0)
         bandeja.pack_start(botao("Próxima", ao_clicar=self._proxima_do_mini, icone_nome="proxima"), False, False, 0)
         abrir = botao("Abrir o rádio", ao_clicar=lambda: self.ctx.session.ir_para(Tela.RADIO))
-        for peca in (vidro, bandeja, abrir):
-            linha.add(peca)
-        for filha in linha.get_children():
-            filha.set_can_focus(False)                # só os botões recebem o foco, não a "caixinha" do FlowBox
-        self.mini.pack_start(linha, False, False, 0)
-
-        # barra de progresso comum, com o tempo nas pontas; um clique vai ao ponto
-        self._progresso_do_mini = LinhaDeProgresso(self._buscar_do_mini)
-        self.barra_do_radio = self._progresso_do_mini.barra
-        self.mini.pack_start(self._progresso_do_mini, False, False, 0)
+        linha.pack_start(vidro, False, False, 0)
+        linha.pack_start(bandeja, False, False, 0)
+        linha.pack_end(abrir, False, False, 0)
+        self._mini_corpo.pack_start(linha, False, False, 0)
         self.mini.show_all()
         self.atualizar_progresso_do_mini()
 
     def atualizar_progresso_do_mini(self) -> None:
-        """Move a barra de progresso e os tempos, só mexendo no que mudou."""
-        if self._progresso_do_mini is not None:
+        """Move o fio, e a barra clicável se ela estiver à mostra, só mexendo no que mudou."""
+        if self.fio_do_radio is None:
+            return
+        fracao = self.ctx.radio.progresso()
+        self.fio_do_radio.set_fraction(fracao if fracao is not None else 0.0)
+        if self._flutuante.get_reveal_child():
             self._progresso_do_mini.atualizar_do_radio(self.ctx.radio)
 
     def _buscar_do_mini(self, fracao: float) -> None:
