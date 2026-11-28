@@ -268,3 +268,10 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Achados:** a primeira tecla afundada (cinza médio com letra branca) dava 4,8:1 e foi escurecida para 7:1; o `perl` de renomeação de tokens mexeu em comentários e precisou de correção; os testes que procuravam botão pelo texto passaram a aceitar o nome acessível.
 - **Decisões que seguem do autor:** texto nas teclas de transporte; a barra do rádio nas outras telas (preview feito, não implementada); o que mostrar sem nada tocando.
 - **NÃO testado:** no notebook do pai; nem se o idoso reconhece o volume sem texto. O custo de desenho do tema novo não foi medido no Pentium.
+
+## 28/11/2026 — Barra do rádio (B + E) implementada
+
+- **Pedido:** "Bora" (implementar a mistura B + E, com barra de progresso clicável, Anterior e Próxima). As duas perguntas em aberto (o que mostrar sem nada tocando; aceitar a altura) ficaram no padrão recomendado e estão avisadas ao autor.
+- **Feito:** `Player.buscar`, `Radio.progresso` e `buscar_fracao`; `BarraDeProgresso` (clique, 64 px, sem foco de teclado); a barra do pé da janela refeita (visor, bandeja com as três teclas, "Abrir o rádio", progresso, dica); o tempo andando uma vez por segundo; ADR-0026 e CLAUDE.md atualizados. Testes novos: busca no player, progresso no rádio, clique de verdade na barra e a barra na janela (aparece, some, teclas, letra "Maior").
+- **Achados:** `0.0 or 99` em Python vira 99, o que enganou um teste de posição; o sink rápido termina a faixa antes de dar tempo de buscar (o teste usa o player no relógio com a faixa longa); sem a janela desenhada o widget não tem tamanho, e o teste do clique precisa desenhá-la antes.
+- **NÃO testado:** no notebook do pai; custo da barra andando no Pentium; se o idoso percebe que a barra é clicável.

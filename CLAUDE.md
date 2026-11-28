@@ -229,6 +229,7 @@ O `tools/measure.sh` deve medir esses números de forma repetível, por exemplo 
 - **Nome: Moa Media Player.** O autor escolheu o nome completo, sabendo que "Media Player" é genérico e em inglês. Pacote `moa`, ID `br.tcc.Moa`.
 - **Expansão futura:** depois do MVP, o autor pretende expandir para vídeos e fotos. Vídeo num notebook antigo é bem mais pesado que áudio e exigirá medição e um ADR antes de qualquer promessa.
 - **Audição:** o rádio terá um botão **"Voz mais clara"** (liga/desliga, estado em texto), que reforça agudos e voz. É a opção B1 do ADR-0004; pode evoluir para um controle "Tom" (B2) se o teste mostrar que não basta.
+- **Barra do rádio nas outras telas (28/11/2026, ADR-0026):** visor com estado, música e "Faixa X de Y", teclas Anterior / Tocar-Pausar / Próxima, "Abrir o rádio" e uma **barra de progresso comum e clicável** (um clique vai ao ponto; não arrasta; sem foco de teclado, porque as setas são Anterior e Próxima), com o tempo nas pontas. Aparece em toda tela menos no rádio.
 - **Perfil do usuário definido só por literatura** (ADR-0005). A IA havia recomendado questionário seguido de observação; o autor escolheu só a literatura.
 - **Dispositivo apontador: mouse** (o usuário usa mouse, não touchpad).
 - **Cada CD tem uma pasta própria**; as duplicadas são a mesma música em CDs diferentes (mantidas, cada uma no seu disco).
@@ -252,7 +253,7 @@ O `tools/measure.sh` deve medir esses números de forma repetível, por exemplo 
 - **Desenho visual dos botões, dos ícones e das telas** (inclusive da manutenção da coleção: adicionar, renomear, trocar capa, remover). Será explorado com `ce-ideate`, seguido de um preview em HTML.
 - Confirmação ao fechar pelo X (por padrão, não há).
 - Se os usuários acham o botão "Configurações" no teste (a literatura recomenda o controle de letra visível), e se as paletas de daltonismo funcionam para uma pessoa daltônica real.
-- Mostrar ou não a barra de progresso da música, e se ela é clicável.
+- O que mostrar na barra do rádio quando não há nada tocando (hoje some) e se a letra "Maior" pode deixar a barra tão alta (hoje sim; medir na tela do notebook).
 - Comportamento ao fim do disco: parar ou voltar para a estante.
 - Paleta de cores e tema (claro, escuro ou alto contraste).
 - Versão do Linux Mint e especificações do notebook do usuário (CPU, RAM, tipo de disco), (o leitor de CD **existe**, confirmado pelo autor em 27/11/2026; falta a versão do Mint, a CPU, a RAM e o tipo de disco).
