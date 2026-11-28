@@ -261,3 +261,25 @@ def test_no_preto_e_branco_nenhum_token_de_fundo_de_tecla_tem_tom():
         cor = theme.PALETAS["preto-e-branco"][token].lstrip("#")
         canais = [int(cor[i:i + 2], 16) for i in (0, 2, 4)]
         assert max(canais) - min(canais) <= 8, (token, cor)
+
+
+# -- barra de rolagem temática (ADR-0024) ---------------------------------------------------------
+
+@pytest.mark.parametrize("paleta", list(theme.PALETAS))
+def test_a_barra_de_rolagem_e_larga_o_bastante_para_o_mouse(paleta):
+    css = theme.gerar_css(paleta, "normal")
+    largura = int(re.search(r"scrollbar slider \{[^}]*?min-width:\s*(\d+)px", css).group(1))
+    assert largura >= 26
+    assert int(re.search(r"scrollbar slider \{[^}]*?min-height:\s*(\d+)px", css).group(1)) >= theme.ALVO_MINIMO_PX
+
+
+def test_a_canaleta_e_escura_e_o_cursor_e_de_latao():
+    css = theme.gerar_css("normal", "normal")
+    assert theme.PALETAS["normal"]["brass"].lower() in _bloco(css, "scrollbar slider").lower()
+    assert "inset" in _bloco(css, "scrollbar trough")
+
+
+def test_no_preto_e_branco_a_barra_nao_tem_degrade():
+    css = theme.gerar_css("preto-e-branco", "normal")
+    assert "gradient" not in _bloco(css, "scrollbar slider") and "gradient" not in _bloco(css, "scrollbar trough")
+

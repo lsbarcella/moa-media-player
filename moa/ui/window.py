@@ -100,6 +100,7 @@ class Conteudo:
         """Põe uma tela na pilha. Cada tela rola sozinha se não couber."""
         rolagem = Gtk.ScrolledWindow()
         rolagem.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        rolagem.set_overlay_scrolling(False)      # a barra fica sempre à vista (nada de aparecer só com o mouse)
         rolagem.add(visao.raiz)
         self.pilha.add_named(rolagem, tela.value)
         self.telas[tela] = visao

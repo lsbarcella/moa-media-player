@@ -282,6 +282,32 @@ def _css_do_movel(c: dict[str, str], modo: str) -> str:
 """
 
 
+def _css_da_rolagem(c: dict[str, str], modo: str) -> str:
+    """Barra de rolagem como um trilho de madeira com um cursor de latão (sempre visível)."""
+    if modo == "contorno":
+        return f"""
+scrollbar {{ background-color: {c['white']}; border: 0 solid {c['dark']}; }}
+scrollbar trough {{ background-color: {c['dark']}; background-image: none; min-width: 30px;
+                    border: 3px solid {c['white']}; box-shadow: inset 0 0 0 3px {c['dark']}; }}
+scrollbar slider {{ background-color: {c['white']}; background-image: none; min-width: 26px; min-height: 72px;
+                    border: 4px solid {c['dark']}; border-radius: 10px; box-shadow: 0 0 0 2px {c['white']}; }}
+scrollbar slider:hover, scrollbar slider:active {{ background-color: {c['white']}; border-width: 6px; }}
+"""
+    friso = "rgba(0,0,0,0.30)"
+    return f"""
+scrollbar {{ background-color: {c['wood_lo']}; border: 0 solid {c['dark']}; }}
+scrollbar trough {{ background-color: {c['wood_lo']}; background-image: none; min-width: 30px;
+                    border: 0 solid {c['dark']}; box-shadow: inset 4px 0 8px rgba(0,0,0,0.65), inset -2px 0 0 rgba(255,255,255,0.12); }}
+scrollbar slider {{ background-color: {c['brass']};
+    background-image: linear-gradient(to right, {_rgba(c['brass_hi'], 1)} 0%, {_rgba(c['brass'], 1)} 55%, {_rgba(c['brass_lo'], 1)} 100%),
+                      repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 4px, {friso} 5px, rgba(0,0,0,0) 6px);
+    min-width: 26px; min-height: 72px; margin: 2px; border: 2px solid {c['brass_lo']}; border-radius: 10px;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.7), 0 3px 0 rgba(0,0,0,0.5); }}
+scrollbar slider:hover {{ background-color: {c['brass_hi']}; }}
+scrollbar slider:active {{ box-shadow: inset 0 3px 0 rgba(0,0,0,0.3); margin-top: 4px; }}
+"""
+
+
 def _css_das_teclas(c: dict[str, str], modo: str) -> str:
     """CSS das teclas (botões de ação, escolhas e marcações), das lâmpadas e das variantes."""
     b, h, p = BORDA_PX, ALTURA_DA_TECLA_PX, PADDING_TOPO_PX
@@ -386,6 +412,7 @@ label {{ color: {c['ink']}; }}
 
 /* estante */
 {_css_do_movel(c, modo)}
+{_css_da_rolagem(c, modo)}
 button.moa-disco {{ min-height: {ALVO_MINIMO_PX}px; background-image: none; background-color: transparent;
                     border: 3px solid transparent; border-radius: 12px; padding: 6px; box-shadow: none; }}
 button.moa-disco:hover {{ background-color: {c['selbg']}; }}

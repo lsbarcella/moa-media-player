@@ -4,7 +4,11 @@
 
 """Os parafusos aparecem nas placas da Estante, no Aparelho de CD e no painel do "+" (U7)."""
 
+import gi
 import pytest
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk  # noqa: E402
 
 from moa.core.session import Tela
 from moa.ui import cairo_pecas
@@ -32,3 +36,16 @@ def test_o_aparelho_de_cd_tem_parafusos_nos_cantos(app, tmp_path):
     ctx.session.ir_para(Tela.APARELHO_DE_CD)
     desenhar(conteudo, tmp_path / "cd.png")
     assert 16 in _lados_dos_parafusos()
+
+
+def test_a_barra_de_rolagem_da_janela_fica_sempre_visivel(app):
+    ctx, conteudo = app
+    rolagens = []
+
+    def achar(w):
+        if isinstance(w, Gtk.ScrolledWindow):
+            rolagens.append(w)
+        if isinstance(w, Gtk.Container):
+            w.foreach(achar)
+    achar(conteudo.raiz)
+    assert rolagens and all(not r.get_overlay_scrolling() for r in rolagens)
