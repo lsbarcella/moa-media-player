@@ -17,7 +17,7 @@ from gi.repository import Gtk  # noqa: E402
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.session import Tela  # noqa: E402
 from moa.ui.cartao_de_atualizacao import cartao_de_atualizacao, deve_aparecer_na_estante  # noqa: E402     # ATUALIZACAO_DE_TESTE
-from moa.ui.widgets import texto_de, aviso, botao, capa_do_disco, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
+from moa.ui.widgets import EmPedacos, texto_de, aviso, botao, capa_do_disco, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
 
 TEXTO_CARREGANDO = "Estou procurando os seus discos..."
 SEGUNDOS_ATE_AVISAR_DA_DEMORA = 5
@@ -34,12 +34,48 @@ class ShelfView:
         self.raiz.set_border_width(24)
         self.raiz.set_halign(Gtk.Align.FILL)
         self.botao_principal: Gtk.Widget | None = None
+        self._chave_desenhada: tuple | None = None
+        self._foco_pendente = False
+        self._construtores: list[EmPedacos] = []
+        contexto.ao_mudar_a_colecao(self._esquecer_o_desenho)
         self.atualizar()
 
     # -- desenho ---------------------------------------------------------------------
 
+    def _esquecer_o_desenho(self) -> None:
+        """A coleção mudou (disco novo, nome, capa, Caixa): na próxima vez a estante é refeita."""
+        self._chave_desenhada = None
+
+    def _chave(self) -> tuple:
+        """Tudo o que a estante mostra além da coleção. Se for igual, não há por que refazê-la:
+        com 80 discos isso custava ~220 ms no notebook do usuário a cada aviso ou toque."""
+        ctx = self.ctx
+        radio = ctx.radio
+        ids = ctx.ids_dos_discos
+        onde = None if radio.tem_disco else ctx.memoria.onde_parou(ids)
+        a = ctx.atualizacao
+        return (
+            ctx.carregando, bool(ctx.discos or ctx.montados),
+            radio.disco.id if radio.tem_disco else None,
+            tuple(ctx.memoria.recentes(ids)),
+            (onde.album_id, onde.indice) if onde else None,
+            ctx.session.aviso, ctx.aparelho.copiando,
+            (a.habilitada, a.momento, a.commit_remoto, a.tem_versao_anterior),    # ATUALIZACAO_DE_TESTE
+        )
+
+    def ao_entrar(self) -> None:
+        self._foco_pendente = True
+
     def atualizar(self) -> None:
         ctx = self.ctx
+        chave = self._chave()
+        if chave == self._chave_desenhada:
+            return                  # nada que a estante mostra mudou
+        self._chave_desenhada = chave
+        self._foco_pendente = True
+        for construtor in self._construtores:
+            construtor.cancelar()
+        self._construtores = []
         limpar(self.raiz)
         self.botao_principal = None
         if ctx.session.aviso is not None:
@@ -175,8 +211,14 @@ class ShelfView:
         grade.set_max_children_per_line(8)
         grade.set_column_spacing(18)
         grade.set_row_spacing(20)
-        for disco in discos:
-            grade.add(self._peca(disco))
+        def acrescentar(disco) -> None:
+            peca = self._peca(disco)
+            grade.add(peca)
+            peca.show_all()
+            peca.get_parent().show()            # a caixinha que o FlowBox põe em volta
+
+        # Estantes grandes aparecem em pedaços: os primeiros discos já na hora.
+        self._construtores.append(EmPedacos(discos, acrescentar, minimo=24).iniciar())
         moldura = caixa_v(0)
         moldura.get_style_context().add_class("moa-tabua")
         moldura.pack_start(grade, False, False, 0)
@@ -219,4 +261,7 @@ class ShelfView:
         self.ctx.session.ir_para(Tela.RADIO)
 
     def foco_inicial(self) -> Gtk.Widget | None:
+        if not self._foco_pendente:
+            return None             # a estante não mudou: o foco fica onde o usuário o deixou
+        self._foco_pendente = False
         return self.botao_principal

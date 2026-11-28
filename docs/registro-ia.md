@@ -210,3 +210,11 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Feedback:** indicador girando e andamento em palavras ("Já olhei 340 músicas.", "Preparando as capas: 12 de 80.") no carregamento da estante; frase de tranquilidade só depois de 5 s. ADR-0022.
 - **Cuidado ao ler as medições:** a ferramenta copia a janela para uma imagem a cada ação (cerca de 13 ms fixos aqui), o que o uso real não faz; os números absolutos da medição superestimam um pouco.
 - **NÃO testado:** no notebook do pai depois destas mudanças.
+
+## 27/11/2026 — Listas em pedaços e estante que só se refaz quando muda
+
+- **Pedido:** seguir para o próximo item da lista de desempenho.
+- **Feito:** `EmPedacos` (monta listas longas em fatias de ~10 ms, a primeira de no mínimo 30 itens); usado na lista de músicas do rádio (com o botão "Mexer neste disco" fixo no fim e a marca "Tocando agora" aplicada na linha quando ela chega), na lista da tela de playlist e nos discos da Estante. Playlist: marcar muda só a linha. Estante: só é refeita quando algo que ela mostra muda. A medição passou a mostrar "até a tela responder" e "até terminar de montar".
+- **Verificação:** 20 testes novos (montagem em pedaços, marca de uma linha ainda não montada, cancelar ao trocar de disco ou digitar, foco). Aqui (i5): todas as ações respondem em 13 a 53 ms; criar playlist de 132 para 52 ms.
+- **Achado nos testes:** o som de teste termina em milissegundos e a faixa "atual" anda sozinha; os testes que dependem da faixa atual pausam o player e leem o índice depois de esperar.
+- **NÃO testado:** no notebook do pai. Falta rodar o `measure.sh` lá.

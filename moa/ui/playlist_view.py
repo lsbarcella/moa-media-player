@@ -22,7 +22,7 @@ from moa.core import custom_albums  # noqa: E402
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.models import MixDisc  # noqa: E402
 from moa.core.session import Tela  # noqa: E402
-from moa.ui.widgets import aviso, botao, capa_do_disco, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
+from moa.ui.widgets import EmPedacos, classe, texto_de, aviso, botao, capa_do_disco, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -30,14 +30,14 @@ MAXIMO_NA_LISTA = 150          # mais que isso pesa no notebook antigo; o filtro
 TEXTO_DA_BUSCA = "Procurar música (é só começar a digitar)"
 
 
-def _caixinha(marcada: bool) -> Gtk.Widget:
+def _caixinha(marcada: bool) -> tuple[Gtk.Widget, Gtk.Label]:
     """O quadradinho de marcar: um "✓" dentro de uma borda grossa (texto, não só cor)."""
     caixa = Gtk.Box()
     caixa.get_style_context().add_class("moa-caixinha")
     caixa.set_size_request(40, 40)
     etiqueta = rotulo("✓" if marcada else " ", "moa-forte", quebrar=False, centro=True)
     caixa.pack_start(etiqueta, True, True, 0)
-    return caixa
+    return caixa, etiqueta
 
 
 class PlaylistView:
@@ -53,6 +53,10 @@ class PlaylistView:
         self._area_da_lista: Gtk.Box | None = None
         self._area_do_cartao: Gtk.Box | None = None
         self._botoes_de_filtro: dict[str, Gtk.Button] = {}
+        # Cada música da lista: caminho -> (botão, "✓" da caixinha, texto "Marcada"). Marcar uma
+        # música muda só a linha dela, em vez de refazer as centenas de linhas.
+        self._linhas: dict[str, tuple[Gtk.Button, Gtk.Label, Gtk.Label]] = {}
+        self._construtor_da_lista: EmPedacos | None = None
         self.atualizar()
 
     # -- ciclo de vida -------------------------------------------------------------------
@@ -142,8 +146,13 @@ class PlaylistView:
                 contexto.remove_class("moa-escolhida")
 
     def _redesenhar_lista(self) -> None:
+        """Refaz a lista de músicas (a busca ou o filtro mudou), em pedaços: as primeiras linhas
+        aparecem na hora e quem digita rápido não espera a lista anterior terminar."""
         rascunho = self.ctx.rascunho
+        if self._construtor_da_lista is not None:
+            self._construtor_da_lista.cancelar()
         limpar(self._area_da_lista)
+        self._linhas = {}
         achados = rascunho.filtrar(self.ctx.discos)
         if not achados:
             cartao = caixa_v(0)
@@ -151,30 +160,42 @@ class PlaylistView:
             cartao.pack_start(rotulo("Nenhuma música encontrada. Apague uma letra ou escolha "
                                      "“Todos os discos”."), False, False, 0)
             self._area_da_lista.pack_start(cartao, False, False, 0)
-        for disco, faixa in achados[:MAXIMO_NA_LISTA]:
-            self._area_da_lista.pack_start(self._linha(disco, faixa), False, False, 0)
-        if len(achados) > MAXIMO_NA_LISTA:
-            self._area_da_lista.pack_start(
-                rotulo(f"Mostrando as primeiras {MAXIMO_NA_LISTA} músicas. Digite ou escolha um "
-                       "disco para achar as outras.", "moa-nota"), False, False, 0)
-        self._area_da_lista.show_all()
+        area = self._area_da_lista
+
+        def acrescentar(item) -> None:
+            linha = self._linha(*item)
+            area.pack_start(linha, False, False, 0)
+            linha.show_all()
+
+        def avisar_do_limite() -> None:
+            if len(achados) > MAXIMO_NA_LISTA:
+                nota = rotulo(f"Mostrando as primeiras {MAXIMO_NA_LISTA} músicas. Digite ou escolha "
+                              "um disco para achar as outras.", "moa-nota")
+                area.pack_start(nota, False, False, 0)
+                nota.show_all()
+
+        area.show_all()
+        self._construtor_da_lista = EmPedacos(achados[:MAXIMO_NA_LISTA], lambda it: acrescentar(it),
+                                              ao_terminar=avisar_do_limite).iniciar()
 
     def _linha(self, disco, faixa) -> Gtk.Button:
         marcada = self.ctx.rascunho.esta_marcada(str(faixa.path))
         conteudo = caixa_h(14)
-        conteudo.pack_start(_caixinha(marcada), False, False, 0)
+        caixinha, sinal = _caixinha(marcada)
+        conteudo.pack_start(caixinha, False, False, 0)
         textos = caixa_v(0)
         textos.pack_start(rotulo(faixa.title, "moa-forte"), False, False, 0)
         textos.pack_start(rotulo(disco.title, "moa-nota"), False, False, 0)
         conteudo.pack_start(textos, True, True, 0)
-        conteudo.pack_end(rotulo("Marcada" if marcada else "", "moa-forte", quebrar=False),
-                          False, False, 0)
+        etiqueta = rotulo("Marcada" if marcada else "", "moa-forte", quebrar=False)
+        conteudo.pack_end(etiqueta, False, False, 0)
         b = Gtk.Button()
         b.add(conteudo)
         b.get_style_context().add_class("moa-marca")
         if marcada:
             b.get_style_context().add_class("moa-marcada")
         b.connect("clicked", lambda _b, c=str(faixa.path): self._alternar(c))
+        self._linhas[str(faixa.path)] = (b, sinal, etiqueta)
         return b
 
     def _redesenhar_cartao(self) -> None:
@@ -237,8 +258,19 @@ class PlaylistView:
     def _alternar(self, caminho: str) -> None:
         self.ctx.session.acao()
         self.ctx.rascunho.alternar(caminho)
-        self._redesenhar_lista()
+        self._marcar_a_linha(caminho)
         self._redesenhar_cartao()
+
+    def _marcar_a_linha(self, caminho: str) -> None:
+        """Mostra a música marcada ou desmarcada mudando só a linha dela."""
+        linha = self._linhas.get(caminho)
+        if linha is None:
+            return
+        botao_da_linha, sinal, etiqueta = linha
+        marcada = self.ctx.rascunho.esta_marcada(caminho)
+        classe(botao_da_linha, "moa-marcada", marcada)
+        texto_de(sinal, "✓" if marcada else " ")
+        texto_de(etiqueta, "Marcada" if marcada else "")
 
     def _mudar_o_nome(self) -> None:
         self.ctx.session.acao()

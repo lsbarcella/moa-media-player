@@ -25,3 +25,14 @@ A medição no notebook do usuário (Pentium T4300, HDD) mostrou 11,9 s para a p
 
 - **Não testado no notebook do usuário.** O Spinner anima sempre; se pesar na CPU antiga ou incomodar, trocar por uma barra sem animação.
 - O contraste do indicador é menor que o do texto; por isso ele nunca vem sozinho (acompanha a frase).
+
+## Complemento (27/11/2026): listas grandes em pedaços
+
+O item "Ainda sem feedback" acima virou outra solução: em vez de só avisar da espera, **as listas grandes passam a ser montadas em pedaços** (`EmPedacos`, em `ui/widgets.py`). A primeira fatia (no mínimo 30 itens) é feita na hora, e o resto vem em fatias de ~10 ms, devolvendo o controle ao GTK entre elas, então cliques e teclas continuam sendo atendidos. Vale para a lista de músicas do rádio, a lista da tela "Criar uma playlist" e os discos da Estante. Listas curtas terminam na própria chamada (nada muda para elas).
+
+Junto, três mudanças de desempenho no mesmo espírito (atualizar só o que mudou):
+- **Playlist:** marcar ou desmarcar uma música muda só a linha dela (antes refazia as até 150 linhas).
+- **Estante:** só é refeita quando algo que ela mostra muda (coleção, disco no rádio, recentes, onde parou, aviso, cópia de CD, atualização); antes era refeita a cada aviso ou toque, até duas vezes por segundo durante a cópia de um CD.
+- **Foco do teclado:** não volta ao botão principal quando nada mudou.
+
+A ferramenta de medição passa a registrar duas medidas por ação: **até a tela responder** (o que o usuário sente) e **até terminar de montar** (as listas vêm em pedaços).

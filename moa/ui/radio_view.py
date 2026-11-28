@@ -17,7 +17,7 @@ from gi.repository import Gtk  # noqa: E402
 
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.player import DEGRAU_MAXIMO  # noqa: E402
-from moa.ui.widgets import classe, definir_texto_do_botao, texto_de, aviso, capa_do_disco, botao, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
+from moa.ui.widgets import EmPedacos, classe, definir_texto_do_botao, texto_de, aviso, capa_do_disco, botao, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
 
 LARGURA_PARA_EMPILHAR = 900
 
@@ -51,7 +51,9 @@ class RadioView:
         self._marca: tuple[int, bool] | None = None     # (faixa atual, tocando): muda em lugar só
         self._linhas: list[tuple[Gtk.Widget, Gtk.Box]] = []     # (moldura, caixa dos nomes) de cada música
         self._nota: Gtk.Label | None = None             # "Tocando agora" / "Parado aqui"
+        self._construtor_da_lista: EmPedacos | None = None
         contexto.ao_mudar_a_colecao(self._esquecer_a_lista)
+        contexto.radio.ao_mudar(self._ao_mudar_o_radio)
         self.raiz.connect("size-allocate", self._ao_mudar_de_tamanho)
         self.atualizar()
 
@@ -67,6 +69,11 @@ class RadioView:
 
     def _esquecer_a_lista(self) -> None:
         self._chave_da_lista = None
+
+    def _ao_mudar_o_radio(self) -> None:
+        """Sem disco no rádio, para de montar a lista do disco que saiu (mesmo com a tela escondida)."""
+        if not self.ctx.radio.tem_disco and self._construtor_da_lista is not None:
+            self._construtor_da_lista.cancelar()
 
     def _chave_da_lista_atual(self) -> tuple | None:
         radio = self.ctx.radio
@@ -97,6 +104,8 @@ class RadioView:
                                      False, False, 0)
             self.topo.show_all()
         if visor is None:
+            if self._construtor_da_lista is not None:
+                self._construtor_da_lista.cancelar()
             self._lista = None
             self._chave_da_lista = None
             self._p = None
@@ -270,52 +279,64 @@ class RadioView:
         self._foco_pendente = True
 
     def _lista_de_musicas(self) -> Gtk.Widget:
-        radio = self.ctx.radio
-        disco = radio.disco
-        atual = self.ctx.player.indice
+        """A lista de músicas do disco. Discos grandes são montados em pedaços (`EmPedacos`): as
+        primeiras linhas aparecem na hora e o resto vem em seguida, sem prender a tela."""
+        if self._construtor_da_lista is not None:
+            self._construtor_da_lista.cancelar()
+        disco = self.ctx.radio.disco
         coluna = caixa_v(8)
         coluna.pack_start(rotulo("Músicas deste disco", "moa-grande"), False, False, 0)
+        coluna.pack_end(botao("Mexer neste disco", ao_clicar=self._mexer_no_disco), False, False, 8)
         self._linhas = []
         self._nota = None
-        for i, musica in enumerate(disco.tracks):
-            moldura = caixa_v(6)
-            moldura.get_style_context().add_class("moa-linha")
-            linha = caixa_h(8)
-            if i == atual:
-                moldura.get_style_context().add_class("moa-agora")
-            conteudo = caixa_h(12)
-            conteudo.pack_start(rotulo(str(i + 1), "moa-forte", quebrar=False), False, False, 0)
-            nomes = caixa_v(0)
-            nomes.set_valign(Gtk.Align.CENTER)
-            nomes.pack_start(rotulo(musica.title, xalign=0.0), False, False, 0)
-            if getattr(disco, "eh_montado", False):
-                origem = self.ctx.disco_de_origem(musica)
-                if origem is not None:
-                    nomes.pack_start(rotulo(f"do disco {origem.title}", "moa-nota"), False, False, 0)
-            if i == atual:
-                self._nota = rotulo(self._texto_da_nota(radio.tocando), "moa-nota")
-                nomes.pack_start(self._nota, False, False, 0)
-            self._linhas.append((moldura, nomes))
-            conteudo.pack_start(nomes, True, True, 0)
-            b = Gtk.Button()
-            b.add(conteudo)
-            b.get_style_context().add_class("moa-faixa")
-            b.connect("clicked", lambda _b, k=i: self._tocar_faixa(k))
-            linha.pack_start(b, True, True, 0)
-            if self.ao_pedir_outro_disco is not None:
-                linha.pack_start(
-                    botao("Colocar em outro disco", icone_nome="mais",
-                          ao_clicar=lambda k=i: self.ao_pedir_outro_disco(k)),
-                    False, False, 0)
-            moldura.pack_start(linha, False, False, 0)
-            a = self.ctx.session.aviso
-            if a is not None and a.ancora == str(musica.path):
-                moldura.pack_start(aviso(a.texto, self.ctx.session.desfazer if a.desfazer else None, a.rotulo_do_desfazer),
-                                   False, False, 0)
-            coluna.pack_start(moldura, False, False, 0)
-        coluna.pack_start(botao("Mexer neste disco", ao_clicar=self._mexer_no_disco),
-                          False, False, 8)
+
+        def acrescentar(item) -> None:
+            i, musica = item
+            linha = self._linha_da_musica(i, musica, disco)
+            coluna.pack_start(linha, False, False, 0)
+            linha.show_all()
+
+        self._construtor_da_lista = EmPedacos(enumerate(disco.tracks), acrescentar).iniciar()
         return coluna
+
+    def _linha_da_musica(self, i: int, musica, disco) -> Gtk.Widget:
+        radio = self.ctx.radio
+        atual = self.ctx.player.indice          # lido na hora: a faixa pode ter mudado durante a montagem
+        moldura = caixa_v(6)
+        moldura.get_style_context().add_class("moa-linha")
+        linha = caixa_h(8)
+        if i == atual:
+            moldura.get_style_context().add_class("moa-agora")
+        conteudo = caixa_h(12)
+        conteudo.pack_start(rotulo(str(i + 1), "moa-forte", quebrar=False), False, False, 0)
+        nomes = caixa_v(0)
+        nomes.set_valign(Gtk.Align.CENTER)
+        nomes.pack_start(rotulo(musica.title, xalign=0.0), False, False, 0)
+        if getattr(disco, "eh_montado", False):
+            origem = self.ctx.disco_de_origem(musica)
+            if origem is not None:
+                nomes.pack_start(rotulo(f"do disco {origem.title}", "moa-nota"), False, False, 0)
+        if i == atual:
+            self._nota = rotulo(self._texto_da_nota(radio.tocando), "moa-nota")
+            nomes.pack_start(self._nota, False, False, 0)
+        self._linhas.append((moldura, nomes))
+        conteudo.pack_start(nomes, True, True, 0)
+        b = Gtk.Button()
+        b.add(conteudo)
+        b.get_style_context().add_class("moa-faixa")
+        b.connect("clicked", lambda _b, k=i: self._tocar_faixa(k))
+        linha.pack_start(b, True, True, 0)
+        if self.ao_pedir_outro_disco is not None:
+            linha.pack_start(
+                botao("Colocar em outro disco", icone_nome="mais",
+                      ao_clicar=lambda k=i: self.ao_pedir_outro_disco(k)),
+                False, False, 0)
+        moldura.pack_start(linha, False, False, 0)
+        a = self.ctx.session.aviso
+        if a is not None and a.ancora == str(musica.path):
+            moldura.pack_start(aviso(a.texto, self.ctx.session.desfazer if a.desfazer else None, a.rotulo_do_desfazer),
+                               False, False, 0)
+        return moldura
 
     @staticmethod
     def _texto_da_nota(tocando: bool) -> str:
