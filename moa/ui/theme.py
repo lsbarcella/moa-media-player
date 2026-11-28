@@ -23,7 +23,7 @@ _NORMAL = {
     "bg": "#F2F2EF", "ink": "#16181A", "ink2": "#3C4146", "card": "#FFFFFF",
     "line": "#B9BBBD", "case": "#26282B", "case2": "#4A4D52", "green": "#1F4D2B",
     "amber": "#FFD27A", "blue": "#14407A", "warn": "#FFF1B8", "warnb": "#B58B00",
-    "visor": "#FFE9A8", "lampon": "#B7E4A8", "focus": "#0B3D91", "danger": "#7A1F1F",
+    "visor": "#1F2327", "visor_texto": "#FFFFFF", "lampon": "#B7E4A8", "focus": "#0B3D91", "danger": "#7A1F1F",
     "selbg": "#EAF5E4", "white": "#FFFFFF", "dark": "#1E2023", "btnradio": "#C6C6C2",
     "hint": "#E6E7E8", "lampoff": "#4A4F54", "disabled": "#DCDCD8",
     # Tema hi-fi (ADR-0025): teclas de metal cinza com bisel em bandejas pretas, gabinete grafite
@@ -34,7 +34,7 @@ _NORMAL = {
     "key_hi": "#F0F0ED", "key_lo": "#C6C6C2", "key_edge": "#F8F8F6",     # tecla solta: face e bisel claro
     "keyon_hi": "#565652", "keyon": "#4C4C48", "keyon_lo": "#3F3F3B",    # tecla afundada
     "tray": "#0F1011", "tray_edge": "#5A5D62",                           # bandeja preta que segura as teclas
-    "visor_hi": "#FFF1C8", "visor_lo": "#F2CF76",                        # vidro do visor
+    "visor_hi": "#2B3136", "visor_lo": "#171A1D",                        # vidro do visor: escuro e neutro, letra branca
 }
 
 PALETAS: dict[str, dict[str, str]] = {
@@ -44,7 +44,7 @@ PALETAS: dict[str, dict[str, str]] = {
                      "selbg": "#F9E3EA", "warn": "#FFE3D6", "warnb": "#8A1538"},
     "preto-e-branco": {**_NORMAL, "bg": "#FFFFFF", "green": "#000000", "amber": "#FFFFFF",
                        "lampon": "#FFFFFF", "selbg": "#FFFFFF", "warn": "#FFFFFF",
-                       "warnb": "#000000", "visor": "#FFFFFF", "case": "#000000",
+                       "warnb": "#000000", "visor": "#FFFFFF", "visor_texto": "#16181A", "case": "#000000",
                        "case2": "#000000", "line": "#000000", "blue": "#000000",
                        "disabled": "#FFFFFF", "btnradio": "#FFFFFF", "card": "#FFFFFF",
                        # no preto e branco os materiais são só preto ou branco (relevo por contorno)
@@ -74,7 +74,7 @@ def amostra(paleta: str) -> tuple[str, str, str]:
 # Pares (texto, fundo) que aparecem juntos na tela. Todos precisam de 7:1 ou mais.
 PARES_DE_CONTRASTE = [
     ("ink", "bg"), ("ink2", "bg"), ("ink", "card"), ("ink2", "card"),
-    ("white", "green"), ("ink", "amber"), ("ink", "visor"), ("ink", "lampon"),
+    ("white", "green"), ("ink", "amber"), ("visor_texto", "visor"), ("ink", "lampon"),
     ("white", "case"), ("hint", "case"), ("ink", "warn"), ("ink", "selbg"),
     ("ink2", "selbg"), ("white", "blue"), ("white", "danger"), ("ink", "btnradio"),
     ("white", "dark"), ("ink", "disabled"), ("white", "case2"),
@@ -113,7 +113,7 @@ MATERIAIS = [
     Material("gabinete grafite com rótulo branco", "white", ("case_hi", "case_lo"),
              (("white", ALFA_ESCOVADO),)),
     Material("prata da plaquinha com texto", "ink", ("plate_hi", "plate"), ()),
-    Material("vidro do visor com texto", "ink", ("visor_hi", "visor_lo"), ()),
+    Material("vidro do visor com texto", "visor_texto", ("visor_hi", "visor_lo"), ()),
     Material("tecla solta com texto", "ink", ("key_hi", "key_lo"), (("black", ALFA_SOMBRA_DA_TECLA),)),
     Material("tecla afundada com texto", "white", ("keyon_hi", "keyon", "keyon_lo"), ()),
     Material("tecla verde Tocar (letra abaixo do brilho)", "white", ("green",),
@@ -192,7 +192,7 @@ def _css_do_aparelho(c: dict[str, str], modo: str) -> str:
 .moa-radio .moa-dica {{ color: {c['hint']}; }}
 .moa-visor {{ background-color: {c['visor']}; background-image: none; border: 5px solid {c['dark']};
               border-radius: 12px; padding: 12px; box-shadow: inset 0 0 0 3px {c['white']}; }}
-.moa-visor label {{ color: {c['ink']}; }}
+.moa-visor label {{ color: {c['visor_texto']}; }}
 .moa-bandeja, .moa-volume {{ background-color: {c['tray']}; border: 3px solid {c['tray_edge']}; border-radius: 14px;
               padding: 8px; box-shadow: inset 0 0 0 2px {c['tray']}; }}
 .moa-grade {{ background-color: {c['dark']}; background-image: none; border: 3px solid {c['white']};
@@ -208,7 +208,7 @@ def _css_do_aparelho(c: dict[str, str], modo: str) -> str:
     background-image: repeating-linear-gradient(to right, {estria} 0px, {estria} 1px,
                           {sem_estria} 2px, {sem_estria} 4px),
                       linear-gradient(to bottom, {_rgba(c['case_hi'], 1)} 0%, {_rgba(c['case_lo'], 1)} 100%);
-    border: 4px solid {c['plate_lo']}; border-radius: 18px; padding: 22px;
+    border: 4px solid {c['plate_lo']}; border-radius: 18px; padding: 14px 18px;
     box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 0 0 2px {c['dark']},
                 0 0 0 2px {c['dark']}, 0 6px 0 rgba(0,0,0,0.45); }}
 .moa-radio label {{ color: {c['white']}; }}
@@ -217,8 +217,8 @@ def _css_do_aparelho(c: dict[str, str], modo: str) -> str:
     background-image: linear-gradient(to bottom, {_rgba(c['visor_hi'], 1)} 0%, {_rgba(c['visor_lo'], 1)} 100%);
     border: 4px solid {c['dark']}; border-radius: 12px; padding: 12px;
     box-shadow: 0 0 0 2px {c['plate_lo']}, inset 0 0 14px rgba(0,0,0,0.30),
-                inset 0 2px 0 rgba(255,255,255,0.70), inset 2px 0 0 rgba(255,255,255,0.35); }}
-.moa-visor label {{ color: {c['ink']}; }}
+                inset 0 2px 0 rgba(255,255,255,0.22), inset 2px 0 0 rgba(255,255,255,0.10); }}
+.moa-visor label {{ color: {c['visor_texto']}; }}
 .moa-bandeja, .moa-volume {{ background-color: {c['tray']}; border: 2px solid {c['tray_edge']}; border-radius: 14px;
     padding: 7px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.9), 0 1px 0 rgba(255,255,255,0.35); }}
 .moa-grade {{ background-color: {c['dark']};
@@ -403,6 +403,7 @@ def gerar_css(paleta: str = "normal", letra: str = "normal") -> str:
     base = round(LETRA_BASE_PX * e)
     titulo = round(30 * e)
     grande = round(26 * e)
+    capada = round(LETRA_BASE_PX * min(e, 1.2))      # letra da barra do pé: no máximo "Grande"
     modo = relevo(paleta)
     return f"""
 * {{ font-size: {base}px; }}
@@ -415,9 +416,11 @@ label {{ color: {c['ink']}; }}
 
 .moa-cabecalho {{ background-color: {c['card']}; border-bottom: 3px solid {c['case2']};
                   padding: 10px 20px; }}
-.moa-mini {{ background-color: {c['case']}; border-top: 5px solid {c['plate_lo']}; padding: 12px 22px 8px 22px; }}
+.moa-mini {{ background-color: {c['case']}; border-top: 5px solid {c['plate_lo']}; padding: 8px 18px 4px 18px; }}
+/* a barra do pé nunca passa da letra "Grande": o básico do rádio tem de caber mesmo em letra "Maior" */
+.moa-mini label, .moa-mini button.moa-btn {{ font-size: {capada}px; }}
+.moa-mini .moa-grande {{ font-size: {round(26 * min(e, 1.2))}px; }}
 .moa-mini label {{ color: {c['white']}; }}
-.moa-mini .moa-visor label {{ color: {c['ink']}; }}
 .moa-mini .moa-dica {{ color: {c['hint']}; font-weight: 700; }}
 .moa-mini .moa-barra trough {{ min-height: 30px; border-radius: 15px; }}
 .moa-mini .moa-barra progress {{ min-height: 30px; border-radius: 12px; }}
@@ -442,7 +445,7 @@ button.moa-disco label {{ color: {c['ink']}; font-weight: 800; }}
 
 /* rádio */
 {_css_do_aparelho(c, modo)}
-.moa-visor .moa-nota-visor {{ background-color: {c['white']}; border-radius: 6px; padding: 2px 8px;
+.moa-visor .moa-nota-visor {{ background-color: {c['white']}; color: {c['ink']}; border-radius: 6px; padding: 2px 8px;
                               font-weight: 700; }}
 .moa-radio button.moa-tocar {{ background-color: {c['green']}; color: {c['white']}; min-height: 92px; font-size: {grande}px; }}
 .moa-radio button.moa-tocar label {{ color: {c['white']}; }}
@@ -452,7 +455,7 @@ button.moa-disco label {{ color: {c['ink']}; font-weight: 800; }}
 .moa-barra trough {{ min-height: 26px; background-color: {c['white']}; border: 3px solid {c['dark']};
                      border-radius: 13px; }}
 .moa-barra progress {{ min-height: 26px; background-color: {c['green']}; background-image: none;
-                       border-radius: 10px; }}
+                       border-radius: 10px; border-right: 8px solid {c['dark']}; }}
 .moa-barra {{ background-color: {c['lampoff']}; border: 2px solid {c['white']}; border-radius: 4px;
               min-width: 14px; min-height: 34px; }}
 

@@ -275,3 +275,12 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Feito:** `Player.buscar`, `Radio.progresso` e `buscar_fracao`; `BarraDeProgresso` (clique, 64 px, sem foco de teclado); a barra do pé da janela refeita (visor, bandeja com as três teclas, "Abrir o rádio", progresso, dica); o tempo andando uma vez por segundo; ADR-0026 e CLAUDE.md atualizados. Testes novos: busca no player, progresso no rádio, clique de verdade na barra e a barra na janela (aparece, some, teclas, letra "Maior").
 - **Achados:** `0.0 or 99` em Python vira 99, o que enganou um teste de posição; o sink rápido termina a faixa antes de dar tempo de buscar (o teste usa o player no relógio com a faixa longa); sem a janela desenhada o widget não tem tamanho, e o teste do clique precisa desenhá-la antes.
 - **NÃO testado:** no notebook do pai; custo da barra andando no Pentium; se o idoso percebe que a barra é clicável.
+
+## 28/11/2026 — Problemas do teste no notebook e ano do disco (ADR-0027)
+
+- **Relato do autor (teste no notebook):** com a música pausada a barra do rádio cobria metade da tela; botões "devorados" pelo tamanho; o básico do rádio precisa ficar visível em letra grande; o nome da música ainda tinha o visual terroso; a barra de progresso lembrava um rádio muito antigo; e a pergunta de por que a capa do MusicBrainz não aparecia.
+- **Feito:** barra do pé em duas linhas, sem a dica e com a letra limitada a "Grande" (38% para cerca de 26% da altura em 1366x768); visor escuro e neutro (o âmbar saiu); régua trocada por barra de progresso comum com marcador, também na tela do rádio; painel do rádio enxuto para o volume caber na primeira tela em letra "Maior" (testes de altura); `tools/telas.py --tamanho`.
+- **MusicBrainz:** investiguei o código: a capa só é baixada para disco sem capa própria e só aparece na abertura seguinte; sem rede ou sem certeza, não muda nada. O ano não era lido de lugar nenhum. A causa real no notebook depende do log (`grep -i musicbrainz ~/.local/share/moa/moa.log`), ainda não enviado.
+- **Opção B escolhida:** ano das tags e do MusicBrainz (migração 5), "Artista · Álbum · Ano" no visor, ADR-0027. 
+- **Achados:** um caso de teste com espaços na data que o próprio mutagen recusa gravar; os discos montados são outro tipo e precisaram de `year`; a migração precisa marcar o cache como desatualizado para o ano ser lido.
+- **NÃO testado:** no notebook do pai; a primeira abertura (que relê as tags de tudo uma vez) não foi cronometrada lá.

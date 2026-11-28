@@ -36,27 +36,6 @@ def test_degrau_fora_da_faixa_e_corrigido():
     assert instrumentos.angulo_do_botao(99, 10) == instrumentos.angulo_do_botao(10, 10)
 
 
-def test_a_escala_de_um_disco_pequeno_tem_um_traco_por_faixa():
-    assert instrumentos.posicoes_dos_tracos(12) == [k / 11 for k in range(12)]
-
-
-def test_a_escala_de_um_disco_enorme_tem_no_maximo_24_tracos():
-    posicoes = instrumentos.posicoes_dos_tracos(371)
-    assert len(posicoes) == instrumentos.MAXIMO_DE_TRACOS == 24
-    assert posicoes[0] == 0 and posicoes[-1] == 1
-
-
-def test_a_escala_de_um_disco_de_uma_faixa_nao_divide_por_zero():
-    assert instrumentos.posicoes_dos_tracos(1) == [0.0]
-    assert instrumentos.posicoes_dos_tracos(0) == []
-
-
-def test_o_marcador_fica_na_posicao_da_faixa_atual():
-    assert instrumentos.posicao_do_marcador(1, 12) == 0
-    assert instrumentos.posicao_do_marcador(12, 12) == 1
-    assert instrumentos.posicao_do_marcador(1, 1) == 0.0
-
-
 # ---- widgets: precisam de tela ---------------------------------------------------------------
 
 com_tela = pytest.mark.skipif(not tem_display(), reason="sem sessão gráfica (DISPLAY)")
@@ -107,21 +86,10 @@ def test_o_botao_de_volume_usa_o_cache_em_vez_de_redesenhar_as_pecas():
 
 
 @com_tela
-def test_a_escala_do_visor_guarda_faixa_e_total_e_so_redesenha_se_mudou():
-    escala = instrumentos.EscalaDoVisor()
-    janela = _mostrar(escala, 300, 40)
-    assert escala.definir(3, 12) is True
-    assert escala.definir(3, 12) is False
-    assert escala.definir(4, 12) is True
-    janela.get_pixbuf()
-    janela.destroy()
-
-
-@com_tela
 @pytest.mark.parametrize("paleta", list(theme.PALETAS))
-def test_os_dois_instrumentos_desenham_em_toda_paleta(paleta):
+def test_os_instrumentos_desenham_em_toda_paleta(paleta):
     theme.definir_paleta_atual(paleta)
-    for widget, w, h in ((instrumentos.BotaoDeVolume(10), 160, 160), (instrumentos.EscalaDoVisor(), 300, 40)):
+    for widget, w, h in ((instrumentos.BotaoDeVolume(10), 160, 160), (instrumentos.LinhaDeProgresso(lambda f: None), 400, 80)):
         janela = _mostrar(widget, w, h)
         assert janela.get_pixbuf() is not None
         janela.destroy()
@@ -129,7 +97,7 @@ def test_os_dois_instrumentos_desenham_em_toda_paleta(paleta):
 
 
 @com_tela
-def test_no_radio_o_volume_gira_e_a_escala_marca_a_faixa(app):
+def test_no_radio_o_volume_gira_e_a_barra_mostra_o_andamento(app):
     ctx, conteudo = app
     ctx.radio.abrir_disco(ctx.discos[0], tocar=False)
     ctx.session.ir_para(Tela.RADIO)
@@ -138,7 +106,8 @@ def test_no_radio_o_volume_gira_e_a_escala_marca_a_faixa(app):
     ctx.radio.volume_mais()
     assert p.botao_volume.degrau == ctx.player.degrau_de_volume
     assert f"Volume: {ctx.player.degrau_de_volume} de 10" in textos(p.corpo)
-    assert p.escala.faixa >= 1 and p.escala.total == len(ctx.discos[0].tracks)
+    assert p.progresso.barra.fracao == 0.0 or 0.0 <= p.progresso.barra.fracao <= 1.0
+    assert p.progresso.rotulo_atual.get_text()                 # o tempo decorrido está escrito
 
 
 @com_tela

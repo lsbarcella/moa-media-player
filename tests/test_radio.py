@@ -163,3 +163,28 @@ def test_buscar_fracao_move_o_ponto_e_fracao_fora_da_faixa_e_corrigida(tmp_path,
 def test_buscar_fracao_sem_disco_nao_quebra(radio):
     radio.buscar_fracao(0.5)
     assert radio.progresso() is None
+
+
+# -- "Artista · Álbum · Ano" no visor (ADR-0027) --------------------------------------------------
+
+def _disco_com(tmp_path, titulo="Boleros", artista="Ana", ano=None):
+    from pathlib import Path
+    faixa = Track(path=Path(tmp_path / "01.mp3"), title="Música 1", number=1)
+    return Album(folder=Path(tmp_path), title=titulo, artist=artista, tracks=(faixa,), year=ano)
+
+
+@pytest.mark.parametrize("artista,ano,esperado", [
+    ("Ana", 2005, "Ana · Boleros · 2005"),
+    ("Ana", None, "Ana · Boleros"),
+    (None, 1999, "Boleros · 1999"),
+    (None, None, "Boleros"),
+])
+def test_o_visor_junta_artista_album_e_ano_so_com_o_que_existe(radio, tmp_path, artista, ano, esperado):
+    radio.abrir_disco(_disco_com(tmp_path, artista=artista, ano=ano), tocar=False)
+    assert radio.visor().sobre_o_disco == esperado
+    assert radio.visor().artista == artista and radio.visor().ano == ano
+
+
+def test_artista_igual_ao_nome_do_disco_nao_se_repete(radio, tmp_path):
+    radio.abrir_disco(_disco_com(tmp_path, titulo="Roberto Carlos", artista="Roberto Carlos", ano=1970), tocar=False)
+    assert radio.visor().sobre_o_disco == "Roberto Carlos · 1970"

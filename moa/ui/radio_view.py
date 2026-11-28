@@ -18,7 +18,7 @@ from gi.repository import Gtk  # noqa: E402
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.player import DEGRAU_MAXIMO  # noqa: E402
 from moa.ui import ornamentos  # noqa: E402
-from moa.ui.instrumentos import BotaoDeVolume, EscalaDoVisor  # noqa: E402
+from moa.ui.instrumentos import BotaoDeVolume, LinhaDeProgresso  # noqa: E402
 from moa.ui.widgets import EmPedacos, classe, definir_estado_da_tecla, definir_texto_do_botao, tecla_travavel, texto_de, aviso, capa_do_disco, botao, botao_so_com_icone, definir_nome_da_tecla, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
 
 LARGURA_PARA_EMPILHAR = 900
@@ -42,7 +42,6 @@ class RadioView:
         self._chave_do_topo: tuple | None = None
         self._foco_pendente = False
         self.botao_principal: Gtk.Widget | None = None
-        self.rotulo_do_tempo: Gtk.Label | None = None
         # O botão "+" de cada música abre o painel "Em qual disco?".
         self.ao_pedir_outro_disco = self._pedir_outro_disco
         self._empilhado: bool | None = None
@@ -112,7 +111,6 @@ class RadioView:
             self._chave_da_lista = None
             self._p = None
             self.botao_principal = None
-            self.rotulo_do_tempo = None
             limpar(self.lugar_da_lista)
             limpar(self.painel)
             return
@@ -152,27 +150,16 @@ class RadioView:
         p = SimpleNamespace()
         p.disco_id = self.ctx.radio.disco.id
         p.luz = None
-        corpo = caixa_v(14)
+        corpo = caixa_v(8)
         corpo.get_style_context().add_class("moa-radio")
         corpo.set_size_request(420, -1)
         p.corpo = corpo
 
         ornamentos.instalar_parafusos(corpo)
 
-        # plaquinha "MOA" de prata e lâmpada + palavra
-        estado = caixa_h(10)
-        p.lampada = Gtk.Box()
+        p.lampada = Gtk.Box()                  # a lâmpada-piloto fica no visor, junto da frase do estado
         p.lampada.get_style_context().add_class("moa-lampada")
         p.lampada.set_valign(Gtk.Align.CENTER)
-        estado.pack_start(p.lampada, False, False, 0)
-        p.palavra = rotulo("", "moa-forte", quebrar=False)
-        estado.pack_start(p.palavra, False, False, 0)
-        placa = caixa_h(0)
-        placa.get_style_context().add_class("moa-plaquinha")
-        placa.pack_start(rotulo("MOA", quebrar=False), False, False, 0)
-        placa.set_valign(Gtk.Align.CENTER)
-        estado.pack_end(placa, False, False, 0)
-        corpo.pack_start(estado, False, False, 0)
 
         # visor
         p.moldura = caixa_h(14)
@@ -182,17 +169,19 @@ class RadioView:
         texto = caixa_v(4)
         p.linha_de_estado = rotulo("", "moa-forte")
         p.titulo = rotulo("", "moa-grande")
-        p.disco = rotulo("")
-        p.faixa = rotulo("")
-        p.tempo = rotulo("")
+        p.sobre = rotulo("")                       # "Artista · Álbum · Ano"
+        p.faixa = rotulo("")                       # "Faixa 3 de 12"
+        p.progresso = LinhaDeProgresso(self._buscar)
         p.nota = rotulo("", "moa-nota-visor")
         p.nota.set_no_show_all(True)            # só aparece quando há o que dizer
-        p.escala = EscalaDoVisor()               # régua gravada no vidro, com o marcador da faixa
-        for etiqueta in (p.linha_de_estado, p.titulo, p.disco, p.faixa, p.escala, p.tempo, p.nota):
+        estado = caixa_h(10)
+        estado.pack_start(p.lampada, False, False, 0)
+        estado.pack_start(p.linha_de_estado, True, True, 0)
+        texto.pack_start(estado, False, False, 0)
+        for etiqueta in (p.titulo, p.sobre, p.faixa, p.progresso, p.nota):
             texto.pack_start(etiqueta, False, False, 0)
         p.moldura.pack_start(texto, True, True, 0)
         corpo.pack_start(p.moldura, False, False, 0)
-        self.rotulo_do_tempo = p.tempo
 
         # botões: anterior / tocar-pausar / próxima (o do meio troca quando muda o estado)
         p.controles = Gtk.Grid(column_spacing=10, column_homogeneous=False)
@@ -232,9 +221,16 @@ class RadioView:
 
         corpo.pack_start(botao("Guardar o disco na estante e parar", ao_clicar=self._guardar, icone_nome="disco"),
                          False, False, 0)
-        grade = Gtk.Box()                       # a grade de tecido do alto-falante, no pé do aparelho
+        pe = caixa_h(12)                        # no pé do aparelho: a grade do alto-falante e a plaquinha MOA
+        grade = Gtk.Box()
         grade.get_style_context().add_class("moa-grade")
-        corpo.pack_start(grade, False, False, 0)
+        pe.pack_start(grade, True, True, 0)
+        placa = caixa_h(0)
+        placa.get_style_context().add_class("moa-plaquinha")
+        placa.pack_start(rotulo("MOA", quebrar=False), False, False, 0)
+        placa.set_valign(Gtk.Align.CENTER)
+        pe.pack_start(placa, False, False, 0)
+        corpo.pack_start(pe, False, False, 0)
         self._p = p
         self._atualizar_painel(visor)
 
@@ -242,7 +238,6 @@ class RadioView:
         p = self._p
         radio = self.ctx.radio
         classe(p.lampada, "moa-acesa", visor.luz_acesa)
-        texto_de(p.palavra, visor.palavra)
         if radio.disco.id != p.disco_id:                 # outro disco: troca só a capa
             p.moldura.remove(p.capa)
             p.capa = capa_do_disco(self.ctx, radio.disco, 120)
@@ -252,10 +247,9 @@ class RadioView:
             p.disco_id = radio.disco.id
         texto_de(p.linha_de_estado, visor.linha_de_estado)
         texto_de(p.titulo, visor.titulo)
-        texto_de(p.disco, f"Disco: {visor.disco}")
+        texto_de(p.sobre, visor.sobre_o_disco)
         texto_de(p.faixa, visor.faixa)
-        p.escala.definir(self.ctx.player.indice + 1, len(radio.disco.tracks))
-        texto_de(p.tempo, visor.tempo)
+        p.progresso.atualizar_do_radio(radio)
         texto_de(p.nota, visor.nota or "")
         p.nota.set_visible(bool(visor.nota))
         if p.luz != visor.luz_acesa:
@@ -393,8 +387,12 @@ class RadioView:
     # -- tempo (chamado por um relógio da janela, sem redesenhar a tela) ------------------
 
     def atualizar_tempo(self) -> None:
-        if self.rotulo_do_tempo is not None:
-            self.rotulo_do_tempo.set_text(self.ctx.radio.texto_do_tempo())
+        if self._p is not None:
+            self._p.progresso.atualizar_do_radio(self.ctx.radio)
+
+    def _buscar(self, fracao: float) -> None:
+        self.ctx.session.acao()
+        self.ctx.radio.buscar_fracao(fracao)
 
     # -- ações ---------------------------------------------------------------------------------
 

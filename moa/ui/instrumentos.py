@@ -2,13 +2,13 @@
 # Copyright (C) 2026 Leonardo dos Santos Barcella
 # Este arquivo faz parte do Moa Media Player. Veja o arquivo LICENSE na raiz do projeto.
 
-"""Instrumentos do rádio desenhados em Cairo: o botão de volume e a escala do visor (ADR-0024).
+"""Instrumentos do rádio: o botão de volume (Cairo) e a barra de progresso clicável (ADR-0024, ADR-0026).
 
 Os dois são `Gtk.DrawingArea`, que é como um `<canvas>`: o GTK chama `_ao_desenhar` quando precisa
 pintar. Nenhum dos dois reage a clique, arraste ou foco (regra do projeto: nada de botão giratório
 que exija arrastar). Quem mexe neles é o programa: `definir_degrau` e `definir` só pedem um novo
 desenho quando o valor mudou. As peças vêm do `CACHE`, então pintar não custa quase nada.
-O texto ("Volume: N de 10", "Faixa X de Y") continua nos rótulos de sempre: aqui só há traços e luzes.
+O texto ("Volume: N de 10") continua no rótulo de sempre: no botão só há luzes e serrilha.
 """
 
 import math
@@ -19,10 +19,11 @@ gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk, Gtk  # noqa: E402
 
+from moa.core.radio import formatar_tempo  # noqa: E402
 from moa.ui import cairo_pecas, theme  # noqa: E402
+from moa.ui.widgets import caixa_h, rotulo, texto_de  # noqa: E402
 
 VARREDURA_GRAUS = 270            # o botão vai de -135 graus (mínimo) a +135 (máximo)
-MAXIMO_DE_TRACOS = 24            # a escala nunca desenha mais traços que isto (discos de 371 faixas)
 LADO_DO_BOTAO_PX = 132
 
 
@@ -30,23 +31,6 @@ def angulo_do_botao(degrau: int, maximo: int) -> float:
     """Ângulo, em graus, para onde o botão aponta: 0 no meio, negativo à esquerda."""
     degrau = max(0, min(maximo, degrau))
     return -VARREDURA_GRAUS / 2 + VARREDURA_GRAUS * degrau / maximo
-
-
-def posicoes_dos_tracos(total: int) -> list[float]:
-    """Onde ficam os traços da escala, de 0 (início) a 1 (fim). Com muitas faixas, agrupa."""
-    if total <= 0:
-        return []
-    if total == 1:
-        return [0.0]
-    quantos = min(total, MAXIMO_DE_TRACOS)
-    return [k / (quantos - 1) for k in range(quantos)]
-
-
-def posicao_do_marcador(faixa: int, total: int) -> float:
-    """Onde fica o marcador da faixa atual (faixa 1 = início, última = fim)."""
-    if total <= 1:
-        return 0.0
-    return (max(1, min(total, faixa)) - 1) / (total - 1)
 
 
 class BotaoDeVolume(Gtk.DrawingArea):
@@ -102,56 +86,6 @@ class BotaoDeVolume(Gtk.DrawingArea):
         return False
 
 
-class EscalaDoVisor(Gtk.DrawingArea):
-    """Régua gravada embaixo do visor, com um marcador na faixa que está tocando."""
-
-    ALTURA_PX = 26
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.faixa = 0
-        self.total = 0
-        self.set_size_request(-1, self.ALTURA_PX)
-        self.set_can_focus(False)
-        self.connect("draw", self._ao_desenhar)
-
-    def definir(self, faixa: int, total: int) -> bool:
-        """Move o marcador. Devolve se mudou (e portanto se pediu um desenho novo)."""
-        if (faixa, total) == (self.faixa, self.total):
-            return False
-        self.faixa, self.total = faixa, total
-        self.queue_draw()
-        return True
-
-    def _ao_desenhar(self, _widget, cr) -> bool:
-        if self.total <= 0:
-            return False
-        paleta = theme.paleta_atual()
-        w, h = self.get_allocated_width(), self.get_allocated_height()
-        margem = 10
-        largura_util = max(1, w - 2 * margem)
-        cr.set_source_rgb(*cairo_pecas.cor_rgb(paleta, "ink"))
-        cr.set_line_width(2)
-        cr.move_to(margem, h - 6)                   # a linha da régua
-        cr.line_to(w - margem, h - 6)
-        for pos in posicoes_dos_tracos(self.total):  # os traços gravados
-            x = margem + pos * largura_util
-            cr.move_to(x, h - 6)
-            cr.line_to(x, h - 14)
-        cr.stroke()
-        x = margem + posicao_do_marcador(self.faixa, self.total) * largura_util
-        cr.move_to(x, h - 3)                        # marcador: triângulo cheio apontando para a régua
-        cr.line_to(x - 7, 2)
-        cr.line_to(x + 7, 2)
-        cr.close_path()
-        cr.set_source_rgb(*cairo_pecas.cor_rgb(paleta, "danger" if theme.relevo(paleta) == "tons" else "ink"))
-        cr.fill_preserve()
-        cr.set_source_rgb(*cairo_pecas.cor_rgb(paleta, "ink"))
-        cr.set_line_width(1.5)
-        cr.stroke()
-        return False
-
-
 class BarraDeProgresso(Gtk.EventBox):
     """A barra de progresso comum de qualquer aplicativo: um clique vai ao ponto clicado.
 
@@ -171,6 +105,7 @@ class BarraDeProgresso(Gtk.EventBox):
         self._barra.get_style_context().add_class("moa-barra")
         self._barra.set_valign(Gtk.Align.CENTER)
         self.add(self._barra)
+        self.set_tooltip_text("Clique para ir a outro ponto da música")
         self.set_size_request(-1, self.ALTURA_DO_ALVO_PX)
         self.set_can_focus(False)
         self.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
@@ -201,3 +136,27 @@ class BarraDeProgresso(Gtk.EventBox):
             return False
         self.escolher_em(evento.x)
         return True
+
+
+class LinhaDeProgresso(Gtk.Box):
+    """O tempo decorrido, a barra de progresso clicável e a duração total, lado a lado.
+
+    É usada na barra do pé das outras telas e no visor do rádio. `atualizar_do_radio` mexe só no
+    que mudou (a fração da barra e os dois tempos), então pode ser chamada uma vez por segundo.
+    """
+
+    def __init__(self, ao_escolher) -> None:
+        super().__init__(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
+        self.rotulo_atual = rotulo("0:00", "moa-forte", quebrar=False)
+        self.rotulo_total = rotulo("", "moa-forte", quebrar=False)
+        self.barra = BarraDeProgresso(ao_escolher)
+        self.barra.set_hexpand(True)
+        self.pack_start(self.rotulo_atual, False, False, 0)
+        self.pack_start(self.barra, True, True, 0)
+        self.pack_start(self.rotulo_total, False, False, 0)
+
+    def atualizar_do_radio(self, radio) -> None:
+        fracao = radio.progresso()
+        self.barra.definir_fracao(fracao if fracao is not None else 0.0)
+        texto_de(self.rotulo_atual, formatar_tempo(radio.player.posicao()) or "0:00")
+        texto_de(self.rotulo_total, formatar_tempo(radio.player.duracao()))

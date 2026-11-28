@@ -27,8 +27,7 @@ from moa.ui import theme  # noqa: E402
 from moa.ui.box_view import BoxView  # noqa: E402
 from moa.ui.cd_view import CDView  # noqa: E402
 from moa.ui import ornamentos  # noqa: E402
-from moa.ui.instrumentos import BarraDeProgresso  # noqa: E402
-from moa.core.radio import formatar_tempo  # noqa: E402
+from moa.ui.instrumentos import BarraDeProgresso, LinhaDeProgresso  # noqa: E402
 from moa.ui.inibidor import Inibidor  # noqa: E402
 from moa.ui.edit_view import EditView  # noqa: E402
 from moa.ui.playlist_view import PlaylistView  # noqa: E402
@@ -72,7 +71,7 @@ class Conteudo:
         self.mini.get_style_context().add_class("moa-mini")
         ornamentos.instalar_parafusos(self.mini, diametro=12, margem=6)
         self.barra_do_radio: BarraDeProgresso | None = None
-        self._tempos_do_mini: tuple[Gtk.Label, Gtk.Label] | None = None
+        self._progresso_do_mini: LinhaDeProgresso | None = None
         self.raiz.pack_start(self.mini, False, False, 0)
 
         self.telas: dict[Tela, object] = {}
@@ -190,7 +189,7 @@ class Conteudo:
             return
         self._chave_do_mini = chave
         limpar(self.mini)
-        self.barra_do_radio, self._tempos_do_mini = None, None
+        self.barra_do_radio, self._progresso_do_mini = None, None
         if escondido:
             self.mini.hide()
             self.mini.set_no_show_all(True)
@@ -207,18 +206,18 @@ class Conteudo:
         linha.set_row_spacing(10)
         vidro = caixa_v(2)
         vidro.get_style_context().add_class("moa-visor")
-        vidro.set_size_request(280, -1)
+        vidro.set_size_request(260, -1)
         vidro.set_hexpand(True)
-        estado = caixa_h(10)
+        estado = caixa_h(10)                      # lâmpada, estado e música numa só linha: a barra fica baixa
         lampada = Gtk.Box()
         lampada.get_style_context().add_class("moa-lampada")
         lampada.set_valign(Gtk.Align.CENTER)
         classe(lampada, "moa-acesa", visor.luz_acesa)
         estado.pack_start(lampada, False, False, 0)
         estado.pack_start(rotulo(visor.palavra, "moa-forte", quebrar=False), False, False, 0)
+        estado.pack_start(rotulo(visor.titulo, "moa-grande", quebrar=False), False, False, 0)
         vidro.pack_start(estado, False, False, 0)
-        vidro.pack_start(rotulo(visor.titulo, "moa-grande", quebrar=False), False, False, 0)
-        vidro.pack_start(rotulo(f"{visor.faixa} · {visor.disco}"), False, False, 0)
+        vidro.pack_start(rotulo(f"{visor.faixa} · {visor.disco}", quebrar=False), False, False, 0)
         bandeja = caixa_h(6)
         bandeja.get_style_context().add_class("moa-bandeja")
         bandeja.pack_start(botao("Anterior", ao_clicar=self._anterior_do_mini, icone_nome="anterior"), False, False, 0)
@@ -237,30 +236,16 @@ class Conteudo:
         self.mini.pack_start(linha, False, False, 0)
 
         # barra de progresso comum, com o tempo nas pontas; um clique vai ao ponto
-        andamento = caixa_h(14)
-        atual, total = rotulo("0:00", "moa-forte", quebrar=False), rotulo("", "moa-forte", quebrar=False)
-        self.barra_do_radio = BarraDeProgresso(self._buscar_do_mini)
-        self.barra_do_radio.set_hexpand(True)
-        andamento.pack_start(atual, False, False, 0)
-        andamento.pack_start(self.barra_do_radio, True, True, 0)
-        andamento.pack_start(total, False, False, 0)
-        self._tempos_do_mini = (atual, total)
-        self.mini.pack_start(andamento, False, False, 0)
-        dica = rotulo("Clique na barra para ir a outro ponto da música", "moa-dica", centro=True)
-        self.mini.pack_start(dica, False, False, 0)
+        self._progresso_do_mini = LinhaDeProgresso(self._buscar_do_mini)
+        self.barra_do_radio = self._progresso_do_mini.barra
+        self.mini.pack_start(self._progresso_do_mini, False, False, 0)
         self.mini.show_all()
         self.atualizar_progresso_do_mini()
 
     def atualizar_progresso_do_mini(self) -> None:
         """Move a barra de progresso e os tempos, só mexendo no que mudou."""
-        if self.barra_do_radio is None or self._tempos_do_mini is None:
-            return
-        fracao = self.ctx.radio.progresso()
-        self.barra_do_radio.definir_fracao(fracao if fracao is not None else 0.0)
-        atual, total = self._tempos_do_mini
-        player = self.ctx.player
-        texto_de(atual, formatar_tempo(player.posicao()) or "0:00")
-        texto_de(total, formatar_tempo(player.duracao()))
+        if self._progresso_do_mini is not None:
+            self._progresso_do_mini.atualizar_do_radio(self.ctx.radio)
 
     def _buscar_do_mini(self, fracao: float) -> None:
         self.ctx.session.acao()

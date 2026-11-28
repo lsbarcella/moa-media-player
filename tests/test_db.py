@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from moa.core.covers import CoverSource
-from moa.core.db import MIGRACOES, Database, EsquemaMaisNovoQueOApp
+from moa.core.db import MIGRACOES, Database, EsquemaMaisNovoQueOApp, RegistroMB
 from moa.core.models import Track
 
 
@@ -224,3 +224,38 @@ def test_recentes_ficam_no_limite_sem_repetir_com_o_mais_novo_primeiro(db):
         db.touch_recent(f"/m/{nome}", 6)
     db.touch_recent("/m/D", 6)                      # D volta a ser o mais novo, sem duplicar
     assert db.load_recents() == ["/m/D", "/m/H", "/m/G", "/m/F", "/m/E", "/m/C"]
+
+
+# -- ano da faixa e do MusicBrainz (migração 5, ADR-0027) --------------------------------------------
+
+def test_o_ano_da_faixa_vai_e_volta_pelo_cache(db):
+    db.save_tracks([Track(path=Path("/m/CD/01.mp3"), title="A", year=1999),
+                    Track(path=Path("/m/CD/02.mp3"), title="B")])
+    faixas = db.load_tracks()
+    assert faixas["/m/CD/01.mp3"].year == 1999 and faixas["/m/CD/02.mp3"].year is None
+
+
+def test_o_ano_do_musicbrainz_vai_e_volta(db):
+    db.save_mb("/m/CD", RegistroMB("ok", mbid="x", title="T", artist="A", year=2005, checked_at=1.0))
+    assert db.get_mb("/m/CD").year == 2005
+
+
+def test_migracao_5_sobre_banco_da_versao_4_mantem_os_dados_e_manda_reler_as_tags(tmp_path):
+    caminho = tmp_path / "v4.db"
+    conexao = sqlite3.connect(caminho, isolation_level=None)
+    from moa.core.db import _migracao_1, _migracao_2, _migracao_3, _migracao_4
+    for passo in (_migracao_1, _migracao_2, _migracao_3, _migracao_4):
+        passo(conexao)
+    conexao.execute("PRAGMA user_version = 4")
+    conexao.execute("INSERT INTO tracks VALUES ('/m/CD/01.mp3', 1.5, 10, 'Samba', 1, 'Zeca', 'CD', NULL)")
+    conexao.execute("INSERT INTO musicbrainz VALUES ('/m/CD', 'ok', 'id', 'CD', 'Zeca', '[]', NULL, 5.0)")
+    conexao.close()
+    banco = Database(caminho)
+    try:
+        assert banco.schema_version() == len(MIGRACOES) >= 5
+        faixa = banco.load_tracks()["/m/CD/01.mp3"]
+        assert faixa.title == "Samba" and faixa.year is None
+        assert faixa.mtime == -1                      # data impossível: a varredura relê as tags e acha o ano
+        assert banco.get_mb("/m/CD").title == "CD" and banco.get_mb("/m/CD").year is None
+    finally:
+        banco.close()

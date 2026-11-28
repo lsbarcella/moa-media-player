@@ -125,7 +125,18 @@ def _migracao_4(conexao: sqlite3.Connection) -> None:
         )""")
 
 
-MIGRACOES = [_migracao_1, _migracao_2, _migracao_3, _migracao_4]
+def _migracao_5(conexao: sqlite3.Connection) -> None:
+    """O ano do disco (ADR-0027). Aditiva: nenhuma tag do usuário é tocada.
+
+    As faixas já guardadas não têm ano, e o cache só relê um arquivo quando ele muda. Por isso o
+    `mtime` delas vira -1 (uma data impossível): a próxima varredura relê as tags e acha o ano.
+    """
+    conexao.execute("ALTER TABLE tracks ADD COLUMN year INTEGER")
+    conexao.execute("UPDATE tracks SET mtime = -1")
+    conexao.execute("ALTER TABLE musicbrainz ADD COLUMN year INTEGER")
+
+
+MIGRACOES = [_migracao_1, _migracao_2, _migracao_3, _migracao_4, _migracao_5]
 
 
 class EsquemaMaisNovoQueOApp(Exception):
@@ -156,6 +167,7 @@ class RegistroMB:
     track_titles: tuple[str, ...] = ()
     cover_path: Path | None = None
     checked_at: float = 0.0
+    year: int | None = None                      # ano de lançamento (data do MusicBrainz)
 
 
 @dataclass(frozen=True)
@@ -245,19 +257,21 @@ class Database:
     def load_tracks(self) -> dict[str, Track]:
         """Todas as faixas do cache, pelo caminho. Para 800 faixas leva ~1 ms."""
         linhas = self._conexao.execute(
-            "SELECT path, mtime, size, title, number, artist, album, album_artist FROM tracks")
+            "SELECT path, mtime, size, title, number, artist, album, album_artist, year FROM tracks")
         return {
             caminho: Track(path=Path(caminho), mtime=mtime, size=tamanho, title=titulo,
-                           number=numero, artist=artista, album=album, album_artist=artista_album)
-            for caminho, mtime, tamanho, titulo, numero, artista, album, artista_album in linhas
+                           number=numero, artist=artista, album=album, album_artist=artista_album,
+                           year=ano)
+            for caminho, mtime, tamanho, titulo, numero, artista, album, artista_album, ano in linhas
         }
 
     def save_tracks(self, faixas: Iterable[Track]) -> None:
         """Grava as faixas (as que já existem são substituídas), numa transação."""
         with self._transacao():
             self._conexao.executemany(
-                "INSERT OR REPLACE INTO tracks VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                ((str(t.path), t.mtime, t.size, t.title, t.number, t.artist, t.album, t.album_artist)
+                "INSERT OR REPLACE INTO tracks (path, mtime, size, title, number, artist, album, "
+                "album_artist, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                ((str(t.path), t.mtime, t.size, t.title, t.number, t.artist, t.album, t.album_artist, t.year)
                  for t in faixas))
 
     def delete_tracks_except(self, caminhos: Iterable[str]) -> None:
@@ -376,25 +390,27 @@ class Database:
 
     def load_mb(self) -> dict[str, RegistroMB]:
         linhas = self._conexao.execute(
-            "SELECT folder, status, mbid, title, artist, track_titles, cover_path, checked_at "
+            "SELECT folder, status, mbid, title, artist, track_titles, cover_path, checked_at, year "
             "FROM musicbrainz").fetchall()
         resultado = {}
-        for pasta, status, mbid, titulo, artista, faixas, capa, quando in linhas:
+        for pasta, status, mbid, titulo, artista, faixas, capa, quando, ano in linhas:
             try:
                 nomes = tuple(str(n) for n in json.loads(faixas)) if faixas else ()
             except ValueError:
                 nomes = ()
             resultado[pasta] = RegistroMB(status, mbid, titulo, artista, nomes,
-                                          Path(capa) if capa else None, quando)
+                                          Path(capa) if capa else None, quando, ano)
         return resultado
 
     def save_mb(self, pasta: str, registro: RegistroMB) -> None:
         with self._transacao():
             self._conexao.execute(
-                "INSERT OR REPLACE INTO musicbrainz VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT OR REPLACE INTO musicbrainz (folder, status, mbid, title, artist, track_titles, "
+                "cover_path, checked_at, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (pasta, registro.status, registro.mbid, registro.title, registro.artist,
                  json.dumps(list(registro.track_titles), ensure_ascii=False),
-                 str(registro.cover_path) if registro.cover_path else None, registro.checked_at))
+                 str(registro.cover_path) if registro.cover_path else None, registro.checked_at,
+                 registro.year))
 
     def delete_mb_except(self, pastas: Iterable[str]) -> None:
         self._apagar_exceto("musicbrainz", "folder", pastas)
