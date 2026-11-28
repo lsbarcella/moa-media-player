@@ -61,7 +61,7 @@ def test_o_css_e_aceito_pelo_gtk():
 
 # -- materiais do nível 3 (ADR-0024): tokens e contraste no pior ponto -------------------------
 
-TOKENS_DE_MATERIAL = ("wood_hi", "wood_lo", "brass_hi", "brass", "brass_lo", "metal_hi", "metal_lo",
+TOKENS_DE_MATERIAL = ("case_hi", "case_lo", "plate_hi", "plate", "plate_lo", "metal_hi", "metal_lo",
                       "key_hi", "key_lo", "visor_hi", "visor_lo")
 
 
@@ -101,23 +101,23 @@ def test_o_brilho_cobrindo_a_letra_do_botao_verde_falha_e_a_checagem_enxerga():
     assert theme.contraste_no_pior_ponto("normal", armadilha) < theme.CONTRASTE_MINIMO
 
 
-def test_latao_escuro_com_letra_falha_e_o_claro_passa():
-    escuro = theme.Material("latão escuro com letra", "ink", ("brass_lo",), ())
-    claro = theme.Material("latão claro com letra", "ink", ("brass_hi", "brass"), ())
+def test_prata_escuro_com_letra_falha_e_o_claro_passa():
+    escuro = theme.Material("prata escuro com letra", "ink", ("plate_lo",), ())
+    claro = theme.Material("prata claro com letra", "ink", ("plate_hi", "plate"), ())
     assert theme.contraste_no_pior_ponto("normal", escuro) < theme.CONTRASTE_MINIMO
     assert theme.contraste_no_pior_ponto("normal", claro) >= theme.CONTRASTE_MINIMO
 
 
-def test_a_tabela_de_materiais_cobre_madeira_latao_vidro_e_as_teclas():
+def test_a_tabela_de_materiais_cobre_grafite_prata_vidro_e_as_teclas():
     nomes = " ".join(m.nome for m in theme.MATERIAIS).lower()
-    for palavra in ("madeira", "latão", "visor", "tecla"):
+    for palavra in ("grafite", "prata", "visor", "tecla"):
         assert palavra in nomes
 
 
 def test_as_opacidades_do_css_vem_da_tabela_unica():
     """KTD8: o número que o teste confere é o mesmo que vai para o CSS."""
     assert theme.ALFA_BRILHO_DA_TECLA == pytest.approx(0.30)
-    assert 0 < theme.ALFA_VEIO_CLARO <= 0.10
+    assert 0 < theme.ALFA_ESCOVADO <= 0.10
 
 
 # -- teclas com curso (U2, ADR-0024) -------------------------------------------------------------
@@ -134,10 +134,11 @@ def test_o_brilho_da_tecla_termina_acima_do_rotulo_em_toda_escala(letra):
 
 def test_tecla_apertada_troca_borda_de_baixo_por_espaco_em_cima_sem_mudar_a_altura():
     css = theme.gerar_css("normal", "normal")
-    repouso = theme.BORDA_PX + theme.ALTURA_DA_TECLA_PX
-    apertada_borda = theme.BORDA_PX + 1
-    assert f"border-bottom-width: {repouso}px" in css
-    assert f"border-bottom-width: {apertada_borda}px" in css
+    b = theme.BORDA_PX
+    repouso = b + theme.ALTURA_DA_TECLA_PX
+    apertada_borda = b + 1
+    assert f"border-width: {b}px {b}px {repouso}px {b}px" in css
+    assert f"border-width: {b}px {b}px {apertada_borda}px {b}px" in css
     # a soma (borda de baixo + espaço de cima) é igual em repouso e apertada: altura constante
     assert (repouso + theme.PADDING_TOPO_PX
             == apertada_borda + theme.PADDING_TOPO_PX + theme.ALTURA_DA_TECLA_PX - 1)
@@ -183,10 +184,10 @@ def _bloco(css: str, seletor: str) -> str:
 
 
 @pytest.mark.parametrize("paleta", [p for p in theme.PALETAS if p != "preto-e-branco"])
-def test_gabinete_de_madeira_tem_veios_e_moldura_de_latao(paleta):
+def test_gabinete_grafite_tem_estrias_e_friso_prateado(paleta):
     bloco = _bloco(theme.gerar_css(paleta, "normal"), ".moa-radio")
-    assert "repeating-linear-gradient" in bloco                          # veios
-    assert theme.PALETAS[paleta]["brass"].lower() in bloco.lower()       # moldura de latão
+    assert "repeating-linear-gradient" in bloco                          # estrias do metal escovado
+    assert theme.PALETAS[paleta]["plate_lo"].lower() in bloco.lower()    # friso prateado
 
 
 def test_gabinete_no_preto_e_branco_nao_tem_veios_e_usa_contorno_duplo():
@@ -209,7 +210,7 @@ def test_visor_no_preto_e_branco_e_branco_chapado_com_contorno():
 
 def test_existem_moldura_de_metal_grade_e_plaquinha_do_aparelho():
     css = theme.gerar_css("normal", "normal")
-    for seletor in (".moa-metal", ".moa-grade", ".moa-plaquinha"):
+    for seletor in (".moa-bandeja", ".moa-grade", ".moa-plaquinha"):
         assert seletor in css
 
 
@@ -228,7 +229,7 @@ def test_estante_tem_fundo_recuado_e_tampo_com_sombra(paleta):
     assert "box-shadow" in fundo and "border-bottom" in fundo  # e o tampo tem quina e sombra por fora
 
 
-def test_o_nome_do_disco_na_estante_e_branco_sobre_a_madeira_escura():
+def test_o_nome_do_disco_na_estante_e_branco_sobre_a_grafite_escura():
     css = theme.gerar_css("normal", "normal")
     assert "#FFFFFF" in _bloco(css, ".moa-tabua button.moa-disco label")
 
@@ -237,9 +238,9 @@ def test_o_vao_em_uso_no_radio_e_concavo():
     assert "inset" in _bloco(theme.gerar_css("normal", "normal"), ".moa-vazio")
 
 
-def test_as_placas_dos_titulos_sao_de_latao_com_texto_escuro():
+def test_as_placas_dos_titulos_sao_de_prata_com_texto_escuro():
     css = theme.gerar_css("normal", "normal")
-    assert theme.PALETAS["normal"]["brass"].lower() in _bloco(css, ".moa-placa").lower()
+    assert theme.PALETAS["normal"]["plate"].lower() in _bloco(css, ".moa-placa").lower()
     assert theme.PALETAS["normal"]["ink"].lower() in _bloco(css, ".moa-placa label").lower()
 
 
@@ -273,9 +274,9 @@ def test_a_barra_de_rolagem_e_larga_o_bastante_para_o_mouse(paleta):
     assert int(re.search(r"scrollbar slider \{[^}]*?min-height:\s*(\d+)px", css).group(1)) >= theme.ALVO_MINIMO_PX
 
 
-def test_a_canaleta_e_escura_e_o_cursor_e_de_latao():
+def test_a_canaleta_e_escura_e_o_cursor_e_de_prata():
     css = theme.gerar_css("normal", "normal")
-    assert theme.PALETAS["normal"]["brass"].lower() in _bloco(css, "scrollbar slider").lower()
+    assert theme.PALETAS["normal"]["plate"].lower() in _bloco(css, "scrollbar slider").lower()
     assert "inset" in _bloco(css, "scrollbar trough")
 
 
@@ -283,3 +284,50 @@ def test_no_preto_e_branco_a_barra_nao_tem_degrade():
     css = theme.gerar_css("preto-e-branco", "normal")
     assert "gradient" not in _bloco(css, "scrollbar slider") and "gradient" not in _bloco(css, "scrollbar trough")
 
+
+
+# -- tema hi-fi (ADR-0025): bisel, tecla afundada e bandeja preta ------------------------------------
+
+def test_a_tecla_solta_tem_bisel_claro_em_cima_e_a_esquerda_e_escuro_embaixo():
+    c = theme.PALETAS["normal"]
+    bloco = _bloco(theme.gerar_css("normal", "normal"), "button.moa-btn, button.moa-opcao, button.moa-marca")
+    assert f"border-color: {c['key_edge']} {c['plate_lo']} {c['dark']} {c['key_edge']}" in bloco
+
+
+def test_a_tecla_afundada_inverte_o_bisel_e_tem_letra_branca():
+    css = theme.gerar_css("normal", "normal")
+    c = theme.PALETAS["normal"]
+    bloco = _bloco(css, "button.moa-btn:active, button.moa-btn.moa-travada, button.moa-pausar, "
+                        "button.moa-opcao.moa-escolhida, button.moa-marca.moa-marcada")
+    assert f"border-color: {c['dark']} {c['key_edge']} {c['key_edge']} {c['dark']}" in bloco
+    assert "inset 0 3px 6px" in bloco and f"color: {c['white']}" in bloco
+
+
+def test_a_tecla_afundada_tem_7_para_1_com_letra_branca_em_todo_o_degrade():
+    for paleta in theme.PALETAS:
+        afundada = next(m for m in theme.MATERIAIS if m.nome == "tecla afundada com texto")
+        assert theme.contraste_no_pior_ponto(paleta, afundada) >= theme.CONTRASTE_MINIMO, paleta
+
+
+@pytest.mark.parametrize("paleta", list(theme.PALETAS))
+def test_a_bandeja_das_teclas_e_preta(paleta):
+    c = theme.PALETAS[paleta]
+    bloco = _bloco(theme.gerar_css(paleta, "normal"), ".moa-bandeja, .moa-volume")
+    assert c["tray"].lower() in bloco.lower()
+
+
+def test_o_gabinete_do_radio_e_grafite_nao_e_mais_madeira():
+    c = theme.PALETAS["normal"]
+    for token in ("case", "case_hi", "case_lo"):
+        cor = c[token].lstrip("#")
+        canais = [int(cor[i:i + 2], 16) for i in (0, 2, 4)]
+        assert max(canais) - min(canais) <= 12, (token, cor)          # cinza neutro, sem tom marrom
+
+
+def test_nenhum_token_do_tema_normal_tem_tom_de_madeira_ou_latao():
+    c = theme.PALETAS["normal"]
+    for token in ("case", "case_hi", "case_lo", "plate_hi", "plate", "plate_lo", "key_hi", "key_lo",
+                  "keyon", "tray", "metal_hi", "metal_lo"):
+        cor = c[token].lstrip("#")
+        r, g, b = (int(cor[i:i + 2], 16) for i in (0, 2, 4))
+        assert max(r, g, b) - min(r, g, b) <= 16, (token, cor)        # cinza: nada amarelado ou marrom

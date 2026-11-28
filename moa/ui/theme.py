@@ -20,18 +20,21 @@ from moa.core.covers import contrast_ratio
 # --- Cores --------------------------------------------------------------------------
 
 _NORMAL = {
-    "bg": "#FAF5E9", "ink": "#1E1913", "ink2": "#4A4036", "card": "#FFFFFF",
-    "line": "#CDBFA6", "wood": "#4A2A12", "wood2": "#7A4A21", "green": "#1F4D2B",
+    "bg": "#F2F2EF", "ink": "#16181A", "ink2": "#3C4146", "card": "#FFFFFF",
+    "line": "#B9BBBD", "case": "#26282B", "case2": "#4A4D52", "green": "#1F4D2B",
     "amber": "#FFD27A", "blue": "#14407A", "warn": "#FFF1B8", "warnb": "#B58B00",
     "visor": "#FFE9A8", "lampon": "#B7E4A8", "focus": "#0B3D91", "danger": "#7A1F1F",
-    "selbg": "#EAF5E4", "white": "#FFFFFF", "dark": "#2B2118", "btnradio": "#F6E9D2",
-    "hint": "#F3E6CC", "lampoff": "#4A3B2C", "disabled": "#E4DCCB",
-    # Materiais do nível 3 (ADR-0024). "_hi" é o trecho mais claro do degradê, "_lo" o mais escuro.
-    "wood_hi": "#5E3518", "wood_lo": "#3D220F",                    # madeira do gabinete e da estante
-    "brass_hi": "#E8CF8A", "brass": "#D6B25C", "brass_lo": "#9C7A2A",   # latão: o escuro só em moldura sem texto
-    "metal_hi": "#EDEAE2", "metal_lo": "#B9B3A6",                  # metal escovado
-    "key_hi": "#FFFFFF", "key_lo": "#E4D4AE",                      # face da tecla
-    "visor_hi": "#FFF1C8", "visor_lo": "#F2CF76",                  # vidro do visor
+    "selbg": "#EAF5E4", "white": "#FFFFFF", "dark": "#1E2023", "btnradio": "#C6C6C2",
+    "hint": "#E6E7E8", "lampoff": "#4A4F54", "disabled": "#DCDCD8",
+    # Tema hi-fi (ADR-0025): teclas de metal cinza com bisel em bandejas pretas, gabinete grafite
+    # com friso prateado. "_hi" é o trecho mais claro do degradê, "_lo" o mais escuro.
+    "case_hi": "#3A3D41", "case_lo": "#1E2023",                          # gabinete e fundo da estante
+    "plate_hi": "#E6E7E9", "plate": "#C9CBCE", "plate_lo": "#7B7E82",    # prata: friso, plaquinhas, parafusos
+    "metal_hi": "#EDEDEA", "metal_lo": "#B4B4B0",                        # metal escovado
+    "key_hi": "#F0F0ED", "key_lo": "#C6C6C2", "key_edge": "#F8F8F6",     # tecla solta: face e bisel claro
+    "keyon_hi": "#565652", "keyon": "#4C4C48", "keyon_lo": "#3F3F3B",    # tecla afundada
+    "tray": "#0F1011", "tray_edge": "#5A5D62",                           # bandeja preta que segura as teclas
+    "visor_hi": "#FFF1C8", "visor_lo": "#F2CF76",                        # vidro do visor
 }
 
 PALETAS: dict[str, dict[str, str]] = {
@@ -41,14 +44,16 @@ PALETAS: dict[str, dict[str, str]] = {
                      "selbg": "#F9E3EA", "warn": "#FFE3D6", "warnb": "#8A1538"},
     "preto-e-branco": {**_NORMAL, "bg": "#FFFFFF", "green": "#000000", "amber": "#FFFFFF",
                        "lampon": "#FFFFFF", "selbg": "#FFFFFF", "warn": "#FFFFFF",
-                       "warnb": "#000000", "visor": "#FFFFFF", "wood": "#000000",
-                       "wood2": "#000000", "line": "#000000", "blue": "#000000",
-                       "disabled": "#FFFFFF", "btnradio": "#FFFFFF",
+                       "warnb": "#000000", "visor": "#FFFFFF", "case": "#000000",
+                       "case2": "#000000", "line": "#000000", "blue": "#000000",
+                       "disabled": "#FFFFFF", "btnradio": "#FFFFFF", "card": "#FFFFFF",
                        # no preto e branco os materiais são só preto ou branco (relevo por contorno)
-                       "wood_hi": "#000000", "wood_lo": "#000000",
-                       "brass_hi": "#FFFFFF", "brass": "#FFFFFF", "brass_lo": "#000000",
+                       "case_hi": "#000000", "case_lo": "#000000",
+                       "plate_hi": "#FFFFFF", "plate": "#FFFFFF", "plate_lo": "#000000",
                        "metal_hi": "#FFFFFF", "metal_lo": "#FFFFFF",
-                       "key_hi": "#FFFFFF", "key_lo": "#FFFFFF",
+                       "key_hi": "#FFFFFF", "key_lo": "#FFFFFF", "key_edge": "#FFFFFF",
+                       "keyon_hi": "#000000", "keyon": "#000000", "keyon_lo": "#000000",
+                       "tray": "#000000", "tray_edge": "#FFFFFF",
                        "visor_hi": "#FFFFFF", "visor_lo": "#FFFFFF"},
 }
 
@@ -70,9 +75,9 @@ def amostra(paleta: str) -> tuple[str, str, str]:
 PARES_DE_CONTRASTE = [
     ("ink", "bg"), ("ink2", "bg"), ("ink", "card"), ("ink2", "card"),
     ("white", "green"), ("ink", "amber"), ("ink", "visor"), ("ink", "lampon"),
-    ("white", "wood"), ("hint", "wood"), ("ink", "warn"), ("ink", "selbg"),
+    ("white", "case"), ("hint", "case"), ("ink", "warn"), ("ink", "selbg"),
     ("ink2", "selbg"), ("white", "blue"), ("white", "danger"), ("ink", "btnradio"),
-    ("white", "dark"), ("ink", "disabled"), ("white", "wood2"),
+    ("white", "dark"), ("ink", "disabled"), ("white", "case2"),
 ]
 
 CONTRASTE_MINIMO = 7.0
@@ -91,11 +96,9 @@ def contraste(paleta: str, texto: str, fundo: str) -> float:
 
 ALFA_BRILHO_DA_TECLA = 0.30     # brilho branco, só na faixa de cima da tecla (nunca atrás da letra)
 ALFA_REALCE_DA_TECLA = 0.90     # fio claro no topo da tecla
-ALFA_SOMBRA_DA_TECLA = 0.18     # sombreado no pé da tecla
-ALFA_TECLA_TRAVADA = 0.14       # a tecla baixada fica um pouco mais escura
+ALFA_SOMBRA_DA_TECLA = 0.12     # sombreado no pé da tecla
 ALFA_REALCE_NA_ESTANTE = 0.12   # realce de um disco sob o mouse, sobre o fundo escuro da estante
-ALFA_VEIO_CLARO = 0.03          # veios claros da madeira (máx. 10%, KTD2)
-ALFA_VEIO_ESCURO = 0.10         # veios escuros da madeira
+ALFA_ESCOVADO = 0.035           # estrias do metal escovado do gabinete (máx. 10%)
 
 
 class Material(NamedTuple):
@@ -107,17 +110,17 @@ class Material(NamedTuple):
 
 
 MATERIAIS = [
-    Material("madeira do gabinete com rótulo branco", "white", ("wood_hi", "wood_lo"),
-             (("white", ALFA_VEIO_CLARO),)),
-    Material("latão claro da plaquinha com texto", "ink", ("brass_hi", "brass"), ()),
+    Material("gabinete grafite com rótulo branco", "white", ("case_hi", "case_lo"),
+             (("white", ALFA_ESCOVADO),)),
+    Material("prata da plaquinha com texto", "ink", ("plate_hi", "plate"), ()),
     Material("vidro do visor com texto", "ink", ("visor_hi", "visor_lo"), ()),
-    Material("face da tecla com texto", "ink", ("key_hi", "key_lo"), (("black", ALFA_SOMBRA_DA_TECLA),)),
-    Material("tecla travada com texto", "ink", ("key_hi", "key_lo"), (("black", ALFA_TECLA_TRAVADA),)),
+    Material("tecla solta com texto", "ink", ("key_hi", "key_lo"), (("black", ALFA_SOMBRA_DA_TECLA),)),
+    Material("tecla afundada com texto", "white", ("keyon_hi", "keyon", "keyon_lo"), ()),
     Material("tecla verde Tocar (letra abaixo do brilho)", "white", ("green",),
              (("black", ALFA_SOMBRA_DA_TECLA),)),
-    Material("tecla âmbar Pausar com texto", "ink", ("amber",), (("black", ALFA_SOMBRA_DA_TECLA),)),
+    Material("tecla âmbar com texto", "ink", ("amber",), (("black", ALFA_SOMBRA_DA_TECLA),)),
     Material("tecla escolhida com texto", "white", ("blue",), (("black", ALFA_SOMBRA_DA_TECLA),)),
-    Material("rótulo branco no fundo da estante (com o realce do mouse)", "white", ("wood_hi", "wood_lo"),
+    Material("rótulo branco no fundo da estante (com o realce do mouse)", "white", ("case_hi", "case_lo"),
              (("white", ALFA_REALCE_NA_ESTANTE),)),
     Material("cabeçalho de metal com título", "ink", ("metal_hi", "metal_lo"), ()),
 ]
@@ -179,73 +182,68 @@ def _rgba(hexa: str, alfa: float) -> str:
 
 
 def _css_do_aparelho(c: dict[str, str], modo: str) -> str:
-    """Gabinete de madeira, visor de vidro, moldura de metal, grade do alto-falante e plaquinha."""
-    if modo == "contorno":      # preto e branco: contorno duplo, sem veios nem degradê (KTD3)
+    """Gabinete grafite, visor de vidro, bandeja preta das teclas, grade do alto-falante e plaquinha."""
+    if modo == "contorno":      # preto e branco: contorno duplo, sem estrias nem degradê (KTD3)
         return f"""
-.moa-radio {{ background-color: {c['wood']}; background-image: none; border: 4px solid {c['white']};
-              border-radius: 22px; padding: 18px;
+.moa-radio {{ background-color: {c['case']}; background-image: none; border: 4px solid {c['white']};
+              border-radius: 18px; padding: 18px;
               box-shadow: 0 0 0 3px {c['dark']}, inset 0 0 0 3px {c['dark']}, 0 6px 0 {c['dark']}; }}
 .moa-radio label {{ color: {c['white']}; }}
 .moa-radio .moa-dica {{ color: {c['hint']}; }}
 .moa-visor {{ background-color: {c['visor']}; background-image: none; border: 5px solid {c['dark']};
-              border-radius: 14px; padding: 12px; box-shadow: inset 0 0 0 3px {c['white']}; }}
+              border-radius: 12px; padding: 12px; box-shadow: inset 0 0 0 3px {c['white']}; }}
 .moa-visor label {{ color: {c['ink']}; }}
-.moa-metal {{ background-color: {c['white']}; border: 3px solid {c['dark']}; border-radius: 16px;
-              padding: 8px; box-shadow: inset 0 0 0 2px {c['white']}, inset 0 0 0 4px {c['dark']}; }}
+.moa-bandeja, .moa-volume {{ background-color: {c['tray']}; border: 3px solid {c['tray_edge']}; border-radius: 14px;
+              padding: 8px; box-shadow: inset 0 0 0 2px {c['tray']}; }}
 .moa-grade {{ background-color: {c['dark']}; background-image: none; border: 3px solid {c['white']};
               border-radius: 10px; min-height: 28px; }}
 .moa-plaquinha {{ background-color: {c['white']}; border: 3px solid {c['dark']}; border-radius: 8px;
                   padding: 0px 14px; }}
 .moa-plaquinha label {{ color: {c['ink']}; font-weight: 800; letter-spacing: 4px; }}
 """
-    veio_escuro = _rgba("#000000", ALFA_VEIO_ESCURO)
-    veio_claro = _rgba("#FFFFFF", ALFA_VEIO_CLARO)
+    estria = _rgba("#FFFFFF", ALFA_ESCOVADO)
+    sem_estria = _rgba("#FFFFFF", 0)
     return f"""
-.moa-radio {{ background-color: {c['wood']};
-    background-image: repeating-linear-gradient(to bottom, {veio_escuro} 0px, {veio_escuro} 1px,
-                          {_rgba('#000000', 0)} 2px, {veio_claro} 5px, {_rgba('#FFFFFF', 0)} 7px,
-                          {_rgba('#000000', 0)} 11px),
-                      linear-gradient(to bottom, {_rgba(c['wood_hi'], 1)} 0%, {_rgba(c['wood_lo'], 1)} 100%);
-    border: 5px solid {c['brass']}; border-radius: 22px; padding: 22px;
-    box-shadow: inset 0 0 0 2px {c['brass_lo']}, inset 0 0 18px rgba(0,0,0,0.45),
+.moa-radio {{ background-color: {c['case']};
+    background-image: repeating-linear-gradient(to right, {estria} 0px, {estria} 1px,
+                          {sem_estria} 2px, {sem_estria} 4px),
+                      linear-gradient(to bottom, {_rgba(c['case_hi'], 1)} 0%, {_rgba(c['case_lo'], 1)} 100%);
+    border: 4px solid {c['plate_lo']}; border-radius: 18px; padding: 22px;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 0 0 2px {c['dark']},
                 0 0 0 2px {c['dark']}, 0 6px 0 rgba(0,0,0,0.45); }}
 .moa-radio label {{ color: {c['white']}; }}
 .moa-radio .moa-dica {{ color: {c['hint']}; }}
 .moa-visor {{ background-color: {c['visor']};
     background-image: linear-gradient(to bottom, {_rgba(c['visor_hi'], 1)} 0%, {_rgba(c['visor_lo'], 1)} 100%);
-    border: 5px solid {c['brass']}; border-radius: 14px; padding: 12px;
-    box-shadow: 0 0 0 2px {c['brass_lo']}, inset 0 0 14px rgba(0,0,0,0.30),
+    border: 4px solid {c['dark']}; border-radius: 12px; padding: 12px;
+    box-shadow: 0 0 0 2px {c['plate_lo']}, inset 0 0 14px rgba(0,0,0,0.30),
                 inset 0 2px 0 rgba(255,255,255,0.70), inset 2px 0 0 rgba(255,255,255,0.35); }}
 .moa-visor label {{ color: {c['ink']}; }}
-.moa-metal {{ background-color: {c['metal_lo']};
-    background-image: repeating-linear-gradient(to right, rgba(255,255,255,0.22) 0px, rgba(255,255,255,0.22) 1px,
-                          rgba(255,255,255,0) 2px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0) 4px),
-                      linear-gradient(to bottom, {_rgba(c['metal_hi'], 1)} 0%, {_rgba(c['metal_lo'], 1)} 100%);
-    border: 3px solid {c['dark']}; border-radius: 16px; padding: 8px;
-    box-shadow: inset 0 2px 0 rgba(255,255,255,0.8), inset 0 -3px 0 rgba(0,0,0,0.25); }}
+.moa-bandeja, .moa-volume {{ background-color: {c['tray']}; border: 2px solid {c['tray_edge']}; border-radius: 14px;
+    padding: 7px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.9), 0 1px 0 rgba(255,255,255,0.35); }}
 .moa-grade {{ background-color: {c['dark']};
     background-image: repeating-linear-gradient(to right, rgba(255,255,255,0.14) 0px, rgba(255,255,255,0.14) 2px,
                           rgba(0,0,0,0) 3px, rgba(0,0,0,0) 6px),
                       repeating-linear-gradient(to bottom, rgba(255,255,255,0.10) 0px, rgba(255,255,255,0.10) 2px,
                           rgba(0,0,0,0) 3px, rgba(0,0,0,0) 6px);
-    border: 3px solid {c['brass_lo']}; border-radius: 10px; min-height: 28px;
+    border: 3px solid {c['plate_lo']}; border-radius: 10px; min-height: 28px;
     box-shadow: inset 0 3px 8px rgba(0,0,0,0.6); }}
-.moa-plaquinha {{ background-color: {c['brass']};
-    background-image: linear-gradient(to bottom, {_rgba(c['brass_hi'], 1)} 0%, {_rgba(c['brass'], 1)} 100%);
-    border: 2px solid {c['brass_lo']}; border-radius: 8px; padding: 0px 14px;
+.moa-plaquinha {{ background-color: {c['plate']};
+    background-image: linear-gradient(to bottom, {_rgba(c['plate_hi'], 1)} 0%, {_rgba(c['plate'], 1)} 100%);
+    border: 2px solid {c['plate_lo']}; border-radius: 8px; padding: 0px 14px;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.7); }}
 .moa-plaquinha label {{ color: {c['ink']}; font-weight: 800; letter-spacing: 4px; }}
 """
 
 
 def _css_do_movel(c: dict[str, str], modo: str) -> str:
-    """Estante com profundidade, vão côncavo, placas de latão, cartões e painel (mesma luz)."""
+    """Estante com profundidade, vão côncavo, placas de prata, cartões e painel (mesma luz)."""
     if modo == "contorno":
         return f"""
 .moa-placa {{ background-color: {c['white']}; border: 3px solid {c['dark']}; border-radius: 8px; padding: 4px 24px;
               box-shadow: inset 0 0 0 2px {c['white']}, inset 0 0 0 4px {c['dark']}; }}
 .moa-placa label {{ color: {c['ink']}; font-weight: 800; }}
-.moa-tabua {{ background-color: {c['wood']}; background-image: none; border-bottom: 16px solid {c['white']};
+.moa-tabua {{ background-color: {c['case']}; background-image: none; border-bottom: 16px solid {c['white']};
               padding: 18px 18px 14px 18px; box-shadow: 0 6px 0 {c['dark']}, inset 0 0 0 3px {c['white']}; }}
 .moa-tabua button.moa-disco label {{ color: {c['white']}; font-weight: 800; }}
 .moa-tabua button.moa-disco:hover {{ background-color: transparent; border-color: {c['white']}; }}
@@ -259,15 +257,15 @@ def _css_do_movel(c: dict[str, str], modo: str) -> str:
                box-shadow: 0 4px 0 {c['ink']}; }}
 """
     return f"""
-.moa-placa {{ background-color: {c['brass']};
-    background-image: linear-gradient(to bottom, {_rgba(c['brass_hi'], 1)} 0%, {_rgba(c['brass'], 1)} 100%);
-    border: 2px solid {c['brass_lo']}; border-radius: 8px; padding: 4px 24px;
+.moa-placa {{ background-color: {c['plate']};
+    background-image: linear-gradient(to bottom, {_rgba(c['plate_hi'], 1)} 0%, {_rgba(c['plate'], 1)} 100%);
+    border: 2px solid {c['plate_lo']}; border-radius: 8px; padding: 4px 24px;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 2px 0 rgba(0,0,0,0.35); }}
 .moa-placa label {{ color: {c['ink']}; font-weight: 800; }}
-.moa-tabua {{ background-color: {c['wood']};
+.moa-tabua {{ background-color: {c['case']};
     background-image: linear-gradient(to bottom, rgba(0,0,0,0.45) 0px, rgba(0,0,0,0.15) 14px, rgba(0,0,0,0) 40px),
-                      linear-gradient(to bottom, {_rgba(c['wood_lo'], 1)} 0%, {_rgba(c['wood_hi'], 1)} 100%);
-    border-bottom: 16px solid {c['wood_hi']}; padding: 18px 18px 14px 18px;
+                      linear-gradient(to bottom, {_rgba(c['case_lo'], 1)} 0%, {_rgba(c['case_hi'], 1)} 100%);
+    border-bottom: 16px solid {c['plate_lo']}; padding: 18px 18px 14px 18px;
     box-shadow: 0 6px 0 rgba(0,0,0,0.40), inset 0 12px 16px rgba(0,0,0,0.45), inset 0 -2px 0 rgba(255,255,255,0.18); }}
 .moa-tabua button.moa-disco label {{ color: {c['white']}; font-weight: 800; }}
 .moa-tabua button.moa-disco:hover {{ background-color: rgba(255,255,255,{ALFA_REALCE_NA_ESTANTE}); }}
@@ -277,13 +275,13 @@ def _css_do_movel(c: dict[str, str], modo: str) -> str:
 .moa-vazio label {{ color: {c['white']}; font-weight: 800; }}
 .moa-cartao {{ background-color: {c['card']}; border: 2px solid {c['line']}; border-radius: 14px;
     padding: 14px 18px; box-shadow: 0 4px 0 rgba(0,0,0,0.18), inset 0 2px 0 rgba(255,255,255,0.7); }}
-.moa-painel {{ background-color: {c['card']}; border: 5px solid {c['brass_lo']}; border-radius: 16px; padding: 24px;
+.moa-painel {{ background-color: {c['card']}; border: 5px solid {c['plate_lo']}; border-radius: 16px; padding: 24px;
     box-shadow: 0 4px 0 rgba(0,0,0,0.30), inset 0 2px 0 rgba(255,255,255,0.7), 0 0 0 2px {c['dark']}; }}
 """
 
 
 def _css_da_rolagem(c: dict[str, str], modo: str) -> str:
-    """Barra de rolagem como um trilho de madeira com um cursor de latão (sempre visível)."""
+    """Barra de rolagem como um trilho grafite com um cursor de prata (sempre visível)."""
     if modo == "contorno":
         return f"""
 scrollbar {{ background-color: {c['white']}; border: 0 solid {c['dark']}; }}
@@ -295,59 +293,74 @@ scrollbar slider:hover, scrollbar slider:active {{ background-color: {c['white']
 """
     friso = "rgba(0,0,0,0.30)"
     return f"""
-scrollbar {{ background-color: {c['wood_lo']}; border: 0 solid {c['dark']}; }}
-scrollbar trough {{ background-color: {c['wood_lo']}; background-image: none; min-width: 30px;
+scrollbar {{ background-color: {c['case_lo']}; border: 0 solid {c['dark']}; }}
+scrollbar trough {{ background-color: {c['case_lo']}; background-image: none; min-width: 30px;
                     border: 0 solid {c['dark']}; box-shadow: inset 4px 0 8px rgba(0,0,0,0.65), inset -2px 0 0 rgba(255,255,255,0.12); }}
-scrollbar slider {{ background-color: {c['brass']};
-    background-image: linear-gradient(to right, {_rgba(c['brass_hi'], 1)} 0%, {_rgba(c['brass'], 1)} 55%, {_rgba(c['brass_lo'], 1)} 100%),
+scrollbar slider {{ background-color: {c['plate']};
+    background-image: linear-gradient(to right, {_rgba(c['plate_hi'], 1)} 0%, {_rgba(c['plate'], 1)} 55%, {_rgba(c['plate_lo'], 1)} 100%),
                       repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 4px, {friso} 5px, rgba(0,0,0,0) 6px);
-    min-width: 26px; min-height: 72px; margin: 2px; border: 2px solid {c['brass_lo']}; border-radius: 10px;
+    min-width: 26px; min-height: 72px; margin: 2px; border: 2px solid {c['plate_lo']}; border-radius: 10px;
     box-shadow: inset 0 2px 0 rgba(255,255,255,0.7), 0 3px 0 rgba(0,0,0,0.5); }}
-scrollbar slider:hover {{ background-color: {c['brass_hi']}; }}
+scrollbar slider:hover {{ background-color: {c['plate_hi']}; }}
 scrollbar slider:active {{ box-shadow: inset 0 3px 0 rgba(0,0,0,0.3); margin-top: 4px; }}
 """
 
 
 def _css_das_teclas(c: dict[str, str], modo: str) -> str:
-    """CSS das teclas (botões de ação, escolhas e marcações), das lâmpadas e das variantes."""
+    """CSS das teclas de metal com bisel (botões de ação, escolhas e marcações), das lâmpadas e das variantes."""
     b, h, p = BORDA_PX, ALTURA_DA_TECLA_PX, PADDING_TOPO_PX
     pe = ALVO_MINIMO_PX
-    repouso = (f"border: {b}px solid {c['dark']}; border-bottom-width: {b + h}px; "
-               f"border-radius: 14px; padding: {p}px 20px {p}px 20px;")
-    apertada = f"border-bottom-width: {b + 1}px; padding-top: {p + h - 1}px;"
     teclas = "button.moa-btn, button.moa-opcao, button.moa-marca"
-    apertadas = ("button.moa-btn:active, button.moa-btn.moa-travada, "
+    apertadas = ("button.moa-btn:active, button.moa-btn.moa-travada, button.moa-pausar, "
                  "button.moa-opcao.moa-escolhida, button.moa-marca.moa-marcada")
+    rotulos_apertados = ("button.moa-btn:active label, button.moa-btn.moa-travada label, "
+                         "button.moa-pausar label, button.moa-opcao.moa-escolhida label, "
+                         "button.moa-marca.moa-marcada label")
     faixa = FAIXA_DO_BRILHO_PX
+    repouso = (f"border-style: solid; border-width: {b}px {b}px {b + h}px {b}px; border-radius: 10px; "
+               f"padding: {p}px 20px {p}px 20px;")
+    apertada = f"border-width: {b}px {b}px {b + 1}px {b}px; padding-top: {p + h - 1}px;"
     if modo == "contorno":      # preto e branco: contorno duplo e sombra, sem tons (KTD3)
+        bordas = f"border-color: {c['dark']};"
         face = (f"background-color: {c['key_lo']}; background-image: none; "
                 f"box-shadow: inset 0 0 0 2px {c['white']}, inset 0 0 0 4px {c['dark']};")
-        face_apertada = (f"background-image: none; "
-                         f"box-shadow: inset 0 0 0 2px {c['white']}, inset 0 0 0 6px {c['dark']};")
+        bordas_apertada = f"border-color: {c['dark']};"
+        face_apertada = (f"background-color: {c['keyon']}; background-image: none; "
+                         f"box-shadow: inset 0 0 0 3px {c['white']};")
         brilho_colorido = "background-image: none;"
     else:
+        # bisel: a luz vem de cima e da esquerda (borda clara em cima e à esquerda, escura embaixo e à direita)
+        bordas = f"border-color: {c['key_edge']} {c['plate_lo']} {c['dark']} {c['key_edge']};"
         face = (f"background-color: {c['key_lo']}; "
                 f"background-image: linear-gradient(to bottom, rgba(255,255,255,{ALFA_REALCE_DA_TECLA}) 0px, "
                 f"rgba(255,255,255,0) 60%), "
                 f"linear-gradient(to bottom, rgba(0,0,0,0) 45%, rgba(0,0,0,{ALFA_SOMBRA_DA_TECLA}) 100%); "
-                f"box-shadow: inset 0 2px 0 rgba(255,255,255,{ALFA_REALCE_DA_TECLA});")
-        face_apertada = (f"background-image: linear-gradient(to bottom, rgba(0,0,0,{ALFA_TECLA_TRAVADA}) 0px, "
-                         f"rgba(0,0,0,0.02) 60%); box-shadow: inset 0 3px 0 rgba(0,0,0,0.28);")
+                f"box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 0 rgba(0,0,0,0.45);")
+        # tecla afundada: mais escura, com o centro "para dentro" (sombra por dentro) e o bisel invertido
+        bordas_apertada = f"border-color: {c['dark']} {c['key_edge']} {c['key_edge']} {c['dark']};"
+        face_apertada = (f"background-color: {c['keyon']}; "
+                         f"background-image: linear-gradient(to bottom, {_rgba(c['keyon_lo'], 1)} 0%, "
+                         f"{_rgba(c['keyon'], 1)} 40%, {_rgba(c['keyon_hi'], 1)} 100%); "
+                         f"box-shadow: inset 0 3px 6px rgba(0,0,0,0.6);")
         # tecla colorida: brilho só numa faixa fina no topo (acima da letra) e sombreado no pé (KTD2)
         brilho_colorido = (f"background-image: linear-gradient(to bottom, rgba(255,255,255,{ALFA_BRILHO_DA_TECLA}) 0px, "
                            f"rgba(255,255,255,{ALFA_BRILHO_DA_TECLA}) {faixa - 2}px, rgba(255,255,255,0) {faixa}px), "
                            f"linear-gradient(to bottom, rgba(0,0,0,0) 45%, rgba(0,0,0,{ALFA_SOMBRA_DA_TECLA}) 100%);")
     return f"""
-/* teclas: alvo de 64 px, relevo com curso (ADR-0024), foco bem visível */
+/* teclas de metal com bisel e curso (ADR-0025): alvo de 64 px, foco bem visível */
 {teclas} {{ min-height: {pe}px; min-width: {pe}px; font-weight: 800; color: {c['ink']};
     {repouso}
+    {bordas}
     {face}
     text-shadow: none; }}
 button.moa-btn label {{ color: inherit; font-weight: 800; }}
-button.moa-btn:hover {{ background-color: {c['selbg']}; }}
+button.moa-btn:hover, button.moa-opcao:hover, button.moa-marca:hover {{ background-color: {c['key_hi']}; }}
 {teclas.replace(', ', ':focus, ')}:focus {{ outline: 5px solid {c['focus']}; outline-offset: 3px; }}
 {apertadas} {{ {apertada}
-    {face_apertada} }}
+    {bordas_apertada}
+    {face_apertada}
+    color: {c['white']}; }}
+{rotulos_apertados} {{ color: {c['white']}; }}
 button.moa-pri {{ background-color: {c['green']}; color: {c['white']}; {brilho_colorido} }}
 button.moa-pri:hover {{ background-color: {c['green']}; }}
 button.moa-pri label {{ color: {c['white']}; }}
@@ -358,11 +371,8 @@ button.moa-btn:disabled label, button.moa-btn.moa-inativo label {{ color: {c['in
 button.moa-perigo {{ border-color: {c['danger']}; }}
 button.moa-opcao {{ padding-left: 16px; padding-right: 16px; }}
 button.moa-opcao label {{ color: {c['ink']}; font-weight: 800; }}
-button.moa-opcao:hover, button.moa-marca:hover {{ background-color: {c['selbg']}; }}
-button.moa-opcao.moa-escolhida {{ border-color: {c['green']}; background-color: {c['selbg']}; }}
 button.moa-marca {{ padding-left: 12px; padding-right: 12px; }}
 button.moa-marca label {{ color: {c['ink']}; }}
-button.moa-marca.moa-marcada {{ border-color: {c['green']}; background-color: {c['selbg']}; }}
 button.moa-btn.moa-escolhida {{ background-color: {c['blue']}; color: {c['white']}; {brilho_colorido} }}
 button.moa-btn.moa-escolhida label {{ color: {c['white']}; }}
 
@@ -403,9 +413,9 @@ label {{ color: {c['ink']}; }}
 .moa-forte {{ font-weight: 800; }}
 .moa-nota {{ color: {c['ink2']}; font-weight: 600; }}
 
-.moa-cabecalho {{ background-color: {c['card']}; border-bottom: 3px solid {c['wood2']};
+.moa-cabecalho {{ background-color: {c['card']}; border-bottom: 3px solid {c['case2']};
                   padding: 10px 20px; }}
-.moa-mini {{ background-color: {c['wood']}; padding: 8px 20px; }}
+.moa-mini {{ background-color: {c['case']}; padding: 8px 20px; }}
 .moa-mini label {{ color: {c['white']}; }}
 
 {_css_das_teclas(c, modo)}
@@ -430,17 +440,11 @@ button.moa-disco label {{ color: {c['ink']}; font-weight: 800; }}
 {_css_do_aparelho(c, modo)}
 .moa-visor .moa-nota-visor {{ background-color: {c['white']}; border-radius: 6px; padding: 2px 8px;
                               font-weight: 700; }}
-.moa-radio button.moa-btn {{ background-color: {c['btnradio']}; border-color: {c['dark']}; color: {c['ink']}; }}
-.moa-radio button.moa-btn label {{ color: {c['ink']}; }}
-.moa-radio button.moa-tocar {{ background-color: {c['green']}; color: {c['white']}; border-radius: 40px;
-                               min-height: 92px; font-size: {grande}px; }}
+.moa-radio button.moa-tocar {{ background-color: {c['green']}; color: {c['white']}; min-height: 92px; font-size: {grande}px; }}
 .moa-radio button.moa-tocar label {{ color: {c['white']}; }}
-.moa-radio button.moa-pausar {{ background-color: {c['amber']}; color: {c['ink']}; border-radius: 12px;
-                                min-height: 92px; font-size: {grande}px; }}
-.moa-radio button.moa-pausar label {{ color: {c['ink']}; }}
-.moa-radio button.moa-clara-ligada {{ background-color: {c['lampon']}; }}
+.moa-radio button.moa-pausar {{ min-height: 92px; font-size: {grande}px; }}
+.moa-radio button.moa-clara-ligada {{ color: {c['white']}; }}
 .moa-radio button.moa-btn:focus {{ outline: 5px solid {c['white']}; outline-offset: 3px; }}
-.moa-volume {{ background-color: {c['dark']}; border-radius: 12px; padding: 10px; }}
 .moa-barra trough {{ min-height: 26px; background-color: {c['white']}; border: 3px solid {c['dark']};
                      border-radius: 13px; }}
 .moa-barra progress {{ min-height: 26px; background-color: {c['green']}; background-image: none;

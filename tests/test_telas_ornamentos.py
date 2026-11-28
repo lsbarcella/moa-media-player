@@ -22,7 +22,7 @@ def _lados_dos_parafusos():
     return {k[1] for k in cairo_pecas.CACHE.chaves() if k[0] == "parafuso"}
 
 
-def test_a_estante_tem_placas_de_latao_com_parafusos_pequenos(app, tmp_path):
+def test_a_estante_tem_placas_de_prata_com_parafusos_pequenos(app, tmp_path):
     ctx, conteudo = app
     cairo_pecas.CACHE.limpar()
     ctx.session.ir_para(Tela.ESTANTE)

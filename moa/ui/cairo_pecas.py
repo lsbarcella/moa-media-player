@@ -33,7 +33,7 @@ def _contorno(paleta: str) -> bool:
 
 
 def desenhar_parafuso(cr: cairo.Context, w: int, h: int, paleta: str, estado: int = 0) -> None:
-    """Parafuso de latão com fenda. `estado` gira a fenda (0, 1, 2, 3 = 45 graus cada)."""
+    """Parafuso de prata com fenda. `estado` gira a fenda (0, 1, 2, 3 = 45 graus cada)."""
     raio = min(w, h) / 2 - 1
     cx, cy = w / 2, h / 2
     cr.arc(cx, cy, raio, 0, 2 * math.pi)
@@ -46,8 +46,8 @@ def desenhar_parafuso(cr: cairo.Context, w: int, h: int, paleta: str, estado: in
         fenda = cor_rgb(paleta, "dark")
     else:
         brilho = cairo.RadialGradient(cx - raio / 3, cy - raio / 3, raio / 6, cx, cy, raio)
-        brilho.add_color_stop_rgb(0, *cor_rgb(paleta, "brass_hi"))
-        brilho.add_color_stop_rgb(1, *cor_rgb(paleta, "brass_lo"))
+        brilho.add_color_stop_rgb(0, *cor_rgb(paleta, "plate_hi"))
+        brilho.add_color_stop_rgb(1, *cor_rgb(paleta, "plate_lo"))
         cr.set_source(brilho)
         cr.fill_preserve()
         cr.set_source_rgba(*cor_rgb(paleta, "dark"), 0.8)
