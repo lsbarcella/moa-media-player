@@ -98,7 +98,7 @@ moa/
 │   │   ├── models.py       # dataclasses: Album, Track
 │   │   ├── covers.py       # Capa embutida, folder.jpg ou capa substituta
 │   │   ├── player.py       # Envolve o GStreamer: tocar, pausar, próxima, volume
-│   │   ├── db.py           # Banco SQLite: cache da biblioteca, discos montados, Caixa, recentes (ADR-0008)
+│   │   ├── db.py           # Banco SQLite: cache da biblioteca, discos montados, Lixeira, recentes (ADR-0008)
 │   │   ├── state.py        # Salva e restaura onde parou (usa o banco)
 │   │   ├── config.py       # Preferências do próprio usuário (JSON)
 │   │   ├── custom_albums.py# "Discos montados" pelo usuário a partir de faixas existentes
@@ -169,7 +169,7 @@ Referências: WCAG 2.2, Czaja et al. (2019), Hawthorn (2000) e a revisão de lit
 **Cuidar da coleção (feito pelo próprio usuário)**
 - Adicionar, renomear, trocar a capa e remover discos, tudo dentro da metáfora, sem jargão (nada de "pasta", "tag" ou "varredura" na tela).
 - O desenho exato é **decisão em aberto**. Será explorado com `ce-ideate` e validado em um **preview em HTML** antes de qualquer implementação.
-- Operações destrutivas precisam ser reversíveis ou pedir confirmação calma. Remover um disco da estante **não deve apagar os arquivos de música** sem deixar isso claro. "Tirar da estante" leva o disco para a **Caixa**; **"Apagar de vez" só existe dentro da Caixa**, com texto claro e dois botões grandes (ADR-0007).
+- Operações destrutivas precisam ser reversíveis ou pedir confirmação calma. Remover um disco da estante **não deve apagar os arquivos de música** sem deixar isso claro. "Tirar da estante" leva o disco para a **Lixeira**; **"Apagar de vez" só existe dentro da Lixeira**, com texto claro e dois botões grandes (ADR-0007).
 
 **Playlist (montar um disco)**
 - O usuário cria um **disco novo na estante** a partir de músicas que já estão em outros discos. O resultado aparece na estante como qualquer outro disco, com capa e nome.
@@ -229,11 +229,11 @@ O `tools/measure.sh` deve medir esses números de forma repetível, por exemplo 
 - **Dispositivo apontador: mouse** (o usuário usa mouse, não touchpad).
 - **Cada CD tem uma pasta própria**; as duplicadas são a mesma música em CDs diferentes (mantidas, cada uma no seu disco).
 - **Ordem da estante: por artista e depois álbum.**
-- **Persistência em SQLite** para o cache da biblioteca e os dados do usuário (discos montados, Caixa, recentes, onde parou); **JSON** só para as configurações legíveis (letra, cores, "Voz mais clara"). Ver ADR-0008. O acervo tem cerca de **800 faixas**.
+- **Persistência em SQLite** para o cache da biblioteca e os dados do usuário (discos montados, Lixeira, recentes, onde parou); **JSON** só para as configurações legíveis (letra, cores, "Voz mais clara"). Ver ADR-0008. O acervo tem cerca de **800 faixas**.
 - **"Voz mais clara" começa desativado.** Os valores do ajuste ainda precisam ser testados com ele ouvindo.
 - **Volume:** é o do app, com limite em 100% (sem ganho acima disso), e o volume do sistema é ajustado uma vez na instalação.
 - **Botão "+" em cada música:** mostra as **capas dos discos** ("Em qual disco?"), com um "Disco novo" como primeira capa, no lugar das duas frases (ADR-0007).
-- **"Apagar de vez" só dentro da Caixa** (ADR-0007).
+- **"Apagar de vez" só dentro da Lixeira** (ADR-0007).
 - **Tamanho da letra** fica dentro de um botão **"Configurações"** (ADR-0006).
 - **Configuração para daltonismo**, como camada extra de acessibilidade, também dentro de "Configurações" (ADR-0006).
 - **As demais opções do preview ficam na primeira alternativa** (padrão): o visor do rádio diz o estado ("TOCANDO: Faixa 3 de 12"); avisos e confirmações ficam até a próxima ação; a "estante que lembra" (continuar a ouvir, ouvidos há pouco e lugar vazio) fica ligada.

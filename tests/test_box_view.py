@@ -2,7 +2,7 @@
 # Copyright (C) 2026 Leonardo dos Santos Barcella
 # Este arquivo faz parte do Moa Media Player. Veja o arquivo LICENSE na raiz do projeto.
 
-"""Testes da Caixa e da tela de editar disco (M4)."""
+"""Testes da Lixeira e da tela de editar disco (M4)."""
 
 import gi
 import pytest
@@ -26,7 +26,7 @@ def abrir_editar(ctx, conteudo, indice=0):
 
 
 def todo_o_texto_menos_a_caixa(ctx, conteudo):
-    """Junta o texto de todas as telas, exceto a Caixa, para provar o que NÃO aparece."""
+    """Junta o texto de todas as telas, exceto a Lixeira, para provar o que NÃO aparece."""
     ctx.radio.abrir_disco(ctx.discos[0], tocar=False)
     achados = []
     for tela in Tela:
@@ -37,7 +37,7 @@ def todo_o_texto_menos_a_caixa(ctx, conteudo):
     return achados
 
 
-# -- Caixa --------------------------------------------------------------------------------------
+# -- Lixeira --------------------------------------------------------------------------------------
 
 def test_apagar_de_vez_nunca_aparece_fora_da_caixa(app):
     ctx, conteudo = app
@@ -50,18 +50,18 @@ def test_apagar_de_vez_nunca_aparece_fora_da_caixa(app):
 
 def test_o_botao_da_caixa_na_estante_conta_os_discos(app):
     ctx, conteudo = app
-    assert "A Caixa (0 discos)" in textos(conteudo.telas[Tela.ESTANTE].raiz)
+    assert "A Lixeira (0 discos)" in textos(conteudo.telas[Tela.ESTANTE].raiz)
     box.tirar_da_estante(ctx.banco, ctx.discos[0].id)
     ctx.recarregar()
-    assert "A Caixa (1 disco)" in textos(conteudo.telas[Tela.ESTANTE].raiz)
-    botao_com_texto(conteudo.telas[Tela.ESTANTE].raiz, "A Caixa (1 disco)").clicked()
+    assert "A Lixeira (1 disco)" in textos(conteudo.telas[Tela.ESTANTE].raiz)
+    botao_com_texto(conteudo.telas[Tela.ESTANTE].raiz, "A Lixeira (1 disco)").clicked()
     assert ctx.session.tela == Tela.CAIXA
 
 
 def test_caixa_vazia_diz_que_esta_vazia(app):
     ctx, conteudo = app
     ctx.session.ir_para(Tela.CAIXA)
-    assert "A Caixa está vazia." in textos(conteudo.telas[Tela.CAIXA].raiz)
+    assert "A Lixeira está vazia." in textos(conteudo.telas[Tela.CAIXA].raiz)
 
 
 def test_manter_o_disco_nao_apaga_e_sim_apaga_so_aquele_disco(app, musica):
@@ -80,7 +80,7 @@ def test_manter_o_disco_nao_apaga_e_sim_apaga_so_aquele_disco(app, musica):
     botao_com_texto(raiz(), "Sim, apagar de vez").clicked()
     assert not any(f.path.exists() for f in alvo.tracks)
     assert all(f.path.exists() for f in outro.tracks)
-    assert ctx.caixa == [] and "A Caixa está vazia." in textos(raiz())
+    assert ctx.caixa == [] and "A Lixeira está vazia." in textos(raiz())
     assert f"Apaguei “{alvo.title}” de vez." in textos(raiz())
 
 
@@ -109,7 +109,7 @@ def test_falha_ao_apagar_mostra_frase_calma_sem_jargao(app, monkeypatch):
     botao_com_texto(conteudo.telas[Tela.CAIXA].raiz, "Apagar de vez…").clicked()
     botao_com_texto(conteudo.telas[Tela.CAIXA].raiz, "Sim, apagar de vez").clicked()
     t = textos(conteudo.telas[Tela.CAIXA].raiz)
-    assert "Não consegui apagar tudo. O que sobrou continua na Caixa." in t
+    assert "Não consegui apagar tudo. O que sobrou continua na Lixeira." in t
     assert not any("Errno" in x or "Permission" in x for x in t)
     assert len(ctx.caixa) == 1
 
