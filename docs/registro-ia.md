@@ -178,3 +178,11 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Verificação:** 20 testes novos sem internet; uma atualização real contra o GitHub numa cópia (procurar, instalar, importar o código novo, voltar); suíte completa passa (424).
 - **Custo aceito pelo autor:** quebra "offline por padrão", expõe jargão e baixa código sem assinatura. Só liga em pasta de código-fonte gravável.
 - **NÃO testado:** no notebook do pai; o "Abrir de novo agora" dentro da janela de verdade.
+
+## 27/11/2026 — Medição de desempenho (`tools/measure.sh`)
+
+- **Pedido:** medir o desempenho de forma automatizada, para comparar o notebook do pai com a máquina de desenvolvimento.
+- **Feito:** `tools/measure.sh` e `tools/measure.py` (abertura do app de verdade, RAM e CPU em repouso, tempo de 11 ações em duas coleções sintéticas, CPU tocando), CSV com a configuração da máquina, linha de log `estante pronta` no `Carregador`, ADR-0021, `tests/test_measure.py`.
+- **Tropeço:** a primeira versão isolava o D-Bus (`dbus-run-session`) e media 25 s de abertura; era um artefato do isolamento (o app espera um serviço que não existe na sessão nova), não do app. Passei a medir na sessão real e a recusar rodar com um Moa aberto. Também a CPU tocando dava 4,6% por causa do meu próprio laço de espera; troquei por um laço de eventos e caiu para ~3,5%.
+- **Medido aqui (i5-9600K, `--rapido`):** abertura ~0,3 s, RAM ~85 MB em repouso, CPU tocando ~3,5%.
+- **NÃO rodado no notebook do pai.** Falta a rodada completa lá e a medida a frio depois de reiniciar.

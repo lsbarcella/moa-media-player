@@ -90,4 +90,5 @@ class Carregador:
 
     def _entregar(self, discos, miniaturas) -> bool:
         self._contexto.definir_colecao(discos, miniaturas)
+        log.info("estante pronta: %d discos", len(discos))      # tools/measure.py mede até aqui
         return False                           # False: não repetir este idle
