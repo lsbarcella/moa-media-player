@@ -94,3 +94,8 @@ def test_discos_com_numero_no_nome_seguem_ordem_natural():
     ]
     nomes = [d.title for d in sorted(discos, key=lambda d: d.sort_key)]
     assert nomes == ["Sucessos Vol 2", "Sucessos Vol 10"]
+
+
+def test_disco_montado_nao_tem_ano_mas_tem_a_mesma_cara_do_album():
+    from moa.core.models import MixDisc
+    assert MixDisc(id="m", title="Minha playlist").year is None

@@ -33,6 +33,7 @@ class Track:
     artist: str | None = None   # artista da faixa, se a tag existir
     album: str | None = None    # nome do álbum segundo a tag, se existir
     album_artist: str | None = None   # artista do álbum segundo a tag, se existir
+    year: int | None = None     # ano de lançamento segundo a tag de data, se existir
     mtime: float = 0.0          # data de modificação do arquivo (para o cache)
     size: int = 0               # tamanho do arquivo em bytes (para o cache)
 
@@ -58,6 +59,7 @@ class Album:
     title: str
     artist: str | None = None   # None quando nenhuma tag de artista foi encontrada
     tracks: tuple[Track, ...] = ()   # uma tupla é como um array `readonly`
+    year: int | None = None     # ano do disco: o das tags (ou, sem tag, o do MusicBrainz)
 
     @property
     def id(self) -> str:
@@ -87,6 +89,7 @@ class MixDisc:
     title: str
     tracks: tuple[Track, ...] = ()
     artist: str | None = None
+    year: int | None = None     # uma playlist não tem ano (mas tem a mesma "cara" de um Album)
 
     @property
     def sort_key(self):

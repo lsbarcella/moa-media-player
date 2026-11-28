@@ -69,6 +69,20 @@ def title_from_filename(stem: str) -> tuple[str, int | None]:
     return stem.replace("_", " ").strip() or stem, None
 
 
+_ANO = re.compile(r"(?<!\d)(\d{4})(?!\d)")
+
+
+def parse_year(valor: str | None) -> int | None:
+    """"2005", "2005-03-01" e "1987-1989" viram o primeiro ano (de 1800 a 2100). Resto vira None."""
+    if not valor:
+        return None
+    achou = _ANO.search(valor)
+    if not achou:
+        return None
+    ano = int(achou.group(1))
+    return ano if 1800 <= ano <= 2100 else None
+
+
 def _parse_number(valor: str | None) -> int | None:
     """"3", "03" e "3/12" viram 3. Qualquer outra coisa vira None."""
     if not valor:
@@ -131,6 +145,7 @@ def read_track(path: Path) -> Track:
         artist=_tag(tags, "artist", "TPE1"),
         album=_tag(tags, "album", "TALB"),
         album_artist=_tag(tags, "albumartist", "TPE2"),
+        year=parse_year(_tag(tags, "date", "TDRC", "originaldate")),
         mtime=estado.st_mtime,
         size=estado.st_size,
     )
@@ -158,6 +173,14 @@ def _mais_comum(valores: list[str]) -> str | None:
     return next(v for v in valores if fold(v) == escolhido)
 
 
+def _ano_do_album(faixas: tuple[Track, ...]) -> int | None:
+    """O ano que mais se repete entre as faixas (empate: o mais antigo), ou None."""
+    anos = Counter(t.year for t in faixas if t.year)
+    if not anos:
+        return None
+    return min(anos, key=lambda ano: (-anos[ano], ano))
+
+
 def _artista_do_album(faixas: tuple[Track, ...]) -> str | None:
     """Artista do disco.
 
@@ -182,7 +205,8 @@ def _artista_do_album(faixas: tuple[Track, ...]) -> str | None:
 
 def _montar_disco(pasta: Path, faixas: tuple[Track, ...]) -> Album:
     titulo = _mais_comum([t.album for t in faixas if t.album]) or pasta.name
-    return Album(folder=pasta, title=titulo, artist=_artista_do_album(faixas), tracks=faixas)
+    return Album(folder=pasta, title=titulo, artist=_artista_do_album(faixas), tracks=faixas,
+                 year=_ano_do_album(faixas))
 
 
 def refresh_library(raiz: Path, db: "Database",

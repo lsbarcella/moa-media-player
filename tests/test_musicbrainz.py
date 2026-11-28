@@ -215,7 +215,7 @@ def test_sem_rede_nenhuma_conexao_e_tentada(tmp_path, make_track):
 def test_disco_completo_nao_gera_consulta(tmp_path, make_track, servidor, make_image):
     capa = make_image(tmp_path / "musica" / "Disco" / "folder.jpg")
     _, discos, miniaturas = montar(tmp_path, make_track, album="Completo", artist="Ana",
-                                   albumartist="Ana", musicbrainz_albumid=ID)
+                                   albumartist="Ana", musicbrainz_albumid=ID, date="2001")
     assert miniaturas[discos[0].id] is not None and capa.exists()
     assert atualizador(tmp_path, servidor).executar(discos, miniaturas) == 0
     assert servidor.pedidos == []
@@ -343,3 +343,58 @@ def test_capa_da_pasta_vence_a_capa_baixada(tmp_path, make_track, make_image):
     refresh_covers(discos, banco, tmp_path / "min", alternativas={discos[0].id: baixada})
     assert banco.get_cover(discos[0].id).source.path == propria
     banco.close()
+
+
+# -- ano (ADR-0027) -------------------------------------------------------------------------------
+
+def release_com_data(data, **kwargs):
+    corpo = json.loads(release(**kwargs))
+    corpo["date"] = data
+    return json.dumps(corpo).encode()
+
+
+@pytest.mark.parametrize("data,ano", [("2005-03-01", 2005), ("1987", 1987), ("", None), ("sem data", None)])
+def test_o_ano_do_musicbrainz_sai_da_data_do_lancamento(data, ano):
+    assert mb.ano_do_disco({"date": data}) == ano
+
+
+def test_o_registro_guarda_o_ano_da_data_do_lancamento(tmp_path, make_track, servidor):
+    servidor.respostas[f"/ws/2/release/{ID}"] = (200, release_com_data("2005-03-01"))
+    _, discos, miniaturas = montar(tmp_path, make_track, musicbrainz_albumid=ID)
+    assert atualizador(tmp_path, servidor).executar(discos, miniaturas) == 1
+    banco = Database(tmp_path / "moa.db")
+    try:
+        assert banco.get_mb(discos[0].id).year == 2005
+    finally:
+        banco.close()
+
+
+def test_disco_completo_sem_ano_nas_tags_agora_pergunta_o_ano(tmp_path, make_track, servidor, make_image):
+    make_image(tmp_path / "musica" / "Disco" / "folder.jpg")
+    servidor.respostas[f"/ws/2/release/{ID}"] = (200, release_com_data("1999"))
+    _, discos, miniaturas = montar(tmp_path, make_track, album="Completo", artist="Ana",
+                                   albumartist="Ana", musicbrainz_albumid=ID)
+    assert discos[0].year is None
+    assert atualizador(tmp_path, servidor).executar(discos, miniaturas) == 1
+
+
+def test_disco_completo_com_ano_nas_tags_continua_sem_consulta(tmp_path, make_track, servidor, make_image):
+    make_image(tmp_path / "musica" / "Disco" / "folder.jpg")
+    _, discos, miniaturas = montar(tmp_path, make_track, album="Completo", artist="Ana",
+                                   albumartist="Ana", musicbrainz_albumid=ID, date="2001")
+    assert atualizador(tmp_path, servidor).executar(discos, miniaturas) == 0
+    assert servidor.pedidos == []
+
+
+def test_o_ano_do_musicbrainz_so_vale_onde_as_tags_nao_tem_ano(tmp_path, make_track):
+    from dataclasses import replace
+    raiz = tmp_path / "musica"
+    make_track(raiz / "A", "01.mp3", album="A", artist="X")
+    make_track(raiz / "B", "01.mp3", album="B", artist="X", date="1980")
+    banco = Database(tmp_path / "moa.db")
+    sem_ano, com_ano = refresh_library(raiz, banco)
+    banco.close()
+    registros = {sem_ano.id: RegistroMB("ok", year=2005), com_ano.id: RegistroMB("ok", year=2020)}
+    a, b = mb.aplicar([sem_ano, com_ano], registros)
+    assert a.year == 2005          # as tags não diziam nada: vale o MusicBrainz
+    assert b.year == 1980          # a tag do usuário vence sempre

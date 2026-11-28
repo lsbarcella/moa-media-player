@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import Callable
 
 from moa.core.db import Database, RegistroMB
-from moa.core.library import read_musicbrainz_album_id, title_from_filename
+from moa.core.library import parse_year, read_musicbrainz_album_id, title_from_filename
 from moa.core.models import Album
 
 log = logging.getLogger(__name__)
@@ -166,6 +166,11 @@ def artista_do_disco(disco: dict) -> str | None:
     return "".join(partes).strip() or None
 
 
+def ano_do_disco(disco: dict) -> int | None:
+    """O ano da data de lançamento ("2005-03-01" ou "2005"), ou None se não houver data confiável."""
+    return parse_year(disco.get("date"))
+
+
 def titulos_das_faixas(disco: dict) -> tuple[str, ...]:
     """Os nomes das faixas, na ordem (todos os CDs do disco, um depois do outro)."""
     nomes = []
@@ -259,8 +264,8 @@ class Atualizador:
                 return False
             if self._agora() - registro.checked_at < TENTAR_DE_NOVO_APOS:
                 return False
-        # Só vale a pena perguntar se algo pode melhorar: o disco sem nome nas tags ou sem capa.
-        return precisa_capa or _sem_nome_nas_tags(disco)
+        # Só vale a pena perguntar se algo pode melhorar: disco sem nome nas tags, sem capa ou sem ano.
+        return precisa_capa or _sem_nome_nas_tags(disco) or disco.year is None
 
     def _consultar(self, disco: Album, precisa_capa: bool) -> RegistroMB:
         agora = self._agora()
@@ -272,7 +277,7 @@ class Atualizador:
         if precisa_capa:
             capa = self._baixar_capa(mbid)
         return RegistroMB("ok", mbid, (informacao.get("title") or None), artista_do_disco(informacao),
-                          titulos_das_faixas(informacao), capa, agora)
+                          titulos_das_faixas(informacao), capa, agora, ano_do_disco(informacao))
 
     def _achar_o_id(self, disco: Album) -> str | None:
         for faixa in disco.tracks[:3]:
@@ -322,6 +327,7 @@ def aplicar(albuns: list[Album], registros: dict[str, RegistroMB]) -> list[Album
 
     - o nome do disco, só se nenhuma faixa tem a tag de álbum (o nome veio da pasta);
     - o artista, só se o disco não tem artista;
+    - o ano, só se nenhuma faixa tem ano na tag;
     - o nome de uma faixa, só se ela não tem título na tag (o nome veio do arquivo) e o
       número de faixas bate com o do MusicBrainz.
     Sem registro, ou com "nada", devolve o disco exatamente como estava.
@@ -339,7 +345,8 @@ def aplicar(albuns: list[Album], registros: dict[str, RegistroMB]) -> list[Album
             faixas = tuple(
                 replace(t, title=nome) if nome and t.title == title_from_filename(t.path.stem)[0] else t
                 for t, nome in zip(faixas, registro.track_titles))
-        resultado.append(replace(disco, title=titulo, artist=artista, tracks=faixas))
+        ano = disco.year if disco.year is not None else registro.year       # a tag do usuário vence sempre
+        resultado.append(replace(disco, title=titulo, artist=artista, tracks=faixas, year=ano))
     return resultado
 
 

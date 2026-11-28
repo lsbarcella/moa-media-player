@@ -275,3 +275,33 @@ def test_leitor_de_faixas_pode_ser_trocado(tmp_path, make_track):
 
     scan(tmp_path, read=leitor_falso)
     assert lidos == ["01.mp3"]
+
+
+# -- ano do disco (ADR-0027) ---------------------------------------------------------------
+
+@pytest.mark.parametrize("tag,esperado", [("2005", 2005), ("2005-03-01", 2005), ("1987-1989", 1987)])
+def test_o_ano_vem_da_tag_de_data_em_varios_formatos(make_track, tmp_path, tag, esperado):
+    caminho = make_track(tmp_path / "CD", "01.mp3", title="A", date=tag)
+    assert read_track(caminho).year == esperado
+
+
+@pytest.mark.parametrize("tag", ["0000", "abcd", "12", "3000", ""])
+def test_ano_invalido_ou_ausente_vira_none(make_track, tmp_path, tag):
+    tags = {"title": "A"} | ({"date": tag} if tag else {})
+    assert read_track(make_track(tmp_path / "CD", "01.mp3", **tags)).year is None
+
+
+def test_o_ano_tambem_e_lido_de_flac(make_track, tmp_path):
+    assert read_track(make_track(tmp_path / "CD", "01.flac", title="A", date="1975")).year == 1975
+
+
+def test_o_disco_tem_o_ano_que_mais_se_repete_entre_as_faixas(make_track, tmp_path):
+    pasta = tmp_path / "musica" / "CD"
+    for i, ano in enumerate(("1990", "1990", "1991"), start=1):
+        make_track(pasta, f"{i:02d}.mp3", title=f"M{i}", album="CD", date=ano)
+    assert scan(tmp_path / "musica")[0].year == 1990
+
+
+def test_disco_sem_ano_nas_tags_fica_com_year_none(make_track, tmp_path):
+    make_track(tmp_path / "musica" / "CD", "01.mp3", title="A", album="CD")
+    assert scan(tmp_path / "musica")[0].year is None
