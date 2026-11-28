@@ -9,10 +9,11 @@ import pytest
 from moa.core.config import Config, Preferencias, carregar
 from moa.core.db import Database
 from moa.core.library import scan
+from moa.core.models import Album, Track
 from moa.core.player import Player
 from moa.core.radio import MSG_ERRO_NA_FAIXA, MSG_FIM_DO_DISCO, Radio, formatar_tempo
 from moa.core.state import Memoria
-from tests.test_player import _sink_rapido, esperar
+from tests.test_player import _sink_no_relogio, _sink_rapido, esperar
 
 
 @pytest.fixture
@@ -131,3 +132,34 @@ def test_guardar_o_disco_e_parar_esvazia_o_radio(radio, disco):
     radio.abrir_disco(disco)
     radio.guardar_o_disco_e_parar()
     assert radio.visor() is None and not radio.tocando
+
+
+def test_progresso_e_zero_a_um_e_vazio_sem_disco(radio, disco):
+    assert radio.progresso() is None
+    radio.abrir_disco(disco, tocar=False)
+    assert esperar(lambda: radio.progresso() is not None)
+    assert 0.0 <= radio.progresso() <= 1.0
+
+
+def test_buscar_fracao_move_o_ponto_e_fracao_fora_da_faixa_e_corrigida(tmp_path, faixa_longa):
+    """Com um player no relógio e uma faixa de 4,6 s: 0.5 vai para o meio; 7 e -1 ficam dentro da faixa."""
+    radio = Radio(Player(sink_factory=_sink_no_relogio), Memoria(Database(tmp_path / "m.db")),
+                  Preferencias(tmp_path / "c.json"))
+    try:
+        d = Album(folder=faixa_longa.parent, title="L", artist=None,
+                  tracks=(Track(path=faixa_longa, title="longa", number=1),))
+        radio.abrir_disco(d, tocar=False)
+        assert esperar(lambda: (radio.player.duracao() or 0) > 1)
+        radio.buscar_fracao(0.5)
+        assert esperar(lambda: abs((radio.progresso() or 0) - 0.5) < 0.1)
+        radio.buscar_fracao(7)
+        assert esperar(lambda: (radio.progresso() or 0) > 0.9)
+        radio.buscar_fracao(-1)
+        assert esperar(lambda: (radio.progresso() if radio.progresso() is not None else 1) < 0.1)
+    finally:
+        radio.player.encerrar()
+
+
+def test_buscar_fracao_sem_disco_nao_quebra(radio):
+    radio.buscar_fracao(0.5)
+    assert radio.progresso() is None

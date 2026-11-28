@@ -112,6 +112,22 @@ class Radio:
 
     # -- ações do usuário ---------------------------------------------------------------
 
+    def progresso(self) -> float | None:
+        """Quanto da faixa atual já tocou, de 0.0 a 1.0 (None se ainda não se sabe)."""
+        if not self.tem_disco:
+            return None
+        posicao, duracao = self.player.posicao(), self.player.duracao()
+        if posicao is None or not duracao:
+            return None
+        return max(0.0, min(1.0, posicao / duracao))
+
+    def buscar_fracao(self, fracao: float) -> None:
+        """Vai ao ponto `fracao` (0.0 a 1.0) da faixa atual: o clique na barra de progresso."""
+        duracao = self.player.duracao()
+        if not self.tem_disco or not duracao:
+            return
+        self.player.buscar(max(0.0, min(1.0, fracao)) * duracao)
+
     def abrir_disco(self, disco, indice: int = 0, posicao: float = 0.0, tocar: bool = True) -> None:
         """Põe o disco no rádio. Com `tocar=False`, fica pausado no ponto indicado."""
         self.nota = None

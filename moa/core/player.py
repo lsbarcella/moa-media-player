@@ -243,6 +243,21 @@ class Player:
             return
         self._abrir_faixa(max(0, self._indice - 1), 0.0, True)
 
+    def buscar(self, segundos: float) -> None:
+        """Pula para o ponto `segundos` da faixa atual, sem mudar tocando ou pausado.
+
+        Fora da faixa (antes do início ou depois do fim) vai para o começo ou para o fim.
+        Sem disco carregado, ignora. É o que a barra de progresso clicável chama.
+        """
+        if not self._faixas or self._estado == Estado.PARADO:
+            return
+        duracao = self.duracao()
+        ponto = max(0.0, segundos)
+        if duracao is not None:
+            ponto = min(ponto, max(0.0, duracao - 0.3))       # um pouco antes do fim: não pula a faixa
+        self._playbin.seek_simple(Gst.Format.TIME, Gst.SeekFlags.FLUSH | Gst.SeekFlags.ACCURATE,
+                                  int(ponto * Gst.SECOND))
+
     def definir_degrau_de_volume(self, degrau: int) -> None:
         self._degrau = max(0, min(DEGRAU_MAXIMO, degrau))
         self._aplicar_volume()
