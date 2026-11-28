@@ -13,6 +13,8 @@ As paletas de daltonismo são uma primeira versão: o contraste foi conferido po
 cálculo, mas NÃO com um simulador nem com uma pessoa daltônica (ADR-0006).
 """
 
+from typing import NamedTuple
+
 from moa.core.covers import contrast_ratio
 
 # --- Cores --------------------------------------------------------------------------
@@ -24,6 +26,12 @@ _NORMAL = {
     "visor": "#FFE9A8", "lampon": "#B7E4A8", "focus": "#0B3D91", "danger": "#7A1F1F",
     "selbg": "#EAF5E4", "white": "#FFFFFF", "dark": "#2B2118", "btnradio": "#F6E9D2",
     "hint": "#F3E6CC", "lampoff": "#4A3B2C", "disabled": "#E4DCCB",
+    # Materiais do nível 3 (ADR-0024). "_hi" é o trecho mais claro do degradê, "_lo" o mais escuro.
+    "wood_hi": "#5E3518", "wood_lo": "#3D220F",                    # madeira do gabinete e da estante
+    "brass_hi": "#E8CF8A", "brass": "#D6B25C", "brass_lo": "#9C7A2A",   # latão: o escuro só em moldura sem texto
+    "metal_hi": "#EDEAE2", "metal_lo": "#B9B3A6",                  # metal escovado
+    "key_hi": "#FFFFFF", "key_lo": "#E4D4AE",                      # face da tecla
+    "visor_hi": "#FFF1C8", "visor_lo": "#F2CF76",                  # vidro do visor
 }
 
 PALETAS: dict[str, dict[str, str]] = {
@@ -35,7 +43,13 @@ PALETAS: dict[str, dict[str, str]] = {
                        "lampon": "#FFFFFF", "selbg": "#FFFFFF", "warn": "#FFFFFF",
                        "warnb": "#000000", "visor": "#FFFFFF", "wood": "#000000",
                        "wood2": "#000000", "line": "#000000", "blue": "#000000",
-                       "disabled": "#FFFFFF"},
+                       "disabled": "#FFFFFF",
+                       # no preto e branco os materiais são só preto ou branco (relevo por contorno)
+                       "wood_hi": "#000000", "wood_lo": "#000000",
+                       "brass_hi": "#FFFFFF", "brass": "#FFFFFF", "brass_lo": "#000000",
+                       "metal_hi": "#FFFFFF", "metal_lo": "#FFFFFF",
+                       "key_hi": "#FFFFFF", "key_lo": "#FFFFFF",
+                       "visor_hi": "#FFFFFF", "visor_lo": "#FFFFFF"},
 }
 
 # Nome mostrado ao usuário para cada paleta (sem jargão) e as três cores da amostra.
@@ -67,6 +81,84 @@ CONTRASTE_MINIMO = 7.0
 def contraste(paleta: str, texto: str, fundo: str) -> float:
     cores = PALETAS[paleta]
     return contrast_ratio(cores[texto], cores[fundo])
+
+
+# --- Materiais e contraste no pior ponto (ADR-0024) -------------------------------------
+# Um degradê não tem UMA cor de fundo: o texto precisa de 7:1 em todos os pontos dele. Cada
+# `Material` diz qual texto fica sobre quais trechos do degradê e que camadas translúcidas (brilho,
+# veio) cobrem a zona do texto. Esta tabela é a ÚNICA fonte das opacidades: o gerador de CSS usa os
+# mesmos números que o teste confere (KTD8).
+
+ALFA_BRILHO_DA_TECLA = 0.30     # brilho branco, só na faixa de cima da tecla (nunca atrás da letra)
+ALFA_REALCE_DA_TECLA = 0.90     # fio claro no topo da tecla
+ALFA_SOMBRA_DA_TECLA = 0.18     # sombreado no pé da tecla
+ALFA_TECLA_TRAVADA = 0.14       # a tecla baixada fica um pouco mais escura
+ALFA_VEIO_CLARO = 0.03          # veios claros da madeira (máx. 10%, KTD2)
+ALFA_VEIO_ESCURO = 0.10         # veios escuros da madeira
+
+
+class Material(NamedTuple):
+    """Um texto sobre um degradê. É como uma `interface` de TypeScript: só descreve os dados."""
+    nome: str
+    texto: str                              # token do texto
+    fundos: tuple[str, ...]                 # tokens dos trechos do degradê sob o texto
+    camadas: tuple[tuple[str, float], ...]  # (cor ou token, opacidade) que cobrem a zona do texto
+
+
+MATERIAIS = [
+    Material("madeira do gabinete com rótulo branco", "white", ("wood_hi", "wood_lo"),
+             (("white", ALFA_VEIO_CLARO),)),
+    Material("latão claro da plaquinha com texto", "ink", ("brass_hi", "brass"), ()),
+    Material("vidro do visor com texto", "ink", ("visor_hi", "visor_lo"), ()),
+    Material("face da tecla com texto", "ink", ("key_hi", "key_lo"), (("black", ALFA_SOMBRA_DA_TECLA),)),
+    Material("tecla travada com texto", "ink", ("key_hi", "key_lo"), (("black", ALFA_TECLA_TRAVADA),)),
+    Material("tecla verde Tocar (letra abaixo do brilho)", "white", ("green",),
+             (("black", ALFA_SOMBRA_DA_TECLA),)),
+    Material("tecla âmbar Pausar com texto", "ink", ("amber",), (("black", ALFA_SOMBRA_DA_TECLA),)),
+    Material("tecla escolhida com texto", "white", ("blue",), (("black", ALFA_SOMBRA_DA_TECLA),)),
+]
+
+
+def misturar(base: str, topo: str, alfa: float) -> str:
+    """A cor `base` com uma camada translúcida `topo` por cima (como um `rgba` do CSS)."""
+    b, t = base.lstrip("#"), topo.lstrip("#")
+    canais = []
+    for i in (0, 2, 4):
+        mistura = int(b[i:i + 2], 16) * (1 - alfa) + int(t[i:i + 2], 16) * alfa
+        canais.append(f"{round(mistura):02X}")
+    return "#" + "".join(canais)
+
+
+_FIXAS = {"black": "#000000"}      # "white" já é um token de cada paleta
+
+
+def _cor(paleta: str, nome_ou_hex: str) -> str:
+    """Resolve um token da paleta, uma cor fixa (`black`) ou um `#RRGGBB` direto."""
+    if nome_ou_hex.startswith("#"):
+        return nome_ou_hex
+    if nome_ou_hex in PALETAS[paleta]:
+        return PALETAS[paleta][nome_ou_hex]
+    return _FIXAS[nome_ou_hex]
+
+
+def contraste_no_pior_ponto(paleta: str, material: Material) -> float:
+    """O menor contraste do texto do `material` sobre qualquer trecho do degradê."""
+    texto = _cor(paleta, material.texto)
+    piores = []
+    for fundo in material.fundos:
+        cor = _cor(paleta, fundo)
+        for camada, alfa in material.camadas:
+            cor = misturar(cor, _cor(paleta, camada), alfa)
+        piores.append(contrast_ratio(texto, cor))
+    return min(piores)
+
+
+# No preto e branco o relevo é contorno duplo e sombra, sem tons (KTD3).
+RELEVO_POR_PALETA = {"preto-e-branco": "contorno"}
+
+
+def relevo(paleta: str) -> str:
+    return RELEVO_POR_PALETA.get(paleta, "tons")
 
 
 # --- Escalas de letra -----------------------------------------------------------------

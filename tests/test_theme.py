@@ -57,3 +57,64 @@ def test_o_css_e_aceito_pelo_gtk():
         for letra in theme.ESCALAS:
             provedor = Gtk.CssProvider()
             provedor.load_from_data(theme.gerar_css(paleta, letra).encode("utf-8"))
+
+
+# -- materiais do nível 3 (ADR-0024): tokens e contraste no pior ponto -------------------------
+
+TOKENS_DE_MATERIAL = ("wood_hi", "wood_lo", "brass_hi", "brass", "brass_lo", "metal_hi", "metal_lo",
+                      "key_hi", "key_lo", "visor_hi", "visor_lo")
+
+
+@pytest.mark.parametrize("paleta", list(theme.PALETAS))
+def test_os_tokens_de_material_existem_nas_quatro_paletas(paleta):
+    for token in TOKENS_DE_MATERIAL:
+        cor = theme.PALETAS[paleta][token]
+        assert re.fullmatch(r"#[0-9A-Fa-f]{6}", cor), (paleta, token, cor)
+
+
+def test_no_preto_e_branco_os_materiais_so_tem_preto_ou_branco():
+    for token in TOKENS_DE_MATERIAL:
+        assert theme.PALETAS["preto-e-branco"][token].upper() in ("#000000", "#FFFFFF"), token
+
+
+def test_relevo_por_contorno_so_no_preto_e_branco():
+    assert theme.relevo("preto-e-branco") == "contorno"
+    assert {theme.relevo(p) for p in theme.PALETAS if p != "preto-e-branco"} == {"tons"}
+
+
+def test_misturar_uma_camada_translucida_sobre_uma_cor():
+    assert theme.misturar("#000000", "#FFFFFF", 0.5) in ("#7F7F7F", "#808080")
+    assert theme.misturar("#1F4D2B", "#FFFFFF", 0.0) == "#1F4D2B"
+    assert theme.misturar("#1F4D2B", "#FFFFFF", 1.0) == "#FFFFFF"
+
+
+@pytest.mark.parametrize("paleta", list(theme.PALETAS))
+def test_todo_material_tem_7_para_1_no_pior_ponto_do_degrade(paleta):
+    ruins = [(m.nome, round(theme.contraste_no_pior_ponto(paleta, m), 2))
+             for m in theme.MATERIAIS if theme.contraste_no_pior_ponto(paleta, m) < theme.CONTRASTE_MINIMO]
+    assert not ruins, f"{paleta}: {ruins}"
+
+
+def test_o_brilho_cobrindo_a_letra_do_botao_verde_falha_e_a_checagem_enxerga():
+    """A armadilha do preview: brilho translúcido atrás da letra derruba o contraste."""
+    armadilha = theme.Material("brilho atrás da letra", "white", ("green",), (("white", 0.30),))
+    assert theme.contraste_no_pior_ponto("normal", armadilha) < theme.CONTRASTE_MINIMO
+
+
+def test_latao_escuro_com_letra_falha_e_o_claro_passa():
+    escuro = theme.Material("latão escuro com letra", "ink", ("brass_lo",), ())
+    claro = theme.Material("latão claro com letra", "ink", ("brass_hi", "brass"), ())
+    assert theme.contraste_no_pior_ponto("normal", escuro) < theme.CONTRASTE_MINIMO
+    assert theme.contraste_no_pior_ponto("normal", claro) >= theme.CONTRASTE_MINIMO
+
+
+def test_a_tabela_de_materiais_cobre_madeira_latao_vidro_e_as_teclas():
+    nomes = " ".join(m.nome for m in theme.MATERIAIS).lower()
+    for palavra in ("madeira", "latão", "visor", "tecla"):
+        assert palavra in nomes
+
+
+def test_as_opacidades_do_css_vem_da_tabela_unica():
+    """KTD8: o número que o teste confere é o mesmo que vai para o CSS."""
+    assert theme.ALFA_BRILHO_DA_TECLA == pytest.approx(0.30)
+    assert 0 < theme.ALFA_VEIO_CLARO <= 0.10
