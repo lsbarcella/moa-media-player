@@ -201,3 +201,12 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Pedido:** o `measure.sh` parecia travado nas esperas, mas estava rodando normal; e uma forma fácil de mandar os resultados.
 - **Feito:** passos numerados com hora, esperas que dizem o motivo, aviso "ainda trabalhando" a cada 5 s sem novidade (com a ação atual), falhas isoladas por passo (a medição segue e a falha vai para o resumo), e três arquivos por rodada (`.txt` curto para colar, `.csv`, `.log`). Nada é enviado pela rede.
 - **Verificação:** 5 testes novos (aviso de vida, log, relatório, falha num passo); rodada `--rapido` completa.
+
+## 27/11/2026 — Medição no notebook do pai; painel do rádio atualizado no lugar; "carregando"
+
+- **Medição no notebook (Pentium T4300, 2 núcleos, 5,8 GB, HDD, Mint 22.3 XFCE):** abertura 2,7 s (371 faixas) e 11,9 s (800 faixas, sem cache); com cache 1,2 a 1,3 s (meta 1 s); ações 190 a 570 ms (5 a 6 vezes mais lento que a máquina de desenvolvimento); CPU tocando 2,0%. O autor: "bem travado/truncado" na sensação de uso.
+- **Pedido:** seguir com o item 1 (reduzir o custo de cada clique no rádio) e começar a dar feedback visual nas esperas (mais de 5 s).
+- **Item 1:** o painel do rádio é montado uma vez e só muda o que mudou (textos, classes das barras de volume, o botão Tocar/Pausar só quando troca); cabeçalho, faixa de falha e mini-rádio só são refeitos quando o que mostram muda; o `show_all` global da janela saiu do redesenho; o foco do teclado não pula mais para Tocar/Pausar a cada clique de volume. Medido aqui com 371 faixas: ~7 ms de trabalho por clique de volume (eram ~35 ms; ~440 ms antes das correções).
+- **Feedback:** indicador girando e andamento em palavras ("Já olhei 340 músicas.", "Preparando as capas: 12 de 80.") no carregamento da estante; frase de tranquilidade só depois de 5 s. ADR-0022.
+- **Cuidado ao ler as medições:** a ferramenta copia a janela para uma imagem a cada ação (cerca de 13 ms fixos aqui), o que o uso real não faz; os números absolutos da medição superestimam um pouco.
+- **NÃO testado:** no notebook do pai depois destas mudanças.

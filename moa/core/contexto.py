@@ -8,6 +8,7 @@
 `Contexto` e entrega às telas, que só desenham e chamam as ações dele.
 """
 
+import time
 from dataclasses import replace
 from pathlib import Path
 from typing import Callable
@@ -60,7 +61,22 @@ class Contexto:
         self.rascunho: RascunhoDePlaylist | None = None   # a playlist que está sendo montada
         self.miniaturas: dict[str, Path | None] = {}
         self.carregando = True              # a primeira varredura ainda não terminou
+        self.inicio_da_leitura = time.monotonic()
+        self.progresso_da_leitura: tuple[str, int, int | None] | None = None   # (etapa, feitos, total)
+        self._ouvintes_do_progresso: list[Callable[[], None]] = []
         self._ouvintes_da_colecao: list[Callable[[], None]] = []
+
+    def ao_progredir_a_leitura(self, funcao: Callable[[], None]) -> None:
+        self._ouvintes_do_progresso.append(funcao)
+
+    def informar_progresso(self, etapa: str, feitos: int, total: int | None) -> None:
+        """Chamado na thread principal enquanto a pasta é lida ("musicas" ou "capas")."""
+        self.progresso_da_leitura = (etapa, feitos, total)
+        for funcao in list(self._ouvintes_do_progresso):
+            funcao()
+
+    def segundos_de_leitura(self) -> float:
+        return time.monotonic() - self.inicio_da_leitura
 
     def ao_mudar_a_colecao(self, funcao: Callable[[], None]) -> None:
         self._ouvintes_da_colecao.append(funcao)

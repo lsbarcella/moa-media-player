@@ -106,6 +106,24 @@ def botao(texto: str, *classes: str, ao_clicar=None, icone_nome: str | None = No
     return b
 
 
+def texto_de(etiqueta: Gtk.Label, texto: str) -> None:
+    """Muda o texto de um rótulo só se for diferente (cada mudança custa um redesenho)."""
+    if etiqueta.get_text() != texto:
+        etiqueta.set_text(texto)
+
+
+def definir_texto_do_botao(botao_: Gtk.Button, texto: str) -> None:
+    """Muda o texto de um botão feito por `botao()` (o rótulo é o último item da caixa interna)."""
+    texto_de(botao_.get_child().get_children()[-1], texto)
+
+
+def classe(widget: Gtk.Widget, nome: str, ligada: bool) -> None:
+    """Liga ou desliga uma classe de estilo, só se mudou (mexer no estilo à toa invalida o desenho)."""
+    contexto = widget.get_style_context()
+    if contexto.has_class(nome) != ligada:
+        (contexto.add_class if ligada else contexto.remove_class)(nome)
+
+
 def caixa_v(espaco: int = 12) -> Gtk.Box:
     return Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=espaco)
 

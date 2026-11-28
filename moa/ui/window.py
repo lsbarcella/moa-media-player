@@ -78,14 +78,23 @@ class Conteudo:
         self.registrar(Tela.EDITAR, EditView(contexto))
         self.registrar(Tela.APARELHO_DE_CD, CDView(contexto))
         self._ultima_tela = None
+        self._chave_do_cabecalho: tuple | None = None
+        self._falha_desenhada: str | None = None
+        self._chave_do_mini: object = "inicial"       # diferente de tudo: a 1ª vez sempre desenha
 
         contexto.session.ao_mudar(self.redesenhar)
         contexto.aparelho.ao_mudar(self.redesenhar)
+        contexto.ao_progredir_a_leitura(self._ao_progredir_a_leitura)
         contexto.atualizacao.ao_mudar(self.redesenhar)     # ATUALIZACAO_DE_TESTE
         contexto.radio.ao_mudar(self.redesenhar)
         contexto.ao_mudar_a_colecao(self.redesenhar)
         contexto.preferencias.ao_mudar(self._ao_mudar_preferencia)
         self.redesenhar()
+        self.raiz.show_all()        # uma vez, na montagem; depois cada parte se mostra sozinha
+
+    def _ao_progredir_a_leitura(self) -> None:
+        if self.ctx.session.tela == Tela.ESTANTE:
+            self.telas[Tela.ESTANTE].atualizar_progresso()
 
     def registrar(self, tela: Tela, visao) -> None:
         """Põe uma tela na pilha. Cada tela rola sozinha se não couber."""
@@ -119,13 +128,16 @@ class Conteudo:
         self.pilha.set_visible_child_name(
             sessao.tela.value if sessao.tela in self.telas else Tela.ESTANTE.value)
         self._desenhar_mini()
-        self.raiz.show_all()
         alvo = self.plus.primeiro_botao if sessao.faixa_do_painel is not None else visao.foco_inicial()
         if alvo is not None:
             alvo.grab_focus()
 
     def _desenhar_cabecalho(self) -> None:
         sessao = self.ctx.session
+        chave = (sessao.tela, sessao.texto_de_voltar, sessao.titulo, sessao.mostra_botao_configuracoes)
+        if chave == self._chave_do_cabecalho:
+            return                  # igual ao que já está na tela
+        self._chave_do_cabecalho = chave
         limpar(self.cabecalho)
         esquerda = caixa_h(8)
         esquerda.set_size_request(280, -1)
@@ -144,10 +156,14 @@ class Conteudo:
         self.cabecalho.pack_start(rotulo(sessao.titulo, "moa-titulo", centro=True,
                                          quebrar=False), True, True, 0)
         self.cabecalho.pack_end(direita, False, False, 0)
+        self.cabecalho.show_all()
 
     def _desenhar_falha(self) -> None:
-        limpar(self.area_da_falha)
         texto = self.ctx.session.falha
+        if texto == self._falha_desenhada:
+            return
+        self._falha_desenhada = texto
+        limpar(self.area_da_falha)
         if texto is None:
             return
         self.area_da_falha.pack_start(aviso(texto), False, False, 0)
@@ -155,9 +171,14 @@ class Conteudo:
 
     def _desenhar_mini(self) -> None:
         radio = self.ctx.radio
-        limpar(self.mini)
         visor = radio.visor()
-        if visor is None or self.ctx.session.tela == Tela.RADIO:
+        escondido = visor is None or self.ctx.session.tela == Tela.RADIO
+        chave = None if escondido else (visor.titulo, visor.disco, radio.tocando)
+        if chave == self._chave_do_mini:
+            return
+        self._chave_do_mini = chave
+        limpar(self.mini)
+        if escondido:
             self.mini.hide()
             self.mini.set_no_show_all(True)
             return
@@ -219,6 +240,8 @@ class Conteudo:
     # -- relógio (chamado a cada meio segundo) -------------------------------------------------
 
     def tique(self, contador: int) -> None:
+        if self.ctx.carregando and self.ctx.session.tela == Tela.ESTANTE:
+            self.telas[Tela.ESTANTE].atualizar_progresso()      # o aviso de demora aparece com o tempo
         if not self.ctx.radio.tocando:
             return
         if self.ctx.session.tela == Tela.RADIO:

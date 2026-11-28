@@ -13,7 +13,7 @@ import pytest
 from moa.core.session import Tela
 from moa.ui import widgets
 from tests.test_ui_smoke import app, musica, montar  # noqa: F401  (fixtures)
-from tests.ui_ajuda import tem_display, textos
+from tests.ui_ajuda import girar, tem_display, textos
 
 pytestmark = pytest.mark.skipif(not tem_display(), reason="sem sessão gráfica (DISPLAY)")
 
@@ -151,3 +151,102 @@ def test_mudar_a_letra_ou_a_cor_reaplica_o_tema(app, monkeypatch):
     assert len(chamadas) == 1 and chamadas[0][1] == "grande"
     ctx.preferencias.mudar(paleta="preto-e-branco")
     assert len(chamadas) == 2
+
+
+# -- o painel do rádio é atualizado no lugar, não recriado --------------------------------------
+
+def test_o_painel_do_radio_nao_e_recriado_a_cada_clique(app):
+    ctx, conteudo = app
+    _abrir_no_radio(ctx)
+    visao = conteudo.telas[Tela.RADIO]
+    corpo, mais, clara = visao._p.corpo, visao._p.mais, visao._p.clara
+    for acao in (ctx.radio.volume_mais, ctx.radio.volume_menos, ctx.radio.alternar_voz_mais_clara,
+                 ctx.radio.proxima, ctx.radio.alternar):
+        acao()
+        assert visao._p.corpo is corpo and visao._p.mais is mais and visao._p.clara is clara
+
+
+def test_volume_atualiza_barras_texto_e_botoes(app):
+    ctx, conteudo = app
+    _abrir_no_radio(ctx)
+    visao = conteudo.telas[Tela.RADIO]
+    p = visao._p
+    ctx.player.definir_degrau_de_volume(3)
+    ctx.radio.volume_mais()
+    degrau = ctx.player.degrau_de_volume
+    assert f"Volume: {degrau} de 10" in textos(p.corpo)
+    acesas = [b.get_style_context().has_class("moa-acesa") for b in p.barras]
+    assert acesas == [k < degrau for k in range(10)]
+    ctx.player.definir_degrau_de_volume(10)
+    ctx.radio.volume_menos(); ctx.radio.volume_mais()
+    assert "No máximo" in textos(p.mais) and p.mais.get_style_context().has_class("moa-inativo")
+    ctx.player.definir_degrau_de_volume(0)
+    ctx.radio.volume_menos()
+    assert "No mínimo" in textos(p.menos)
+
+
+def test_voz_mais_clara_muda_o_texto_e_a_cor(app):
+    ctx, conteudo = app
+    _abrir_no_radio(ctx)
+    p = conteudo.telas[Tela.RADIO]._p
+    assert "Voz mais clara: desligada" in textos(p.clara)
+    ctx.radio.alternar_voz_mais_clara()
+    assert "Voz mais clara: ligada" in textos(p.clara)
+    assert p.clara.get_style_context().has_class("moa-clara-ligada")
+    assert not p.clara.get_style_context().has_class("moa-clara-desligada")
+
+
+def test_tocar_e_pausar_trocam_o_botao_do_meio_e_a_lampada(app):
+    ctx, conteudo = app
+    _abrir_no_radio(ctx)
+    visao = conteudo.telas[Tela.RADIO]
+    nomes = set()
+    for _ in range(2):
+        ctx.radio.alternar()
+        principal = visao.botao_principal
+        nomes.add(textos(principal)[0])
+        assert textos(principal)[0] == ("Pausar" if ctx.radio.tocando else "Tocar")
+        assert visao._p.lampada.get_style_context().has_class("moa-acesa") == ctx.radio.tocando
+    assert nomes == {"Tocar", "Pausar"}
+
+
+def test_trocar_de_disco_troca_so_a_capa_e_os_textos(app):
+    ctx, conteudo = app
+    _abrir_no_radio(ctx)
+    visao = conteudo.telas[Tela.RADIO]
+    corpo, capa = visao._p.corpo, visao._p.capa
+    ctx.radio.abrir_disco(ctx.discos[1])
+    assert visao._p.corpo is corpo and visao._p.capa is not capa
+    assert f"Disco: {ctx.discos[1].title}" in textos(visao._p.corpo)
+
+
+def test_o_foco_nao_pula_quando_so_o_volume_muda(app):
+    ctx, conteudo = app
+    _abrir_no_radio(ctx)
+    visao = conteudo.telas[Tela.RADIO]
+    original = visao.foco_inicial
+    entregues = []
+    visao.foco_inicial = lambda: entregues.append(original()) or entregues[-1]    # o que a janela recebe
+
+    ctx.radio.volume_mais()
+    assert entregues[-1] is None              # o foco fica no botão que o usuário apertou
+    antes = len(entregues)
+    ctx.radio.alternar()                      # troca Tocar por Pausar: o botão novo recebe o foco
+    girar(0.3)                                # o estado do som chega um instante depois
+    assert any(e is visao.botao_principal for e in entregues[antes:])
+    ctx.radio.volume_menos()
+    assert entregues[-1] is None
+    ctx.session.ir_para(Tela.ESTANTE)
+    ctx.session.ir_para(Tela.RADIO)           # chegar na tela de novo leva o foco ao Tocar/Pausar
+    assert entregues[-1] is visao.botao_principal
+
+
+def test_a_nota_do_visor_so_aparece_quando_ha_o_que_dizer(app):
+    ctx, conteudo = app
+    _abrir_no_radio(ctx)
+    p = conteudo.telas[Tela.RADIO]._p
+    assert not p.nota.get_visible()
+    ctx.radio.nota = "Este é o fim do disco."
+    ctx.session.ir_para(Tela.RADIO)
+    conteudo.redesenhar()
+    assert p.nota.get_visible() and p.nota.get_text() == "Este é o fim do disco."

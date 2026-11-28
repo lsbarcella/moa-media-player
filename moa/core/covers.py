@@ -29,7 +29,7 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import mutagen
 from mutagen.flac import FLAC, Picture
@@ -291,7 +291,8 @@ def _assinatura_do_disco(disco: Album, escolha: "CoverChoice | None" = None,
 def refresh_covers(discos: list[Album], db: "Database", pasta_cache: Path,
                    tamanho: int = 256,
                    escolhas: "dict[str, CoverChoice] | None" = None,
-                   alternativas: "dict[str, Path] | None" = None) -> dict[str, Path | None]:
+                   alternativas: "dict[str, Path] | None" = None,
+                   ao_progredir: "Callable[[int, int], None] | None" = None) -> dict[str, Path | None]:
     """Devolve a miniatura de cada disco (pelo `album.id`), usando o cache.
 
     Um disco que não mudou desde a última vez NÃO é reaberto: a decisão e a
@@ -310,7 +311,9 @@ def refresh_covers(discos: list[Album], db: "Database", pasta_cache: Path,
 
     escolhas = escolhas or {}
     alternativas = alternativas or {}
-    for disco in discos:
+    for feitos, disco in enumerate(discos, start=1):
+        if ao_progredir is not None:
+            ao_progredir(feitos, len(discos))
         escolha = escolhas.get(disco.id)
         alternativa = alternativas.get(disco.id)
         assinatura = _assinatura_do_disco(disco, escolha, alternativa)
