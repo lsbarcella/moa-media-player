@@ -208,7 +208,7 @@ def _css_do_aparelho(c: dict[str, str], modo: str) -> str:
     background-image: repeating-linear-gradient(to right, {estria} 0px, {estria} 1px,
                           {sem_estria} 2px, {sem_estria} 4px),
                       linear-gradient(to bottom, {_rgba(c['case_hi'], 1)} 0%, {_rgba(c['case_lo'], 1)} 100%);
-    border: 4px solid {c['plate_lo']}; border-radius: 18px; padding: 22px;
+    border: 4px solid {c['plate_lo']}; border-radius: 18px; padding: 14px 18px;
     box-shadow: inset 0 2px 0 rgba(255,255,255,0.18), inset 0 0 0 2px {c['dark']},
                 0 0 0 2px {c['dark']}, 0 6px 0 rgba(0,0,0,0.45); }}
 .moa-radio label {{ color: {c['white']}; }}

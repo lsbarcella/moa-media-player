@@ -8,12 +8,16 @@ Num disco com centenas de músicas (a coleção do usuário tem uma pasta com 37
 refazer a lista a cada clique travava a tela. Aqui se confere QUANDO ela é refeita.
 """
 
+import gi
 import pytest
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk  # noqa: E402
 
 from moa.core.session import Tela
 from moa.ui import widgets
 from tests.test_ui_smoke import app, musica, montar  # noqa: F401  (fixtures)
-from tests.ui_ajuda import girar, nome_do_botao, tem_display, textos
+from tests.ui_ajuda import girar, nome_do_botao, tem_display, textos, todos_os_widgets
 
 pytestmark = pytest.mark.skipif(not tem_display(), reason="sem sessão gráfica (DISPLAY)")
 
@@ -217,7 +221,7 @@ def test_trocar_de_disco_troca_so_a_capa_e_os_textos(app):
     corpo, capa = visao._p.corpo, visao._p.capa
     ctx.radio.abrir_disco(ctx.discos[1])
     assert visao._p.corpo is corpo and visao._p.capa is not capa
-    assert any(t.startswith(f"Disco: {ctx.discos[1].title} · Faixa 1 de") for t in textos(visao._p.corpo))
+    assert any(ctx.discos[1].title in t for t in textos(visao._p.corpo))
 
 
 def test_o_foco_nao_pula_quando_so_o_volume_muda(app):
@@ -335,3 +339,41 @@ def test_trocar_de_disco_no_meio_da_montagem_cancela_a_antiga(disco_grande):
     ctx.session.voltar_para_a_estante()
     ctx.radio.guardar_o_disco_e_parar()              # sem disco no rádio: a montagem para
     assert not antigo.pendente
+
+
+def test_o_visor_do_radio_mostra_artista_album_e_ano_numa_linha_e_a_faixa_na_outra(app):
+    from dataclasses import replace
+    ctx, conteudo = app
+    disco = replace(ctx.discos[0], artist="Ana", year=2005)
+    ctx.radio.abrir_disco(disco, tocar=False)
+    ctx.session.ir_para(Tela.RADIO)
+    t = textos(conteudo.telas[Tela.RADIO]._p.corpo)
+    assert f"Ana · {disco.title} · 2005" in t
+    assert any(x.startswith("Faixa 1 de") for x in t)
+
+
+def test_o_visor_nao_inventa_ano_quando_nao_ha(app):
+    ctx, conteudo = app
+    ctx.radio.abrir_disco(ctx.discos[0], tocar=False)
+    ctx.session.ir_para(Tela.RADIO)
+    assert not any(x.rstrip().endswith(" · 0") or x.endswith("None") for x in textos(conteudo.telas[Tela.RADIO]._p.corpo))
+
+
+def test_em_letra_maior_e_tela_de_notebook_o_volume_cabe_na_primeira_tela(app):
+    """O básico (estado, música, progresso, teclas e volume) tem de aparecer sem rolar em 1366x768."""
+    ctx, conteudo = app
+    ctx.preferencias.mudar(letra="maior")
+    ctx.radio.abrir_disco(ctx.discos[0], tocar=False)
+    ctx.session.ir_para(Tela.RADIO)
+    janela = Gtk.OffscreenWindow()
+    janela.set_size_request(1366, 768)
+    janela.add(conteudo.raiz)
+    janela.show_all()
+    girar(0.6)
+    legenda = next(w for w in todos_os_widgets(conteudo.raiz)
+                   if isinstance(w, Gtk.Label) and w.get_text().startswith("Volume:"))
+    _, y = legenda.translate_coordinates(janela, 0, 0)
+    fim = y + legenda.get_allocated_height()
+    janela.remove(conteudo.raiz)
+    janela.destroy()
+    assert fim <= 768, fim

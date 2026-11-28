@@ -150,7 +150,7 @@ class RadioView:
         p = SimpleNamespace()
         p.disco_id = self.ctx.radio.disco.id
         p.luz = None
-        corpo = caixa_v(14)
+        corpo = caixa_v(8)
         corpo.get_style_context().add_class("moa-radio")
         corpo.set_size_request(420, -1)
         p.corpo = corpo
@@ -169,7 +169,8 @@ class RadioView:
         texto = caixa_v(4)
         p.linha_de_estado = rotulo("", "moa-forte")
         p.titulo = rotulo("", "moa-grande")
-        p.detalhe = rotulo("")                     # "Disco: X · Faixa 3 de 12"
+        p.sobre = rotulo("")                       # "Artista · Álbum · Ano"
+        p.faixa = rotulo("")                       # "Faixa 3 de 12"
         p.progresso = LinhaDeProgresso(self._buscar)
         p.nota = rotulo("", "moa-nota-visor")
         p.nota.set_no_show_all(True)            # só aparece quando há o que dizer
@@ -177,7 +178,7 @@ class RadioView:
         estado.pack_start(p.lampada, False, False, 0)
         estado.pack_start(p.linha_de_estado, True, True, 0)
         texto.pack_start(estado, False, False, 0)
-        for etiqueta in (p.titulo, p.detalhe, p.progresso, p.nota):
+        for etiqueta in (p.titulo, p.sobre, p.faixa, p.progresso, p.nota):
             texto.pack_start(etiqueta, False, False, 0)
         p.moldura.pack_start(texto, True, True, 0)
         corpo.pack_start(p.moldura, False, False, 0)
@@ -246,7 +247,8 @@ class RadioView:
             p.disco_id = radio.disco.id
         texto_de(p.linha_de_estado, visor.linha_de_estado)
         texto_de(p.titulo, visor.titulo)
-        texto_de(p.detalhe, f"Disco: {visor.disco} · {visor.faixa}")
+        texto_de(p.sobre, visor.sobre_o_disco)
+        texto_de(p.faixa, visor.faixa)
         p.progresso.atualizar_do_radio(radio)
         texto_de(p.nota, visor.nota or "")
         p.nota.set_visible(bool(visor.nota))

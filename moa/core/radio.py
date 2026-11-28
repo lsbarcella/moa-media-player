@@ -32,6 +32,19 @@ class Visor:
     faixa: str              # "Faixa 3 de 8"
     nota: str | None        # última ação ou aviso calmo
     tempo: str              # "1:23 de 3:45" (vazio se ainda não se sabe)
+    artista: str | None = None   # artista do disco (tags ou MusicBrainz), se se sabe
+    ano: int | None = None       # ano do disco (tags ou MusicBrainz), se se sabe
+
+    @property
+    def sobre_o_disco(self) -> str:
+        """"Artista · Álbum · Ano", só com o que existe. Artista igual ao álbum não se repete."""
+        partes = []
+        if self.artista and self.artista.strip().casefold() != self.disco.strip().casefold():
+            partes.append(self.artista)
+        partes.append(self.disco)
+        if self.ano:
+            partes.append(str(self.ano))
+        return " · ".join(partes)
 
 
 def formatar_tempo(segundos: float | None) -> str:
@@ -100,7 +113,7 @@ class Radio:
             palavra, linha = "PARADO", "PARADO. Aperte Tocar para ouvir o disco de novo"
         musica = self.disco.tracks[i]
         return Visor(estado == Estado.TOCANDO, palavra, linha, musica.title, self.disco.title,
-                     faixa, self.nota, self.texto_do_tempo())
+                     faixa, self.nota, self.texto_do_tempo(), self.disco.artist, self.disco.year)
 
     def texto_do_tempo(self) -> str:
         if self.disco is None or self.player.estado == Estado.PARADO:
