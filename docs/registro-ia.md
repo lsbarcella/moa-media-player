@@ -226,6 +226,14 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Bug da playlist, NÃO reproduzido:** montei o cenário completo (MIX de 371 faixas tocando no rádio, duas playlists antigas, uma nova criada pela tela) e a estante mostrou tudo certo, com os dados no banco também corretos. Mesmo assim blindei dois pontos: um item que falha ao desenhar não esconde os outros (vai para o log), e a estante só marca o desenho como pronto depois de terminar sem erro. Adicionei o teste do relato. Para achar a causa de verdade, preciso do `~/.local/share/moa/moa.log` do notebook, de quando acontece.
 - **NÃO testado:** no notebook do pai.
 
+## 27/11/2026 — Feedback da atualização de teste
+
+- **Pedido:** a atualização só "sumia e aparecia o botão novo, sem feedback". Mostrar o tamanho, o momento do download, o momento da instalação e então liberar o botão "Reiniciar o Aplicativo".
+- **Achado:** o GitHub entrega o zip em partes (`Transfer-Encoding: chunked`), sem tamanho total antes de baixar. Então: antes, um tamanho aproximado (soma dos arquivos da versão pela API, sem compactar); durante, "Baixado até agora"; no fim, o tamanho real do zip.
+- **Feito:** momento novo `INSTALANDO`; três etapas com marcas; barra (pulsa ao baixar, enche na instalação); passos da instalação visíveis; botão "Reiniciar o Aplicativo" visível e apagado até o fim, depois liberado; avanços atualizam o cartão no lugar. Complemento no ADR-0020.
+- **Verificação:** 15 testes novos (núcleo e tela) e imagens dos quatro momentos conferidas.
+- **NÃO testado:** num download real no notebook do pai (a velocidade da rede dele define quanto tempo o "Baixando" fica na tela).
+
 ## 28/11/2026 — Aparência analógica (skeuomorfismo): ideação e preview
 
 - **Pedido:** melhorar a interface com skeuomorfismo de verdade, trocando os "quadradões" por objetos analógicos (CLAUDE.md, seção 11: o desenho visual dos botões e das telas é decisão em aberto, a explorar com `ce-ideate` e um preview em HTML).
