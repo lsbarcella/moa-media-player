@@ -47,21 +47,35 @@ NOMES_DOS_ICONES = ("tocar", "pausar", "anterior", "proxima", "volume", "voltar"
 LADO_DO_ICONE = 32
 
 
+_cache_de_icones: dict[tuple[str, str, str, int], GdkPixbuf.Pixbuf] = {}
+
+
 def icone(nome: str, cor: str = "#1E1913", fundo: str = "#FFFFFF",
           lado: int = LADO_DO_ICONE) -> Gtk.Image:
     """Um ícone de aparelho antigo (SVG original do projeto), na cor pedida.
 
     Ícone nunca vem sozinho: sempre acompanha um texto (restrição do projeto).
+    O SVG é lido e convertido uma vez só por combinação (nome, cores, tamanho): uma lista
+    com centenas de músicas pede o mesmo ícone centenas de vezes.
     """
+    chave = (nome, cor, fundo, lado)
+    pixbuf = _cache_de_icones.get(chave)
+    if pixbuf is None:
+        pixbuf = _converter_icone(nome, cor, fundo, lado)
+        _cache_de_icones[chave] = pixbuf
+    imagem = Gtk.Image.new_from_pixbuf(pixbuf)
+    imagem.set_valign(Gtk.Align.CENTER)
+    return imagem
+
+
+def _converter_icone(nome: str, cor: str, fundo: str, lado: int) -> GdkPixbuf.Pixbuf:
     svg = (PASTA_DOS_ICONES / f"{nome}.svg").read_text(encoding="utf-8")
     svg = svg.replace("__COR__", cor).replace("__FUNDO__", fundo)
     carregador = GdkPixbuf.PixbufLoader.new_with_type("svg")
     carregador.set_size(lado, lado)
     carregador.write(svg.encode("utf-8"))
     carregador.close()
-    imagem = Gtk.Image.new_from_pixbuf(carregador.get_pixbuf())
-    imagem.set_valign(Gtk.Align.CENTER)
-    return imagem
+    return carregador.get_pixbuf()
 
 
 # Botões de fundo escuro (verde, preto) levam o ícone branco.

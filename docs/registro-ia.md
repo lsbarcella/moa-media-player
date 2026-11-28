@@ -154,3 +154,11 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Verificação:** o pacote extraído roda `moa` a partir de `/`, e a abertura automática é criada com o caminho do comando.
 - **NÃO testado:** instalação em Mint limpo (`apt install ./arquivo.deb`), menu do XFCE, desinstalação.
 - **Pendência:** a janela em branco no notebook do pai ainda não foi diagnosticada (a saída do terminal e do log não chegou).
+
+## 27/11/2026 — Primeiro teste no notebook do pai: travada no volume
+
+- **Relato do autor:** o app abriu (a janela em branco era a `main` antiga, só com o M0); clicar no volume dava uma travada forte. A coleção dele é uma pasta "MIX" com 371 músicas.
+- **Causa:** cada clique de volume redesenhava a tela do rádio inteira, inclusive as 371 linhas da lista, e cada linha relia e convertia o SVG do ícone "+". Medido aqui: 335 ms por clique (em CPU rápida).
+- **Feito:** cache dos ícones já convertidos (`widgets.icone`) e a lista de músicas só é refeita quando muda disco, faixa, estado de tocar, aviso ou coleção (`RadioView`). Depois: 14 ms por clique. `tests/test_radio_lista.py` (6 testes; o de reaproveitar falha se a regra for desligada).
+- **Fluxo de branches:** daqui em diante, branches a partir da `dev` (esta: `fix/volume-travando`).
+- **NÃO testado:** no notebook do pai (HD mecânico e CPU antiga). As outras telas com listas grandes (montar playlist, Caixa) podem ter o mesmo problema e ainda não foram medidas.
