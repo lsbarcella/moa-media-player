@@ -156,13 +156,13 @@ Referências: WCAG 2.2, Czaja et al. (2019), Hawthorn (2000) e a revisão de lit
 - O app **abre como uma janela de programa normal**, com barra de título e X visíveis (nem em tela cheia, que esconde o X). Ele abre direto na Estante ou, se havia algo tocando, em Tocando agora, no ponto em que parou.
 - Fechar pelo X salva o estado e encerra. Não há botão de desligar.
 - **Um caminho de volta sempre visível** em toda tela que não seja a Estante, com texto ("Voltar para a estante"). A tela atual também deve ser identificável de relance (título ou imagem do aparelho).
-- **Um clique ativa** (`FlowBox.set_activate_on_single_click(True)`). Nenhuma ação depende de duplo clique, de passar o mouse por cima, de arrastar ou de clicar com o botão direito. Isso inclui o volume: nada de botão giratório que exija arrastar, e sim botões "−" e "+" com a imagem do botão do aparelho.
+- **Um clique ativa** (`FlowBox.set_activate_on_single_click(True)`). Nenhuma ação depende de duplo clique, de passar o mouse por cima, de arrastar ou de clicar com o botão direito. Isso inclui o volume: nada de botão giratório que exija arrastar, e sim botões "−" e "+" com a imagem do alto-falante (ADR-0025).
 
 **Tamanhos e cores**
 - Áreas clicáveis de **no mínimo 64×64 px**, bem acima do mínimo de 44×44 px do nível AAA da WCAG. Os botões principais (tocar/pausar) devem ser maiores.
 - Fonte base de no mínimo **20 px**, títulos de 28 a 36 px. O **tamanho da letra** (Normal, Grande, Maior) e as **cores para daltonismo** ficam na tela de Configurações, que o próprio usuário abre sozinho (ADR-0006).
 - Contraste de texto de **pelo menos 7:1** (WCAG nível AAA).
-- Os **ícones imitam aparelhos de som antigos** (decisão do autor), mas vêm **sempre acompanhados de texto** ("Tocar", "Pausar", "Próxima", "Voltar para a estante").
+- Os **ícones imitam aparelhos de som antigos** (decisão do autor). **Regra do texto (reescrita em 28/11/2026, ADR-0025):** todo botão tem texto visível, **exceto** onde o símbolo vem da memória de aparelhos antigos do idoso. Hoje a exceção é só o **volume**: as teclas "Mais baixo" e "Mais alto" são o alto-falante com **−** e **+**, sem texto. Toda tecla só com símbolo precisa de **nome acessível** (o texto que um leitor de tela diz, e a dica), e o **estado continua escrito** ("Volume: 6 de 10", "TOCANDO"). O transporte (Anterior, Tocar/Pausar, Próxima) continua com texto até o autor decidir. Ícones fora dessa exceção ("Voltar para a estante", "Configurações", "Voz mais clara", "A Lixeira"...) seguem com texto. A hipótese (símbolo basta para este idoso) precisa ser validada no teste de usabilidade.
 - O foco do teclado tem que ser **bem visível** (borda grossa).
 
 **Tela Tocando agora**
@@ -216,7 +216,7 @@ O `tools/measure.sh` deve medir esses números de forma repetível, por exemplo 
 
 **Já decididas pelo autor** (não perguntar de novo):
 - Sem cuidador e sem modo escondido; o usuário faz tudo sozinho.
-- Linha visual: estante de CDs, com ícones de tocadores de música antigos.
+- Linha visual: estante de CDs, com ícones de tocadores de música antigos. **Tema hi-fi (28/11/2026, ADR-0025):** teclas de metal cinza com bisel, tecla afundada quando ligada, bandejas pretas, gabinete grafite com friso prateado; substitui a madeira e o latão do ADR-0024.
 - O X da janela fica; não há botão de desligar.
 - A manutenção da coleção é feita pelo próprio usuário, idoso ou não.
 - Caminho de volta sempre visível.

@@ -1,6 +1,6 @@
 # ADR-0024 — Aparência analógica, nível 3 ("Aparelho detalhado")
 
-- **Status:** Aceito.
+- **Status:** Aceito. **Parcialmente substituído pelo ADR-0025** (28/11/2026): os materiais (madeira, latão) viraram grafite e prata; a estrutura (teclas com curso, peças em Cairo com cache, contraste no pior ponto) continua valendo.
 - **Data:** 28/11/2026
 - **Decisor:** o autor. Pediu para transformar os "quadradões" em objetos analógicos, viu o preview em três níveis e escolheu ir **direto ao nível 3**. A IA recomendava o nível 2 primeiro.
 
