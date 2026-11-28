@@ -38,3 +38,14 @@ Procure por `ATUALIZACAO_DE_TESTE` (marcador nos arquivos) e apague:
 
 - O `.deb` ainda leva o código, mas desligado. Remover o módulo antes do M8 final.
 - **Não testado:** no notebook do usuário (HD mecânico, versão do Python e do GTK dele) e a abertura de novo depois de instalar por dentro da janela real.
+
+## Complemento (27/11/2026): feedback do download e da instalação
+
+Antes, ao apertar "Atualizar agora" o cartão só sumia e o botão novo aparecia, sem nada no meio. Agora a atualização mostra o que está acontecendo:
+
+- **Três etapas** com marca de estado: baixar, instalar e reiniciar ("✓" feita, "→" em andamento, "○" ainda não).
+- **Tamanho:** antes de baixar, "Tamanho aproximado: X (descompactado)", somando os arquivos daquela versão pela API do GitHub (o GitHub manda o zip em partes e **não informa o tamanho total antes**, então o exato só se sabe no fim). Baixando: "Baixado até agora: X KB". Ao terminar: "Tamanho da atualização: X KB" (o tamanho real do zip).
+- **Instalação** com os passos visíveis ("conferindo os arquivos", "trocando os arquivos do aplicativo", "trocando as ferramentas", "guardando a versão instalada"), cada um por uns 0,6 s (`PAUSA_ENTRE_ETAPAS`) para dar para acompanhar.
+- **Barra:** pulsa enquanto baixa (total desconhecido) e enche conforme as etapas da instalação.
+- **Botão "Reiniciar o Aplicativo"** aparece desde o início da atualização, apagado e tracejado, e só é **liberado** quando a instalação termina.
+- Os avanços mudam só os textos e a barra, no lugar, sem refazer o cartão (como no "carregando", ADR-0022). A pausa entre etapas é custo aceito pelo autor: alguns segundos a mais numa atualização de teste.
