@@ -161,6 +161,84 @@ def relevo(paleta: str) -> str:
     return RELEVO_POR_PALETA.get(paleta, "tons")
 
 
+# --- Teclas com curso (KTD5): sem `transform` no GTK 3, a tecla "desce" trocando borda por espaço ---
+
+BORDA_PX = 3
+ALTURA_DA_TECLA_PX = 6          # a "altura": borda de baixo extra, que faz o papel de sombra rígida
+PADDING_TOPO_PX = 8             # espaço entre o topo da tecla e o rótulo
+FAIXA_DO_BRILHO_PX = 8          # o brilho termina aqui, acima do rótulo (<= PADDING_TOPO_PX)
+
+
+def _css_das_teclas(c: dict[str, str], grande: int, modo: str) -> str:
+    """CSS das teclas (botões de ação, escolhas e marcações), das lâmpadas e das variantes."""
+    b, h, p = BORDA_PX, ALTURA_DA_TECLA_PX, PADDING_TOPO_PX
+    pe = ALVO_MINIMO_PX
+    repouso = (f"border: {b}px solid {c['dark']}; border-bottom-width: {b + h}px; "
+               f"border-radius: 14px; padding: {p}px 20px {p}px 20px;")
+    apertada = f"border-bottom-width: {b + 1}px; padding-top: {p + h - 1}px;"
+    teclas = "button.moa-btn, button.moa-opcao, button.moa-marca"
+    apertadas = ("button.moa-btn:active, button.moa-btn.moa-travada, "
+                 "button.moa-opcao.moa-escolhida, button.moa-marca.moa-marcada")
+    faixa = FAIXA_DO_BRILHO_PX
+    if modo == "contorno":      # preto e branco: contorno duplo e sombra, sem tons (KTD3)
+        face = (f"background-color: {c['key_lo']}; background-image: none; "
+                f"box-shadow: inset 0 0 0 2px {c['white']}, inset 0 0 0 4px {c['dark']};")
+        face_apertada = (f"background-image: none; "
+                         f"box-shadow: inset 0 0 0 2px {c['white']}, inset 0 0 0 6px {c['dark']};")
+        brilho_colorido = "background-image: none;"
+    else:
+        face = (f"background-color: {c['key_lo']}; "
+                f"background-image: linear-gradient(to bottom, rgba(255,255,255,{ALFA_REALCE_DA_TECLA}) 0px, "
+                f"rgba(255,255,255,0) 60%), "
+                f"linear-gradient(to bottom, rgba(0,0,0,0) 45%, rgba(0,0,0,{ALFA_SOMBRA_DA_TECLA}) 100%); "
+                f"box-shadow: inset 0 2px 0 rgba(255,255,255,{ALFA_REALCE_DA_TECLA});")
+        face_apertada = (f"background-image: linear-gradient(to bottom, rgba(0,0,0,{ALFA_TECLA_TRAVADA}) 0px, "
+                         f"rgba(0,0,0,0.02) 60%); box-shadow: inset 0 3px 0 rgba(0,0,0,0.28);")
+        # tecla colorida: brilho só numa faixa fina no topo (acima da letra) e sombreado no pé (KTD2)
+        brilho_colorido = (f"background-image: linear-gradient(to bottom, rgba(255,255,255,{ALFA_BRILHO_DA_TECLA}) 0px, "
+                           f"rgba(255,255,255,{ALFA_BRILHO_DA_TECLA}) {faixa - 2}px, rgba(255,255,255,0) {faixa}px), "
+                           f"linear-gradient(to bottom, rgba(0,0,0,0) 45%, rgba(0,0,0,{ALFA_SOMBRA_DA_TECLA}) 100%);")
+    return f"""
+/* teclas: alvo de 64 px, relevo com curso (ADR-0024), foco bem visível */
+{teclas} {{ min-height: {pe}px; min-width: {pe}px; font-weight: 800; color: {c['ink']};
+    {repouso}
+    {face}
+    text-shadow: none; }}
+button.moa-btn label {{ color: inherit; font-weight: 800; }}
+button.moa-btn:hover {{ background-color: {c['selbg']}; }}
+{teclas.replace(', ', ':focus, ')}:focus {{ outline: 5px solid {c['focus']}; outline-offset: 3px; }}
+{apertadas} {{ {apertada}
+    {face_apertada} }}
+button.moa-pri {{ background-color: {c['green']}; color: {c['white']}; {brilho_colorido} }}
+button.moa-pri:hover {{ background-color: {c['green']}; }}
+button.moa-pri label {{ color: {c['white']}; }}
+button.moa-grande {{ min-height: 76px; padding-left: 26px; padding-right: 26px; }}
+button.moa-btn:disabled, button.moa-btn.moa-inativo {{ background-color: {c['disabled']};
+                  color: {c['ink2']}; border-style: dashed dashed solid dashed; }}
+button.moa-btn:disabled label, button.moa-btn.moa-inativo label {{ color: {c['ink2']}; }}
+button.moa-perigo {{ border-color: {c['danger']}; }}
+button.moa-opcao {{ padding-left: 16px; padding-right: 16px; }}
+button.moa-opcao label {{ color: {c['ink']}; font-weight: 800; }}
+button.moa-opcao:hover, button.moa-marca:hover {{ background-color: {c['selbg']}; }}
+button.moa-opcao.moa-escolhida {{ border-color: {c['green']}; background-color: {c['selbg']}; }}
+button.moa-marca {{ padding-left: 12px; padding-right: 12px; }}
+button.moa-marca label {{ color: {c['ink']}; }}
+button.moa-marca.moa-marcada {{ border-color: {c['green']}; background-color: {c['selbg']}; }}
+button.moa-btn.moa-escolhida {{ background-color: {c['blue']}; color: {c['white']}; {brilho_colorido} }}
+button.moa-btn.moa-escolhida label {{ color: {c['white']}; }}
+
+/* lâmpadas-piloto com lente: brilho no canto, aro e halo quando acesas */
+.moa-lampada, .moa-luz {{ background-color: {c['lampoff']}; border: 3px solid {c['metal_lo']}; border-radius: 50px;
+    box-shadow: 0 0 0 2px {c['dark']}, inset 0 -2px 0 rgba(0,0,0,0.35);
+    background-image: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.55) 0px, rgba(255,255,255,0) 40%); }}
+.moa-lampada {{ min-width: 22px; min-height: 22px; }}
+.moa-luz {{ min-width: 16px; min-height: 16px; }}
+.moa-lampada.moa-acesa, .moa-luz.moa-acesa {{ background-color: {c['lampon']};
+    box-shadow: 0 0 0 2px {c['dark']}, 0 0 12px {c['lampon']};
+    background-image: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.85) 0px, rgba(255,255,255,0) 45%); }}
+"""
+
+
 # --- Escalas de letra -----------------------------------------------------------------
 
 LETRA_BASE_PX = 20           # mínimo da restrição de acessibilidade
@@ -176,6 +254,7 @@ def gerar_css(paleta: str = "normal", letra: str = "normal") -> str:
     base = round(LETRA_BASE_PX * e)
     titulo = round(30 * e)
     grande = round(26 * e)
+    modo = relevo(paleta)
     return f"""
 * {{ font-size: {base}px; }}
 window.moa, .moa-fundo {{ background-color: {c['bg']}; color: {c['ink']}; }}
@@ -190,22 +269,7 @@ label {{ color: {c['ink']}; }}
 .moa-mini {{ background-color: {c['wood']}; padding: 8px 20px; }}
 .moa-mini label {{ color: {c['white']}; }}
 
-/* botões: alvo de 64 px, borda grossa, foco bem visível */
-button.moa-btn {{ min-height: {ALVO_MINIMO_PX}px; min-width: {ALVO_MINIMO_PX}px; padding: 10px 20px;
-                  font-weight: 800; border: 3px solid {c['ink']}; border-radius: 14px;
-                  background-image: none; background-color: {c['card']}; color: {c['ink']};
-                  box-shadow: none; text-shadow: none; }}
-button.moa-btn label {{ color: inherit; font-weight: 800; }}
-button.moa-btn:hover {{ background-color: {c['selbg']}; }}
-button.moa-btn:focus {{ outline: 5px solid {c['focus']}; outline-offset: 3px; }}
-button.moa-pri {{ background-color: {c['green']}; border-color: {c['green']}; color: {c['white']}; }}
-button.moa-pri:hover {{ background-color: {c['green']}; }}
-button.moa-pri label {{ color: {c['white']}; }}
-button.moa-grande {{ min-height: 76px; padding: 12px 26px; }}
-button.moa-btn:disabled, button.moa-btn.moa-inativo {{ background-color: {c['disabled']};
-                  color: {c['ink2']}; border-style: dashed; }}
-button.moa-btn:disabled label, button.moa-btn.moa-inativo label {{ color: {c['ink2']}; }}
-button.moa-perigo {{ border-color: {c['danger']}; }}
+{_css_das_teclas(c, grande, modo)}
 
 /* estante */
 .moa-placa {{ background-color: {c['wood']}; border-radius: 8px; padding: 4px 16px; }}
@@ -252,9 +316,6 @@ button.moa-disco label {{ color: {c['ink']}; font-weight: 800; }}
                      border-radius: 13px; }}
 .moa-barra progress {{ min-height: 26px; background-color: {c['green']}; background-image: none;
                        border-radius: 10px; }}
-.moa-lampada {{ background-color: {c['dark']}; border: 3px solid {c['white']}; border-radius: 11px;
-                min-width: 22px; min-height: 22px; }}
-.moa-lampada.moa-acesa {{ background-color: {c['lampon']}; box-shadow: 0 0 10px {c['lampon']}; }}
 .moa-barra {{ background-color: {c['lampoff']}; border: 2px solid {c['white']}; border-radius: 4px;
               min-width: 14px; min-height: 34px; }}
 .moa-barra.moa-acesa {{ background-color: {c['lampon']}; box-shadow: 0 0 6px {c['lampon']}; }}
@@ -269,19 +330,10 @@ button.moa-faixa:focus {{ outline: 5px solid {c['focus']}; outline-offset: 3px; 
 button.moa-faixa label {{ color: {c['ink']}; }}
 
 /* playlist: caixas de marcar */
-button.moa-marca {{ min-height: {ALVO_MINIMO_PX}px; padding: 6px 12px; background-image: none;
-                    background-color: {c['card']}; border: 2px solid {c['line']}; border-radius: 12px;
-                    box-shadow: none; }}
-button.moa-marca:hover {{ background-color: {c['selbg']}; }}
-button.moa-marca:focus {{ outline: 5px solid {c['focus']}; outline-offset: 3px; }}
-button.moa-marca label {{ color: {c['ink']}; }}
-button.moa-marca.moa-marcada {{ background-color: {c['selbg']}; border: 4px solid {c['green']}; }}
 .moa-caixinha {{ background-color: {c['card']}; border: 4px solid {c['ink']}; border-radius: 8px;
                  min-width: 40px; min-height: 40px; }}
 button.moa-marcada .moa-caixinha {{ background-color: {c['green']}; border-color: {c['green']}; }}
 button.moa-marcada .moa-caixinha label {{ color: {c['white']}; }}
-button.moa-btn.moa-escolhida {{ background-color: {c['blue']}; border-color: {c['blue']}; color: {c['white']}; }}
-button.moa-btn.moa-escolhida label {{ color: {c['white']}; }}
 
 /* painel do "+" */
 .moa-veu {{ background-color: rgba(30, 25, 19, 0.6); padding: 20px; }}
@@ -290,12 +342,6 @@ button.moa-btn.moa-escolhida label {{ color: {c['white']}; }}
 .moa-mais-grande {{ font-size: {round(48 * e)}px; font-weight: 800; }}
 
 /* escolhas (configurações, capas) */
-button.moa-opcao {{ min-height: {ALVO_MINIMO_PX}px; padding: 8px 16px; font-weight: 800;
-                    background-image: none; background-color: {c['card']}; color: {c['ink']};
-                    border: 3px solid {c['ink']}; border-radius: 14px; box-shadow: none; }}
-button.moa-opcao label {{ color: {c['ink']}; font-weight: 800; }}
-button.moa-opcao:focus {{ outline: 5px solid {c['focus']}; outline-offset: 3px; }}
-button.moa-opcao.moa-escolhida {{ border: 5px solid {c['green']}; background-color: {c['selbg']}; }}
 .moa-amostra {{ border: 2px solid {c['ink']}; border-radius: 6px; min-width: 26px; min-height: 26px; }}
 .moa-exemplo {{ background-color: {c['card']}; border: 2px solid {c['line']}; border-radius: 10px;
                 padding: 10px 14px; font-weight: 700; }}

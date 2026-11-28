@@ -17,7 +17,7 @@ from gi.repository import Gtk  # noqa: E402
 
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.player import DEGRAU_MAXIMO  # noqa: E402
-from moa.ui.widgets import EmPedacos, classe, definir_texto_do_botao, texto_de, aviso, capa_do_disco, botao, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
+from moa.ui.widgets import EmPedacos, classe, definir_estado_da_tecla, definir_texto_do_botao, tecla_travavel, texto_de, aviso, capa_do_disco, botao, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
 
 LARGURA_PARA_EMPILHAR = 900
 
@@ -216,7 +216,8 @@ class RadioView:
         corpo.pack_start(volume, False, False, 0)
 
         # "Voz mais clara"
-        p.clara = botao("Voz mais clara: desligada", "moa-clara-desligada", ao_clicar=self._alternar_voz)
+        p.clara = tecla_travavel("Voz mais clara: desligada", False, "moa-clara-desligada",
+                                 ao_clicar=self._alternar_voz)
         corpo.pack_start(p.clara, False, False, 0)
 
         corpo.pack_start(botao("Guardar o disco na estante e parar", ao_clicar=self._guardar, icone_nome="disco"),
@@ -259,6 +260,7 @@ class RadioView:
         definir_texto_do_botao(p.clara, f"Voz mais clara: {'ligada' if ligada else 'desligada'}")
         classe(p.clara, "moa-clara-ligada", ligada)
         classe(p.clara, "moa-clara-desligada", not ligada)
+        definir_estado_da_tecla(p.clara, ligada)
 
     def _montar_controles(self, tocando: bool) -> None:
         """Anterior / Tocar ou Pausar / Próxima. Só é refeito quando troca Tocar por Pausar."""

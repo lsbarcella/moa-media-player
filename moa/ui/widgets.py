@@ -200,6 +200,49 @@ def classe(widget: Gtk.Widget, nome: str, ligada: bool) -> None:
         (contexto.add_class if ligada else contexto.remove_class)(nome)
 
 
+def tecla_travavel(texto: str, ligada: bool, *classes: str, ao_clicar=None,
+                   horizontal: bool = False) -> Gtk.Button:
+    """Uma tecla de liga e desliga: fica BAIXADA quando está ligada, com a lâmpada acesa e o texto.
+
+    A posição (baixada ou alta) é o terceiro sinal do estado, ao lado do texto e da lâmpada, e não
+    depende de cor (ADR-0024). Num rádio antigo é a tecla que fica presa depois de apertada.
+    `horizontal=True` põe a lâmpada à esquerda do texto (linhas de Configurações).
+    """
+    b = Gtk.Button()
+    caixa = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL if horizontal else Gtk.Orientation.VERTICAL,
+                    spacing=10 if horizontal else 2)
+    caixa.set_halign(Gtk.Align.CENTER)
+    luz = Gtk.Box()
+    luz.get_style_context().add_class("moa-luz")
+    luz.set_halign(Gtk.Align.CENTER)
+    luz.set_valign(Gtk.Align.CENTER)
+    etiqueta = Gtk.Label(label=texto)
+    etiqueta.set_line_wrap(True)
+    etiqueta.set_justify(Gtk.Justification.CENTER)
+    caixa.pack_start(luz, False, False, 0)
+    caixa.pack_start(etiqueta, False, False, 0)       # o rótulo é sempre o último: ver definir_texto_do_botao
+    b.add(caixa)
+    contexto = b.get_style_context()
+    contexto.add_class("moa-btn")
+    for classe_ in classes:
+        contexto.add_class(classe_)
+    definir_estado_da_tecla(b, ligada)
+    if ao_clicar is not None:
+        b.connect("clicked", lambda _b: ao_clicar())
+    return b
+
+
+def lampada_da_tecla(tecla: Gtk.Button) -> Gtk.Widget:
+    """A lâmpada de uma `tecla_travavel` (o primeiro item da caixa interna)."""
+    return tecla.get_child().get_children()[0]
+
+
+def definir_estado_da_tecla(tecla: Gtk.Button, ligada: bool) -> None:
+    """Baixa ou solta a tecla e acende ou apaga a lâmpada, mexendo só no que mudou."""
+    classe(tecla, "moa-travada", ligada)
+    classe(lampada_da_tecla(tecla), "moa-acesa", ligada)
+
+
 def caixa_v(espaco: int = 12) -> Gtk.Box:
     return Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=espaco)
 

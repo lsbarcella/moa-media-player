@@ -118,3 +118,57 @@ def test_as_opacidades_do_css_vem_da_tabela_unica():
     """KTD8: o número que o teste confere é o mesmo que vai para o CSS."""
     assert theme.ALFA_BRILHO_DA_TECLA == pytest.approx(0.30)
     assert 0 < theme.ALFA_VEIO_CLARO <= 0.10
+
+
+# -- teclas com curso (U2, ADR-0024) -------------------------------------------------------------
+
+@pytest.mark.parametrize("letra", list(theme.ESCALAS))
+def test_o_brilho_da_tecla_termina_acima_do_rotulo_em_toda_escala(letra):
+    """A faixa do brilho (px) cabe dentro do espaço de cima da tecla, então não cobre a letra."""
+    assert theme.FAIXA_DO_BRILHO_PX <= theme.PADDING_TOPO_PX
+    css = theme.gerar_css("normal", letra)
+    faixas = {int(n) for n in re.findall(r"rgba\(255,255,255,0\)\s+(\d+)px", css)}
+    assert theme.FAIXA_DO_BRILHO_PX in faixas
+    assert all(f <= theme.PADDING_TOPO_PX for f in faixas)
+
+
+def test_tecla_apertada_troca_borda_de_baixo_por_espaco_em_cima_sem_mudar_a_altura():
+    css = theme.gerar_css("normal", "normal")
+    repouso = theme.BORDA_PX + theme.ALTURA_DA_TECLA_PX
+    apertada_borda = theme.BORDA_PX + 1
+    assert f"border-bottom-width: {repouso}px" in css
+    assert f"border-bottom-width: {apertada_borda}px" in css
+    # a soma (borda de baixo + espaço de cima) é igual em repouso e apertada: altura constante
+    assert (repouso + theme.PADDING_TOPO_PX
+            == apertada_borda + theme.PADDING_TOPO_PX + theme.ALTURA_DA_TECLA_PX - 1)
+
+
+def test_nenhum_degrade_opaco_esconde_a_cor_das_teclas():
+    """KTD1: todo degradê de tecla é translúcido (rgba), nunca um #RRGGBB opaco em background-image."""
+    for paleta in theme.PALETAS:
+        css = theme.gerar_css(paleta, "normal")
+        for bloco in re.findall(r"background-image:\s*([^;]+);", css):
+            if "gradient" in bloco:
+                assert "#" not in bloco, (paleta, bloco)
+
+
+def test_no_preto_e_branco_as_teclas_nao_usam_degrade():
+    css = theme.gerar_css("preto-e-branco", "normal")
+    bloco = re.search(r"button\.moa-btn,[^{]*\{[^}]*\}", css).group(0)
+    assert "gradient" not in bloco and "inset 0 0 0" in bloco       # contorno duplo e sombra
+
+
+def test_a_tecla_travada_tem_a_mesma_geometria_da_apertada():
+    css = theme.gerar_css("normal", "normal")
+    for seletor in ("button.moa-btn.moa-travada", "button.moa-opcao.moa-escolhida",
+                    "button.moa-marca.moa-marcada", "button.moa-btn:active"):
+        assert seletor in css
+
+
+def test_o_css_com_relevo_e_aceito_pelo_gtk_em_toda_combinacao():
+    import gi
+    gi.require_version("Gtk", "3.0")
+    from gi.repository import Gtk
+    for paleta in theme.PALETAS:
+        for letra in theme.ESCALAS:
+            Gtk.CssProvider().load_from_data(theme.gerar_css(paleta, letra).encode("utf-8"))
