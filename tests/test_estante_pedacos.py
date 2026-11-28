@@ -90,3 +90,81 @@ def test_o_foco_nao_pula_quando_a_estante_nao_mudou(estante_cheia):
     ctx.session.ir_para(Tela.CAIXA)
     ctx.session.ir_para(Tela.ESTANTE)
     assert entregues[-1] is not None            # voltou para a estante: o foco vai ao botão principal
+
+
+def test_um_disco_que_falha_ao_desenhar_nao_esconde_os_outros(estante_cheia, monkeypatch):
+    ctx, conteudo, visao = estante_cheia
+    original = visao._peca
+
+    def peca_quebrada(disco):
+        if disco.title == "Disco 03":
+            raise RuntimeError("capa ilegível")
+        return original(disco)
+    monkeypatch.setattr(visao, "_peca", peca_quebrada)
+    ctx.recarregar()
+    _esperar(visao)
+    nomes = _discos_na_tela(visao)
+    assert "Disco 03" not in nomes and len(nomes) == 59 and "Disco 04" in nomes and "Disco 60" in nomes
+
+
+def test_se_o_desenho_falhar_a_proxima_vez_tenta_de_novo(estante_cheia, monkeypatch):
+    ctx, conteudo, visao = estante_cheia
+    _esperar(visao)
+
+    def quebra():
+        raise RuntimeError("falha qualquer")
+    monkeypatch.setattr(visao, "_desenhar_acoes", quebra)
+    visao._esquecer_o_desenho()
+    with pytest.raises(RuntimeError):
+        visao.atualizar()
+    assert visao._chave_desenhada is None            # o desenho incompleto não vale como "pronto"
+    monkeypatch.undo()
+    visao.atualizar()
+    assert visao._chave_desenhada is not None and len(_discos_na_tela(visao)) >= 24
+
+
+def test_criar_uma_playlist_nao_esconde_nenhum_disco_nem_playlist(tmp_path, make_track):
+    """O relato do autor: depois de criar uma playlist, sumiram o MIX e as outras playlists."""
+    from moa.core import custom_albums
+    raiz = tmp_path / "musica"
+    for n in range(1, 41):
+        make_track(raiz / "MIX", f"{n:03d}.mp3", title=f"Faixa {n}", album="MIX", artist="Ana",
+                   albumartist="Ana", tracknumber=str(n))
+    ctx, conteudo = montar(tmp_path, raiz)
+    try:
+        mix = ctx.discos[0]
+        caminhos = [str(t.path) for t in mix.tracks]
+        custom_albums.criar(ctx.banco, "Festa", caminhos[:3])
+        custom_albums.criar(ctx.banco, "Dormir", caminhos[5:8])
+        ctx.recarregar()
+        ctx.radio.abrir_disco(mix)                       # o MIX está tocando
+        ctx.session.voltar_para_a_estante()
+        ctx.session.acao()
+        ctx.novo_rascunho()
+        ctx.session.ir_para(Tela.PLAYLIST)
+        playlist = conteudo.telas[Tela.PLAYLIST]
+        _esperar_playlist(playlist)
+        for caminho in list(playlist._linhas)[:3]:
+            playlist._linhas[caminho][0].clicked()
+        playlist._guardar()
+        est = conteudo.telas[Tela.ESTANTE]
+        _esperar(est)
+        girar(0.3)
+        assert [d.title for d in ctx.discos] == ["MIX"]
+        titulos = [d.title for d in ctx.montados]
+        assert len(titulos) == 3 and {"Festa", "Dormir"} <= set(titulos)
+        assert any(t.startswith("Meu disco de") for t in titulos)
+        tela = textos(est.raiz)
+        for esperado in ("Meus discos", "Discos que montei", "Festa", "Dormir"):
+            assert esperado in tela
+        assert len([t for t in tela if t.startswith("Meu disco de")]) == 1
+    finally:
+        ctx.encerrar()
+        ctx.banco.close()
+
+
+def _esperar_playlist(playlist):
+    for _ in range(200):
+        if playlist._linhas and not playlist._construtor_da_lista.pendente:
+            return
+        girar(0.05)

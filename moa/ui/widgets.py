@@ -10,6 +10,7 @@ Regras do projeto que estes blocos garantem em um lugar só:
 - As cores e os tamanhos vêm do tema (`theme.py`), por classes de estilo.
 """
 
+import logging
 import time
 from pathlib import Path
 
@@ -22,6 +23,8 @@ gi.require_version("GdkPixbuf", "2.0")
 from gi.repository import GdkPixbuf, GLib, Gtk, Pango, PangoCairo  # noqa: E402
 
 from moa.core.covers import substitute_cover  # noqa: E402
+
+log = logging.getLogger(__name__)
 
 LADO_DA_CAPA = 150
 LADO_DA_CAPA_PEQUENA = 84
@@ -167,9 +170,13 @@ class EmPedacos:
         while self._posicao < len(self._itens):
             if feitos >= garantir and time.perf_counter() - inicio >= self._orcamento:
                 break
-            self._fazer(self._itens[self._posicao])
-            self._posicao += 1
+            item = self._itens[self._posicao]
+            self._posicao += 1                  # avança antes: um item que falha não prende a fila
             feitos += 1
+            try:
+                self._fazer(item)
+            except Exception:
+                log.exception("não consegui montar um item da lista (%r); sigo com os outros", item)
         if self._posicao >= len(self._itens) and self._ao_terminar is not None:
             terminar, self._ao_terminar = self._ao_terminar, None
             terminar()

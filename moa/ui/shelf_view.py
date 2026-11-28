@@ -9,6 +9,8 @@ Desenho aprovado em `docs/preview/moa-preview.html`. A estante lembra
 "Em uso no rádio" quando o disco está no rádio.
 """
 
+import logging
+
 import gi
 
 gi.require_version("Gtk", "3.0")
@@ -18,6 +20,8 @@ from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.session import Tela  # noqa: E402
 from moa.ui.cartao_de_atualizacao import cartao_de_atualizacao, deve_aparecer_na_estante  # noqa: E402     # ATUALIZACAO_DE_TESTE
 from moa.ui.widgets import EmPedacos, texto_de, aviso, botao, capa_do_disco, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
+
+log = logging.getLogger(__name__)
 
 TEXTO_CARREGANDO = "Estou procurando os seus discos..."
 SEGUNDOS_ATE_AVISAR_DA_DEMORA = 5
@@ -71,7 +75,16 @@ class ShelfView:
         chave = self._chave()
         if chave == self._chave_desenhada:
             return                  # nada que a estante mostra mudou
+        self._chave_desenhada = None        # só vale depois de o desenho terminar sem erro
+        try:
+            self._refazer()
+        except Exception:
+            log.exception("não consegui desenhar a estante; tento de novo no próximo toque")
+            raise
         self._chave_desenhada = chave
+
+    def _refazer(self) -> None:
+        ctx = self.ctx
         self._foco_pendente = True
         for construtor in self._construtores:
             construtor.cancelar()
