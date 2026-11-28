@@ -14,7 +14,7 @@ O CLAUDE.md (seção 10) fixa metas de abertura, RAM e CPU, e o primeiro teste n
    - `mix`: **um disco com 371 faixas**, como a coleção do usuário;
    - `estante`: 80 discos de 10 faixas, como o acervo descrito no CLAUDE.md.
 2. **Abertura** (processo de verdade, na sessão gráfica real): tempo até a estante aparecer (o app registra `estante pronta` no log), sem o cache do app (`abertura_1a_ms`) e com ele (`abertura_seguinte_ms`), mais RAM (RSS) e CPU em repouso.
-3. **Ações** (dentro do processo da medição, com a janela desenhada fora da tela): mediana e máximo, em 5 repetições, de abrir disco, tocar/pausar, próxima, tocar a faixa do meio, volume, "Voz mais clara", voltar à estante, criar playlist, Caixa, Aparelho de CD e Configurações. O tempo vai até a tela estar desenhada.
+3. **Ações** (dentro do processo da medição, com a janela desenhada fora da tela, sobre uma coleção de **faixas longas** (links para um áudio de 5 minutos), para o disco não avançar sozinho; o "tela pronta" tem limite de 5 s): mediana e máximo, em 5 repetições, de abrir disco, tocar/pausar, próxima, tocar a faixa do meio, volume, "Voz mais clara", voltar à estante, criar playlist, Caixa, Aparelho de CD e Configurações. O tempo vai até a tela estar desenhada.
 4. **CPU tocando** (som de verdade, 10 s, MP3 se o codificador existir, senão FLAC): CPU do processo, onde 100% é um núcleo. `--sem-audio` pula.
 5. O CSV leva em cada linha a configuração da máquina (CPU, núcleos, RAM, tipo de disco, sistema, desktop, Python, GTK, versão do app). **Sem nome da máquina nem do usuário.**
 6. A ferramenta compara com as metas do CLAUDE.md (abertura fria ≤ 3 s, quente ≤ 1 s, CPU tocando < 5%). A comparação da RAM com o Rhythmbox e o VLC continua manual.

@@ -52,6 +52,7 @@ ESPERA_DO_REPOUSO = 3.0
 SEGUNDOS_TOCANDO = 10.0
 TEMPO_MAXIMO_DE_ABERTURA = 120.0
 MARCADOR = "estante pronta"
+LIMITE_DA_TELA_PRONTA = 5.0
 
 
 # ---------------------------------------------------------------------------
@@ -162,17 +163,36 @@ def gerar_colecao(destino: Path, base: Path, discos: int, faixas: int, artista: 
     return discos * faixas
 
 
-def montar_cenarios(pasta: Path, rapido: bool) -> dict[str, Path]:
+def gerar_colecao_longa(destino: Path, longa: Path, discos: int, faixas: int) -> None:
+    """Como `gerar_colecao`, mas cada faixa é um link para UM áudio longo, sem tags.
+
+    Serve para medir as ações: com faixas curtas o disco avançaria sozinho o tempo todo e a tela
+    nunca ficaria parada. Sem tags, a biblioteca cai nos fallbacks (nome da pasta e do arquivo).
+    """
+    for d in range(1, discos + 1):
+        pasta = destino / f"Disco {d:03d}"
+        pasta.mkdir(parents=True)
+        for f in range(1, faixas + 1):
+            os.symlink(longa, pasta / f"{f:03d}{longa.suffix}")
+
+
+def montar_cenarios(pasta: Path, rapido: bool) -> tuple[dict[str, Path], dict[str, Path]]:
+    """Devolve (coleções para abrir o app, coleções para cronometrar as ações)."""
     base = gerar_audio_base(pasta, buffers=8, nome="base")
+    longa = gerar_audio_base(pasta, buffers=int(300 * 44100 / 1024), nome="longa")     # 5 minutos
     mix = (1, 20) if rapido else (1, 371)
     estante = (6, 3) if rapido else (80, 10)
-    cenarios = {}
+    abertura, acoes = {}, {}
     for nome, (discos, faixas) in (("mix", mix), ("estante", estante)):
         raiz = pasta / nome / "musica"
         raiz.mkdir(parents=True)
         gerar_colecao(raiz, base, discos, faixas, "Artista")
-        cenarios[nome] = raiz
-    return cenarios
+        abertura[nome] = raiz
+        raiz_longa = pasta / nome / "musica_longa"
+        raiz_longa.mkdir(parents=True)
+        gerar_colecao_longa(raiz_longa, longa, discos, faixas)
+        acoes[nome] = raiz_longa
+    return abertura, acoes
 
 
 # ---------------------------------------------------------------------------
@@ -314,9 +334,16 @@ def medir_acoes(nome: str, musica: Path, pasta: Path, repeticoes: int) -> list[t
     laco = GLib.MainContext.default()
 
     def pronto() -> None:
-        """Deixa o GTK terminar tudo o que a ação pediu e desenha de verdade."""
+        """Deixa o GTK terminar tudo o que a ação pediu e desenha de verdade.
+
+        Tem limite de 5 s: se a tela nunca ficar parada, a medida sai como 5000 ms em vez de
+        a medição ficar presa para sempre.
+        """
+        limite = time.perf_counter() + LIMITE_DA_TELA_PRONTA
         while laco.iteration(False):
-            pass
+            if time.perf_counter() > limite:
+                print("   (a tela não ficou parada em 5 s)", flush=True)
+                break
         janela.get_pixbuf()
 
     def cronometrar(rotulo: str, acao, preparo=None) -> tuple:
@@ -329,7 +356,9 @@ def medir_acoes(nome: str, musica: Path, pasta: Path, repeticoes: int) -> list[t
             acao()
             pronto()
             tempos.append((time.perf_counter() - t) * 1000)
-        return (nome, f"acao_{rotulo}_mediana_ms", statistics.median(tempos), "ms"), \
+        mediana = statistics.median(tempos)
+        print(f"   {rotulo:24s} {mediana:7.0f} ms", flush=True)
+        return (nome, f"acao_{rotulo}_mediana_ms", mediana, "ms"), \
                (nome, f"acao_{rotulo}_maximo_ms", max(tempos), "ms")
 
     estante = ctx.session.voltar_para_a_estante
@@ -456,12 +485,12 @@ def main(argumentos: list[str] | None = None) -> int:
     with tempfile.TemporaryDirectory(prefix="moa-medicao-") as temporaria:
         pasta = Path(temporaria)
         print("Gerando as coleções de teste...")
-        cenarios = montar_cenarios(pasta, args.rapido)
-        for nome, musica in cenarios.items():
-            print(f"[{nome}] abrindo o app (2 vezes)...")
+        para_abrir, para_acoes = montar_cenarios(pasta, args.rapido)
+        for nome, musica in para_abrir.items():
+            print(f"[{nome}] abrindo o app (2 vezes)...", flush=True)
             medidas += medir_abertura(nome, musica, pasta, args.frio)
-        for nome, musica in cenarios.items():
-            print(f"[{nome}] cronometrando as ações...")
+        for nome, musica in para_acoes.items():
+            print(f"[{nome}] cronometrando as ações...", flush=True)
             medidas += medir_acoes(nome, musica, pasta, repeticoes)
         if not args.sem_audio:
             print("[tocando] medindo a CPU com som de verdade...")
