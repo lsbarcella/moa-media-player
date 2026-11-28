@@ -16,6 +16,7 @@ from gi.repository import Gtk  # noqa: E402
 
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.session import Tela  # noqa: E402
+from moa.ui.cartao_de_atualizacao import cartao_de_atualizacao, deve_aparecer_na_estante  # noqa: E402     # ATUALIZACAO_DE_TESTE
 from moa.ui.widgets import aviso, botao, capa_do_disco, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
 
 TEXTO_CARREGANDO = "Estou procurando os seus discos..."
@@ -42,6 +43,9 @@ class ShelfView:
             a = ctx.session.aviso
             self.raiz.pack_start(aviso(a.texto, ctx.session.desfazer if a.desfazer else None, a.rotulo_do_desfazer),
                                  False, False, 0)
+
+        if deve_aparecer_na_estante(ctx):                                 # ATUALIZACAO_DE_TESTE
+            self.raiz.pack_start(cartao_de_atualizacao(ctx), False, False, 0)
 
         if not ctx.discos and not ctx.montados:
             texto = TEXTO_CARREGANDO if ctx.carregando else TEXTO_VAZIO

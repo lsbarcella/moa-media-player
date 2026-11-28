@@ -170,3 +170,11 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Feito:** a marca "Tocando agora"/"Parado aqui" passa a ser movida no lugar (só duas linhas mudam), e a lista é marcada como `no_show_all` depois de mostrada, para o `show_all` da janela não percorrer as 371 linhas. Depois: tocar/pausar ~12 ms, próxima ~14 ms, abrir o rádio ~17 ms.
 - **Verificação:** `tests/test_radio_lista.py` (8 testes, um deles confere que só uma linha fica destacada); desenho do rádio conferido por imagem.
 - **NÃO testado:** no notebook do pai. Falta o `tools/measure.sh` para medir lá de forma repetível.
+
+## 27/11/2026 — Atualizador de teste dentro do app (temporário)
+
+- **Pedido:** poder atualizar o app no notebook com base na branch `dev`, sem baixar o zip à mão. Opções apresentadas (A script, B script com atalho, C dentro do app, D git pull agendado); a IA recomendou B; **o autor escolheu C** ("quero velocidade; depois a gente remove").
+- **Feito:** `core/atualizacao_de_teste.py` (procura, baixa o zip da `dev`, confere, troca `moa/`, guarda `moa.anterior/`, volta), `ui/cartao_de_atualizacao.py` (Configurações e Estante), procura em silêncio ao abrir, ADR-0020 com a lista de remoção. Todo trecho marcado com `ATUALIZACAO_DE_TESTE`.
+- **Verificação:** 20 testes novos sem internet; uma atualização real contra o GitHub numa cópia (procurar, instalar, importar o código novo, voltar); suíte completa passa (424).
+- **Custo aceito pelo autor:** quebra "offline por padrão", expõe jargão e baixa código sem assinatura. Só liga em pasta de código-fonte gravável.
+- **NÃO testado:** no notebook do pai; o "Abrir de novo agora" dentro da janela de verdade.

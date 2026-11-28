@@ -79,6 +79,7 @@ class Conteudo:
 
         contexto.session.ao_mudar(self.redesenhar)
         contexto.aparelho.ao_mudar(self.redesenhar)
+        contexto.atualizacao.ao_mudar(self.redesenhar)     # ATUALIZACAO_DE_TESTE
         contexto.radio.ao_mudar(self.redesenhar)
         contexto.ao_mudar_a_colecao(self.redesenhar)
         contexto.preferencias.ao_mudar(self._ao_mudar_preferencia)
