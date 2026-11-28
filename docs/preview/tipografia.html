@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Moa — tipografia (preview)</title>
+<!-- Só para este preview: carrega da web as fontes que não estão nesta máquina. O app não faz isso (offline por padrão). -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Roboto+Slab:wght@400;600;700&family=Lora:wght@500;700&family=Noto+Serif:wght@500;700&display=swap">
 <style>
 /* Preview em HTML (não é o app). Compara fontes, pesos, caixa-alta e números nos textos de verdade
    do Moa. Só mostra as fontes instaladas NESTA máquina; as que faltam aparecem marcadas. */
@@ -40,6 +42,13 @@ main{max-width:1300px;margin:auto;padding:20px;display:grid;gap:22px}
 .rotulo{font-weight:var(--pb)}
 .acentos{margin-top:10px;font-weight:600;letter-spacing:.02em}
 .lista-r{margin:0;padding:10px 14px 14px;font-size:13px;color:#3c4146;font-family:system-ui;font-weight:500}
+.par .visor .titulo{font-family:var(--titulo),serif;font-weight:700;font-size:calc(var(--fs)*1.45);line-height:1.15}
+.par .cab{font-family:var(--titulo),serif;font-weight:700;font-size:calc(var(--fs)*1.5);padding:10px 14px;border-bottom:3px solid #1E2023}
+.par .prateleira{display:flex;gap:14px;padding:12px 14px;background:linear-gradient(#2B3136,#1E2023);color:#fff}
+.par .prateleira span{font-family:var(--titulo),serif;font-weight:700;font-size:calc(var(--fs)*1.05);text-align:center;width:6.5em}
+.par .disco{width:100%;aspect-ratio:1;border-radius:4px;background:#7A1F2E;margin-bottom:4px;box-shadow:inset 10px 0 0 #15171a}
+.etiqueta{display:inline-block;margin:6px 14px 0;padding:2px 8px;border-radius:6px;font:700 12px system-ui;background:#EAF5E4;color:#1F4D2B}
+.etiqueta.x{background:#FFF1B8;color:#6b4a00}
 .bloco{background:#fff;border-radius:14px;padding:14px 18px;border:2px solid #b9bbbd}
 .bloco h2{margin:0 0 6px;font-size:19px}.bloco p,.bloco li{margin:4px 0;max-width:110ch}
 </style>
@@ -57,6 +66,12 @@ main{max-width:1300px;margin:auto;padding:20px;display:grid;gap:22px}
 
 <main>
  <div class="grade" id="grade"></div>
+
+ <div class="bloco par-intro">
+  <h2>Duas fontes: a Atkinson para ler e uma segunda para dar voz aos nomes</h2>
+  <p><b>Regra do par:</b> a <b>Atkinson Hyperlegible</b> faz o trabalho de ler (estado, botões, listas, notas, volume, tempos). A <b>segunda fonte</b> só aparece onde há <b>nome</b>: o título da música, o título da tela e os nomes dos discos. Assim a hierarquia vem da <i>família</i>, e não só do tamanho e do negrito. Observe: o apt só traz a Atkinson em <b>Regular e Bold</b> (2021), então 600 e 800 não existem nela.</p>
+ </div>
+ <div class="grade par" id="pares"></div>
 
  <div class="bloco">
   <h2>O que olhar</h2>
@@ -111,6 +126,33 @@ for(const [nome,css,nota] of FONTES){
    <div class="acentos">ÀÉÍÓÚ ÂÊÔ ÃÕ Ç — àéíóú âêô ãõ ç · 0123456789 · Illlí1 O0 rn m</div>
   </div>`;
   grade.appendChild(d);
+}
+const PARES=[
+ ["Atkinson sozinha","'Atkinson Hyperlegible'","apt (141 KB)","ok","a referência: uma fonte só, a hierarquia vem do tamanho e do negrito"],
+ ["Atkinson + Noto Serif","'Noto Serif'","já vem no Mint","ok","serifada neutra e robusta; zero custo; boa com acentos"],
+ ["Atkinson + Roboto Slab","'Roboto Slab'","apt: fonts-roboto-slab (365 KB)","ok","serifa em bloco: firme e com cara de aparelho; combina com o metal"],
+ ["Atkinson + Lora","'Lora'","NÃO está no apt: teria de ser embutida no pacote","x","serifa calorosa, de livro; mais elegante, menos técnica"],
+];
+const pares=document.getElementById('pares');
+for(const [nome,titulo,onde,tipo,nota] of PARES){
+  const sozinha = nome.includes("sozinha");
+  const d=document.createElement('div'); d.className='fonte';
+  d.style.setProperty('--titulo', sozinha ? "'Atkinson Hyperlegible'" : titulo);
+  d.innerHTML=`<header><span>${nome}</span><small>${nota}</small></header>
+  <span class="etiqueta ${tipo==='x'?'x':''}">${onde}</span>
+  <div class="amostra" style="font-family:'Atkinson Hyperlegible',sans-serif">
+   <div class="cab" style="margin:-14px -14px 10px;background:#fff">Tocando agora</div>
+   <div class="visor">
+     <div class="estado"><span class="lampada"></span><span class="est">Pausado</span><span class="frase" style="font-weight:400"> Aperte Tocar para continuar</span></div>
+     <div class="titulo">Coração de Estudante</div>
+     <div class="nota">Milton Nascimento · Ao Vivo · 1985</div>
+     <div class="nota">Faixa 11 de 18</div>
+     <div class="tempos"><span>0:11</span><span>1:11</span><span>3:42</span></div>
+   </div>
+   <div class="teclas"><span class="tecla">Anterior</span><span class="tecla on">Pausar</span><span class="tecla">Próxima</span></div>
+   <div class="prateleira"><div><div class="disco"></div><span>Clube da Esquina</span></div><div><div class="disco" style="background:#1F4D6B"></div><span>Elis & Tom</span></div></div>
+  </div>`;
+  pares.appendChild(d);
 }
 const R=document.documentElement;
 const marca=(g,el)=>document.querySelectorAll('['+g+']').forEach(x=>x.setAttribute('aria-pressed',x===el));
