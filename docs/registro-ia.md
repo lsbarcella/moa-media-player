@@ -218,3 +218,10 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Verificação:** 20 testes novos (montagem em pedaços, marca de uma linha ainda não montada, cancelar ao trocar de disco ou digitar, foco). Aqui (i5): todas as ações respondem em 13 a 53 ms; criar playlist de 132 para 52 ms.
 - **Achado nos testes:** o som de teste termina em milissegundos e a faixa "atual" anda sozinha; os testes que dependem da faixa atual pausam o player e leem o índice depois de esperar.
 - **NÃO testado:** no notebook do pai. Falta rodar o `measure.sh` lá.
+
+## 27/11/2026 — Roteiro de usabilidade, README, "Lixeira" e relato de bug na playlist
+
+- **Pedidos:** (1) o roteiro de testes de usabilidade (M9); (2) subir o README novo; (3) trocar "Caixa" por "Lixeira"; (4) corrigir o bug "depois de criar uma playlist, o MIX de 600 músicas e as playlists antigas somem da estante".
+- **Feito:** `docs/testes-usabilidade.md` (objetivos, preparação, condução, 13 tarefas com sucesso e tempo máximo, planilha, questionário SUS em português com a conta da pontuação, conversa final, limites) e `docs/usabilidade/planilha-de-tempo-e-erros.csv`; README atualizado (telas, medição, atualização de teste, usabilidade, Lixeira); "A Caixa" virou "A Lixeira" na tela, no ícone (uma lixeira nova), no CLAUDE.md, no preview e nos testes (ADR-0023); nomes internos (`Tela.CAIXA`, tabela `box`) ficaram.
+- **Bug da playlist, NÃO reproduzido:** montei o cenário completo (MIX de 371 faixas tocando no rádio, duas playlists antigas, uma nova criada pela tela) e a estante mostrou tudo certo, com os dados no banco também corretos. Mesmo assim blindei dois pontos: um item que falha ao desenhar não esconde os outros (vai para o log), e a estante só marca o desenho como pronto depois de terminar sem erro. Adicionei o teste do relato. Para achar a causa de verdade, preciso do `~/.local/share/moa/moa.log` do notebook, de quando acontece.
+- **NÃO testado:** no notebook do pai.
