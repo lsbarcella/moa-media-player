@@ -299,3 +299,10 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Achado:** o `Gtk.ScrolledWindow` herda "expandir" do conteúdo e, num `Gtk.Box`, o filho com `expand=False` mas que herdou `hexpand` ganha uma fatia do espaço livre e fica centralizado nela; `set_hexpand(False)` resolve.
 - **Tipografia:** só conversa nesta rodada (nada implementado); opções e recomendação foram apresentadas ao autor.
 - **NÃO testado:** no notebook do pai; se 16 px é legível como padrão.
+
+## 28/11/2026 — Tipografia: decisão e pendências salvas
+
+- **Pedido:** o autor gostou da Atkinson Hyperlegible, quer duas fontes e escolheu a Roboto Slab como par ("Atkinson mais Roboto Slab"); pediu para salvar as decisões porque o limite de uso estava acabando.
+- **Feito:** `docs/preview/tipografia.html` (fontes, pesos, caixa, números e pares); **ADR-0030** (decisão e o que falta); `docs/pendencias.md` (git, decisões, próximos passos, perguntas em aberto, hipóteses a validar).
+- **Achados:** a Atkinson está no apt (141 KB, SIL OFL), mas só em Regular e Bold (2021); o pacote `fonts-ibm-plex` tem 41,8 MB e foi descartado; `document.fonts.check` não detecta fonte instalada (usa-se a medição de largura num canvas).
+- **NÃO implementado:** a tipografia no código. **NÃO testado** no notebook do pai.
