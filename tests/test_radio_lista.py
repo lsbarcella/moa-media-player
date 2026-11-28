@@ -35,14 +35,51 @@ def test_volume_nao_refaz_a_lista(app):
     assert antes.get_parent() is not None        # e continua dentro da tela
 
 
-def test_trocar_de_faixa_atualiza_o_tocando_agora(app):
+def _linha_com_a_marca(visao):
+    """Índices das músicas cuja linha mostra "Tocando agora" ou "Parado aqui"."""
+    return [i for i, (_moldura, nomes) in enumerate(visao._linhas)
+            if {"Tocando agora", "Parado aqui"} & set(textos(nomes))]
+
+
+def test_trocar_de_faixa_move_a_marca_sem_refazer_a_lista(app):
     ctx, conteudo = app
     _abrir_no_radio(ctx)
     visao = conteudo.telas[Tela.RADIO]
     antes = visao._lista
+    assert _linha_com_a_marca(visao) == [0]
     ctx.radio.proxima()
-    assert visao._lista is not antes
-    assert any("Parado aqui" in t or "Tocando agora" in t for t in textos(visao._lista))
+    assert visao._lista is antes
+    assert _linha_com_a_marca(visao) == [1]
+    ctx.radio.tocar_faixa(2)
+    assert _linha_com_a_marca(visao) == [2]
+    ctx.radio.anterior()
+    assert _linha_com_a_marca(visao) == [1]
+
+
+def test_pausar_troca_o_texto_da_marca_sem_refazer_a_lista(app):
+    ctx, conteudo = app
+    _abrir_no_radio(ctx)
+    visao = conteudo.telas[Tela.RADIO]
+    antes = visao._lista
+    vistos = set()
+    for _ in range(2):
+        ctx.radio.alternar()
+        esperado = "Tocando agora" if ctx.radio.tocando else "Parado aqui"
+        marca = [t for t in textos(visao._lista) if t in {"Tocando agora", "Parado aqui"}]
+        assert marca == [esperado]
+        vistos.add(esperado)
+    assert vistos == {"Tocando agora", "Parado aqui"}      # o texto mesmo mudou
+    assert visao._lista is antes
+
+
+def test_a_linha_atual_fica_destacada_so_nela(app):
+    ctx, conteudo = app
+    _abrir_no_radio(ctx)
+    visao = conteudo.telas[Tela.RADIO]
+    ctx.radio.proxima()
+    destacadas = [i for i, (moldura, _n) in enumerate(visao._linhas)
+                  if moldura.get_style_context().has_class("moa-agora")]
+    assert destacadas == [1]
 
 
 def test_trocar_de_disco_refaz_a_lista(app):

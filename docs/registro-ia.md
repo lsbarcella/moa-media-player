@@ -162,3 +162,11 @@ Diário curto de cada sessão com o assistente de IA (Claude Code), para o apên
 - **Feito:** cache dos ícones já convertidos (`widgets.icone`) e a lista de músicas só é refeita quando muda disco, faixa, estado de tocar, aviso ou coleção (`RadioView`). Depois: 14 ms por clique. `tests/test_radio_lista.py` (6 testes; o de reaproveitar falha se a regra for desligada).
 - **Fluxo de branches:** daqui em diante, branches a partir da `dev` (esta: `fix/volume-travando`).
 - **NÃO testado:** no notebook do pai (HD mecânico e CPU antiga). As outras telas com listas grandes (montar playlist, Caixa) podem ter o mesmo problema e ainda não foram medidas.
+
+## 27/11/2026 — Travada em tudo no rádio (371 faixas)
+
+- **Relato do autor:** depois da correção do volume, ele percebeu que pausar e as demais ações também travavam (notebook com ventoinha alta). A correção anterior só poupava o volume, porque a lista era refeita sempre que mudava a faixa ou o estado de tocar.
+- **Medido aqui (371 faixas):** tocar/pausar ~100 ms, próxima ~97 ms.
+- **Feito:** a marca "Tocando agora"/"Parado aqui" passa a ser movida no lugar (só duas linhas mudam), e a lista é marcada como `no_show_all` depois de mostrada, para o `show_all` da janela não percorrer as 371 linhas. Depois: tocar/pausar ~12 ms, próxima ~14 ms, abrir o rádio ~17 ms.
+- **Verificação:** `tests/test_radio_lista.py` (8 testes, um deles confere que só uma linha fica destacada); desenho do rádio conferido por imagem.
+- **NÃO testado:** no notebook do pai. Falta o `tools/measure.sh` para medir lá de forma repetível.
