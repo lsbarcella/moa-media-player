@@ -185,7 +185,8 @@ def _montar_disco(pasta: Path, faixas: tuple[Track, ...]) -> Album:
     return Album(folder=pasta, title=titulo, artist=_artista_do_album(faixas), tracks=faixas)
 
 
-def refresh_library(raiz: Path, db: "Database") -> list[Album]:
+def refresh_library(raiz: Path, db: "Database",
+                    ao_progredir: Callable[[int], None] | None = None) -> list[Album]:
     """Varre a pasta de música relendo só o que mudou desde a última vez.
 
     Para cada arquivo, compara a data de modificação e o tamanho com o que o
@@ -194,11 +195,19 @@ def refresh_library(raiz: Path, db: "Database") -> list[Album]:
     alteradas são lidas e gravadas; faixas que sumiram são esquecidas.
 
     O resultado é idêntico ao de `scan`, só mais rápido.
+
+    `ao_progredir(vistas)` é chamada a cada música olhada (a tela mostra "já olhei N músicas";
+    o total não se sabe antes de terminar de varrer as pastas).
     """
     guardadas = db.load_tracks()
     novas: list[Track] = []
+    vistas = 0
 
     def ler(caminho: Path) -> Track:
+        nonlocal vistas
+        vistas += 1
+        if ao_progredir is not None:
+            ao_progredir(vistas)
         estado = caminho.stat()
         antiga = guardadas.get(str(caminho))
         if antiga is not None and antiga.mtime == estado.st_mtime and antiga.size == estado.st_size:

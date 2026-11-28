@@ -17,9 +17,12 @@ from gi.repository import Gtk  # noqa: E402
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.session import Tela  # noqa: E402
 from moa.ui.cartao_de_atualizacao import cartao_de_atualizacao, deve_aparecer_na_estante  # noqa: E402     # ATUALIZACAO_DE_TESTE
-from moa.ui.widgets import aviso, botao, capa_do_disco, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
+from moa.ui.widgets import texto_de, aviso, botao, capa_do_disco, caixa_h, caixa_v, limpar, rotulo  # noqa: E402
 
 TEXTO_CARREGANDO = "Estou procurando os seus discos..."
+SEGUNDOS_ATE_AVISAR_DA_DEMORA = 5
+TEXTO_DA_DEMORA = ("Isso pode demorar um pouco na primeira vez. Pode esperar: está tudo certo "
+                   "e não precisa fazer nada.")
 TEXTO_VAZIO = ("Ainda não há discos aqui. Quando houver músicas na pasta de música, "
                "os discos aparecem na estante.")
 
@@ -47,11 +50,14 @@ class ShelfView:
         if deve_aparecer_na_estante(ctx):                                 # ATUALIZACAO_DE_TESTE
             self.raiz.pack_start(cartao_de_atualizacao(ctx), False, False, 0)
 
+        self._detalhe = self._demora = None
         if not ctx.discos and not ctx.montados:
-            texto = TEXTO_CARREGANDO if ctx.carregando else TEXTO_VAZIO
-            cartao = caixa_v(0)
+            cartao = caixa_v(8)
             cartao.get_style_context().add_class("moa-cartao")
-            cartao.pack_start(rotulo(texto), False, False, 0)
+            if ctx.carregando:
+                self._desenhar_carregando(cartao)
+            else:
+                cartao.pack_start(rotulo(TEXTO_VAZIO), False, False, 0)
             self.raiz.pack_start(cartao, False, False, 0)
             if not ctx.carregando:      # com a estante vazia é por aqui que o primeiro disco entra
                 linha = caixa_h(14)
@@ -68,6 +74,39 @@ class ShelfView:
         self._desenhar_prateleira("Meus discos", ctx.discos)
         self._desenhar_prateleira("Discos que montei", ctx.montados)
         self.raiz.show_all()
+
+    # -- "carregando": a primeira leitura pode levar vários segundos num notebook antigo ---------
+
+    def _desenhar_carregando(self, cartao: Gtk.Box) -> None:
+        linha = caixa_h(14)
+        movimento = Gtk.Spinner()
+        movimento.set_size_request(48, 48)
+        movimento.start()
+        linha.pack_start(movimento, False, False, 0)
+        linha.pack_start(rotulo(TEXTO_CARREGANDO, "moa-forte"), True, True, 0)
+        cartao.pack_start(linha, False, False, 0)
+        self._detalhe = rotulo("")
+        self._demora = rotulo("", "moa-nota")
+        cartao.pack_start(self._detalhe, False, False, 0)
+        cartao.pack_start(self._demora, False, False, 0)
+        self.atualizar_progresso()
+
+    def texto_do_progresso(self) -> str:
+        p = self.ctx.progresso_da_leitura
+        if p is None:
+            return ""
+        etapa, feitos, total = p
+        if etapa == "capas":
+            return f"Preparando as capas: {feitos} de {total}."
+        return "Já olhei 1 música." if feitos == 1 else f"Já olhei {feitos} músicas."
+
+    def atualizar_progresso(self) -> None:
+        """Atualiza só o andamento e o aviso de demora, sem redesenhar a estante."""
+        if self._detalhe is None:
+            return
+        texto_de(self._detalhe, self.texto_do_progresso())
+        demorou = self.ctx.segundos_de_leitura() >= SEGUNDOS_ATE_AVISAR_DA_DEMORA
+        texto_de(self._demora, TEXTO_DA_DEMORA if demorou else "")
 
     def _desenhar_acoes(self) -> None:
         linha = caixa_h(14)

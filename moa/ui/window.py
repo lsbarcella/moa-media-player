@@ -84,12 +84,17 @@ class Conteudo:
 
         contexto.session.ao_mudar(self.redesenhar)
         contexto.aparelho.ao_mudar(self.redesenhar)
+        contexto.ao_progredir_a_leitura(self._ao_progredir_a_leitura)
         contexto.atualizacao.ao_mudar(self.redesenhar)     # ATUALIZACAO_DE_TESTE
         contexto.radio.ao_mudar(self.redesenhar)
         contexto.ao_mudar_a_colecao(self.redesenhar)
         contexto.preferencias.ao_mudar(self._ao_mudar_preferencia)
         self.redesenhar()
         self.raiz.show_all()        # uma vez, na montagem; depois cada parte se mostra sozinha
+
+    def _ao_progredir_a_leitura(self) -> None:
+        if self.ctx.session.tela == Tela.ESTANTE:
+            self.telas[Tela.ESTANTE].atualizar_progresso()
 
     def registrar(self, tela: Tela, visao) -> None:
         """Põe uma tela na pilha. Cada tela rola sozinha se não couber."""
@@ -235,6 +240,8 @@ class Conteudo:
     # -- relógio (chamado a cada meio segundo) -------------------------------------------------
 
     def tique(self, contador: int) -> None:
+        if self.ctx.carregando and self.ctx.session.tela == Tela.ESTANTE:
+            self.telas[Tela.ESTANTE].atualizar_progresso()      # o aviso de demora aparece com o tempo
         if not self.ctx.radio.tocando:
             return
         if self.ctx.session.tela == Tela.RADIO:

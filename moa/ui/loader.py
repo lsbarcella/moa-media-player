@@ -14,6 +14,7 @@ pelo caminho do arquivo e nunca usa a conexão da janela.
 
 import logging
 import threading
+import time
 from pathlib import Path
 
 from gi.repository import GLib
@@ -27,14 +28,21 @@ from moa.core.library import refresh_library
 log = logging.getLogger(__name__)
 
 
-def varrer(caminho_do_banco: Path, pasta_musica: Path, pasta_miniaturas: Path):
-    """O trabalho em si (sem GTK): devolve (discos, miniaturas). Roda em qualquer thread."""
+def varrer(caminho_do_banco: Path, pasta_musica: Path, pasta_miniaturas: Path,
+           informar=None):
+    """O trabalho em si (sem GTK): devolve (discos, miniaturas). Roda em qualquer thread.
+
+    `informar(etapa, feitos, total)` conta o andamento ("musicas" sem total; "capas" com total).
+    """
     banco = Database(caminho_do_banco)
     try:
-        discos = refresh_library(pasta_musica, banco)
+        discos = refresh_library(
+            pasta_musica, banco,
+            ao_progredir=(lambda n: informar("musicas", n, None)) if informar else None)
         miniaturas = refresh_covers(discos, banco, pasta_miniaturas,
                                     escolhas=box.escolhas_de_capa(banco),
-                                    alternativas=musicbrainz.capas_baixadas(banco.load_mb()))
+                                    alternativas=musicbrainz.capas_baixadas(banco.load_mb()),
+                                    ao_progredir=(lambda f, t: informar("capas", f, t)) if informar else None)
         return discos, miniaturas
     finally:
         banco.close()
@@ -48,6 +56,7 @@ class Carregador:
         self._caminho_do_banco = caminho_do_banco
         self._pasta_miniaturas = pasta_miniaturas
         self.thread: threading.Thread | None = None
+        self._ultimo_aviso = 0.0
 
     def iniciar(self) -> None:
         self.thread = threading.Thread(target=self._trabalhar, name="varredura", daemon=True)
@@ -66,10 +75,22 @@ class Carregador:
             return
         GLib.idle_add(self._entregar, discos, miniaturas)
 
+    def _informar(self, etapa: str, feitos: int, total: int | None) -> None:
+        """Roda na thread da varredura: passa o andamento à tela, no máximo 10 vezes por segundo."""
+        agora = time.monotonic()
+        if agora - self._ultimo_aviso < 0.1 and feitos != total:
+            return
+        self._ultimo_aviso = agora
+        GLib.idle_add(self._avisar_a_tela, etapa, feitos, total)
+
+    def _avisar_a_tela(self, etapa: str, feitos: int, total: int | None) -> bool:
+        self._contexto.informar_progresso(etapa, feitos, total)
+        return False
+
     def _trabalhar(self) -> None:
         try:
             discos, miniaturas = varrer(self._caminho_do_banco, self._contexto.pasta_musica,
-                                        self._pasta_miniaturas)
+                                        self._pasta_miniaturas, self._informar)
         except Exception:                      # nunca derruba o app nem assusta o idoso
             log.exception("a varredura da pasta de música falhou")
             discos, miniaturas = list(self._contexto._brutos), dict(self._contexto.miniaturas)
