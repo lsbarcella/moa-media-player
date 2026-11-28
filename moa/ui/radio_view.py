@@ -17,6 +17,7 @@ from gi.repository import Gtk  # noqa: E402
 
 from moa.core.contexto import Contexto  # noqa: E402
 from moa.core.player import DEGRAU_MAXIMO  # noqa: E402
+from moa.ui import ornamentos  # noqa: E402
 from moa.ui.widgets import EmPedacos, classe, definir_estado_da_tecla, definir_texto_do_botao, tecla_travavel, texto_de, aviso, capa_do_disco, botao, caixa_h, caixa_v, icone, limpar, rotulo  # noqa: E402
 
 LARGURA_PARA_EMPILHAR = 900
@@ -155,7 +156,9 @@ class RadioView:
         corpo.set_size_request(420, -1)
         p.corpo = corpo
 
-        # lâmpada + palavra
+        ornamentos.instalar_parafusos(corpo)
+
+        # plaquinha "MOA" de latão e lâmpada + palavra
         estado = caixa_h(10)
         p.lampada = Gtk.Box()
         p.lampada.get_style_context().add_class("moa-lampada")
@@ -163,6 +166,11 @@ class RadioView:
         estado.pack_start(p.lampada, False, False, 0)
         p.palavra = rotulo("", "moa-forte", quebrar=False)
         estado.pack_start(p.palavra, False, False, 0)
+        placa = caixa_h(0)
+        placa.get_style_context().add_class("moa-plaquinha")
+        placa.pack_start(rotulo("MOA", quebrar=False), False, False, 0)
+        placa.set_valign(Gtk.Align.CENTER)
+        estado.pack_end(placa, False, False, 0)
         corpo.pack_start(estado, False, False, 0)
 
         # visor
@@ -186,7 +194,10 @@ class RadioView:
 
         # botões: anterior / tocar-pausar / próxima (o do meio troca quando muda o estado)
         p.controles = Gtk.Grid(column_spacing=10, column_homogeneous=False)
-        corpo.pack_start(p.controles, False, False, 0)
+        metal = caixa_v(0)                      # moldura de metal escovado atrás das três teclas
+        metal.get_style_context().add_class("moa-metal")
+        metal.pack_start(p.controles, False, False, 0)
+        corpo.pack_start(metal, False, False, 0)
 
         # volume em degraus
         volume = caixa_v(8)
@@ -222,6 +233,9 @@ class RadioView:
 
         corpo.pack_start(botao("Guardar o disco na estante e parar", ao_clicar=self._guardar, icone_nome="disco"),
                          False, False, 0)
+        grade = Gtk.Box()                       # a grade de tecido do alto-falante, no pé do aparelho
+        grade.get_style_context().add_class("moa-grade")
+        corpo.pack_start(grade, False, False, 0)
         self._p = p
         self._atualizar_painel(visor)
 

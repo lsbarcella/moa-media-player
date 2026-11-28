@@ -169,6 +169,71 @@ PADDING_TOPO_PX = 8             # espaço entre o topo da tecla e o rótulo
 FAIXA_DO_BRILHO_PX = 8          # o brilho termina aqui, acima do rótulo (<= PADDING_TOPO_PX)
 
 
+def _rgba(hexa: str, alfa: float) -> str:
+    h = hexa.lstrip("#")
+    return f"rgba({int(h[0:2], 16)},{int(h[2:4], 16)},{int(h[4:6], 16)},{alfa})"
+
+
+def _css_do_aparelho(c: dict[str, str], grande: int, modo: str) -> str:
+    """Gabinete de madeira, visor de vidro, moldura de metal, grade do alto-falante e plaquinha."""
+    if modo == "contorno":      # preto e branco: contorno duplo, sem veios nem degradê (KTD3)
+        return f"""
+.moa-radio {{ background-color: {c['wood']}; background-image: none; border: 4px solid {c['white']};
+              border-radius: 22px; padding: 18px;
+              box-shadow: 0 0 0 3px {c['dark']}, inset 0 0 0 3px {c['dark']}, 0 6px 0 {c['dark']}; }}
+.moa-radio label {{ color: {c['white']}; }}
+.moa-radio .moa-dica {{ color: {c['hint']}; }}
+.moa-visor {{ background-color: {c['visor']}; background-image: none; border: 5px solid {c['dark']};
+              border-radius: 14px; padding: 12px; box-shadow: inset 0 0 0 3px {c['white']}; }}
+.moa-visor label {{ color: {c['ink']}; }}
+.moa-metal {{ background-color: {c['white']}; border: 3px solid {c['dark']}; border-radius: 16px;
+              padding: 8px; box-shadow: inset 0 0 0 2px {c['white']}, inset 0 0 0 4px {c['dark']}; }}
+.moa-grade {{ background-color: {c['dark']}; background-image: none; border: 3px solid {c['white']};
+              border-radius: 10px; min-height: 28px; }}
+.moa-plaquinha {{ background-color: {c['white']}; border: 3px solid {c['dark']}; border-radius: 8px;
+                  padding: 0px 14px; }}
+.moa-plaquinha label {{ color: {c['ink']}; font-weight: 800; letter-spacing: 4px; }}
+"""
+    veio_escuro = _rgba("#000000", ALFA_VEIO_ESCURO)
+    veio_claro = _rgba("#FFFFFF", ALFA_VEIO_CLARO)
+    return f"""
+.moa-radio {{ background-color: {c['wood']};
+    background-image: repeating-linear-gradient(to bottom, {veio_escuro} 0px, {veio_escuro} 1px,
+                          {_rgba('#000000', 0)} 2px, {veio_claro} 5px, {_rgba('#FFFFFF', 0)} 7px,
+                          {_rgba('#000000', 0)} 11px),
+                      linear-gradient(to bottom, {_rgba(c['wood_hi'], 1)} 0%, {_rgba(c['wood_lo'], 1)} 100%);
+    border: 5px solid {c['brass']}; border-radius: 22px; padding: 22px;
+    box-shadow: inset 0 0 0 2px {c['brass_lo']}, inset 0 0 18px rgba(0,0,0,0.45),
+                0 0 0 2px {c['dark']}, 0 6px 0 rgba(0,0,0,0.45); }}
+.moa-radio label {{ color: {c['white']}; }}
+.moa-radio .moa-dica {{ color: {c['hint']}; }}
+.moa-visor {{ background-color: {c['visor']};
+    background-image: linear-gradient(to bottom, {_rgba(c['visor_hi'], 1)} 0%, {_rgba(c['visor_lo'], 1)} 100%);
+    border: 5px solid {c['brass']}; border-radius: 14px; padding: 12px;
+    box-shadow: 0 0 0 2px {c['brass_lo']}, inset 0 0 14px rgba(0,0,0,0.30),
+                inset 0 2px 0 rgba(255,255,255,0.70), inset 2px 0 0 rgba(255,255,255,0.35); }}
+.moa-visor label {{ color: {c['ink']}; }}
+.moa-metal {{ background-color: {c['metal_lo']};
+    background-image: repeating-linear-gradient(to right, rgba(255,255,255,0.22) 0px, rgba(255,255,255,0.22) 1px,
+                          rgba(255,255,255,0) 2px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0) 4px),
+                      linear-gradient(to bottom, {_rgba(c['metal_hi'], 1)} 0%, {_rgba(c['metal_lo'], 1)} 100%);
+    border: 3px solid {c['dark']}; border-radius: 16px; padding: 8px;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.8), inset 0 -3px 0 rgba(0,0,0,0.25); }}
+.moa-grade {{ background-color: {c['dark']};
+    background-image: repeating-linear-gradient(to right, rgba(255,255,255,0.14) 0px, rgba(255,255,255,0.14) 2px,
+                          rgba(0,0,0,0) 3px, rgba(0,0,0,0) 6px),
+                      repeating-linear-gradient(to bottom, rgba(255,255,255,0.10) 0px, rgba(255,255,255,0.10) 2px,
+                          rgba(0,0,0,0) 3px, rgba(0,0,0,0) 6px);
+    border: 3px solid {c['brass_lo']}; border-radius: 10px; min-height: 28px;
+    box-shadow: inset 0 3px 8px rgba(0,0,0,0.6); }}
+.moa-plaquinha {{ background-color: {c['brass']};
+    background-image: linear-gradient(to bottom, {_rgba(c['brass_hi'], 1)} 0%, {_rgba(c['brass'], 1)} 100%);
+    border: 2px solid {c['brass_lo']}; border-radius: 8px; padding: 0px 14px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.7); }}
+.moa-plaquinha label {{ color: {c['ink']}; font-weight: 800; letter-spacing: 4px; }}
+"""
+
+
 def _css_das_teclas(c: dict[str, str], grande: int, modo: str) -> str:
     """CSS das teclas (botões de ação, escolhas e marcações), das lâmpadas e das variantes."""
     b, h, p = BORDA_PX, ALTURA_DA_TECLA_PX, PADDING_TOPO_PX
@@ -293,12 +358,7 @@ button.moa-disco label {{ color: {c['ink']}; font-weight: 800; }}
                      padding: 14px 18px; }}
 
 /* rádio */
-.moa-radio {{ background-color: {c['wood']}; border: 4px solid {c['dark']}; border-radius: 22px;
-              padding: 18px; }}
-.moa-radio label {{ color: {c['white']}; }}
-.moa-radio .moa-dica {{ color: {c['hint']}; }}
-.moa-visor {{ background-color: {c['visor']}; border: 5px solid {c['dark']}; border-radius: 14px; padding: 12px; }}
-.moa-visor label {{ color: {c['ink']}; }}
+{_css_do_aparelho(c, grande, modo)}
 .moa-visor .moa-nota-visor {{ background-color: {c['white']}; border-radius: 6px; padding: 2px 8px;
                               font-weight: 700; }}
 .moa-radio button.moa-btn {{ background-color: {c['btnradio']}; border-color: {c['dark']}; color: {c['ink']}; }}

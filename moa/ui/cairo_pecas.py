@@ -154,6 +154,9 @@ class CacheDeDesenho:
     def __len__(self) -> int:
         return len(self._itens)
 
+    def limpar(self) -> None:
+        self._itens.clear()
+
     def obter(self, nome: str, w: int, h: int, paleta: str, estado, desenhar) -> cairo.ImageSurface:
         chave = (nome, w, h, estado, paleta)
         if chave in self._itens:

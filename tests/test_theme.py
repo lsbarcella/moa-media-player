@@ -172,3 +172,47 @@ def test_o_css_com_relevo_e_aceito_pelo_gtk_em_toda_combinacao():
     for paleta in theme.PALETAS:
         for letra in theme.ESCALAS:
             Gtk.CssProvider().load_from_data(theme.gerar_css(paleta, letra).encode("utf-8"))
+
+
+# -- gabinete, visor, moldura de metal e grade (U3, ADR-0024) ------------------------------------
+
+def _bloco(css: str, seletor: str) -> str:
+    achou = re.search(re.escape(seletor) + r"\s*\{([^}]*)\}", css)
+    assert achou, f"sem regra para {seletor}"
+    return achou.group(1)
+
+
+@pytest.mark.parametrize("paleta", [p for p in theme.PALETAS if p != "preto-e-branco"])
+def test_gabinete_de_madeira_tem_veios_e_moldura_de_latao(paleta):
+    bloco = _bloco(theme.gerar_css(paleta, "normal"), ".moa-radio")
+    assert "repeating-linear-gradient" in bloco                          # veios
+    assert theme.PALETAS[paleta]["brass"].lower() in bloco.lower()       # moldura de latão
+
+
+def test_gabinete_no_preto_e_branco_nao_tem_veios_e_usa_contorno_duplo():
+    bloco = _bloco(theme.gerar_css("preto-e-branco", "normal"), ".moa-radio")
+    assert "gradient" not in bloco and "inset 0 0 0" in bloco
+
+
+@pytest.mark.parametrize("paleta", [p for p in theme.PALETAS if p != "preto-e-branco"])
+def test_visor_de_vidro_tem_degrade_sombra_interna_e_reflexo_so_na_borda(paleta):
+    bloco = _bloco(theme.gerar_css(paleta, "normal"), ".moa-visor")
+    assert "linear-gradient" in bloco and "inset" in bloco
+    # o reflexo é um fio claro na borda (inset de poucos px), não uma camada sobre o texto
+    assert "radial-gradient" not in bloco
+
+
+def test_visor_no_preto_e_branco_e_branco_chapado_com_contorno():
+    bloco = _bloco(theme.gerar_css("preto-e-branco", "normal"), ".moa-visor")
+    assert "gradient" not in bloco
+
+
+def test_existem_moldura_de_metal_grade_e_plaquinha_do_aparelho():
+    css = theme.gerar_css("normal", "normal")
+    for seletor in (".moa-metal", ".moa-grade", ".moa-plaquinha"):
+        assert seletor in css
+
+
+
+def test_a_nota_do_visor_continua_numa_caixinha_branca():
+    assert "background-color: #FFFFFF" in _bloco(theme.gerar_css("normal", "normal"), ".moa-visor .moa-nota-visor")
